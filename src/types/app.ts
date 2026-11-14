@@ -7,7 +7,7 @@ export type ProgramMode = 'joint_safe' | 'benchmark';
 export type WorkoutDayKey = 'A' | 'B' | 'C' | 'D';
 export type EvidenceGrade = 'strong' | 'moderate' | 'limited' | 'preliminary';
 export type GoalMode = 'recomp' | 'lean_bulk' | 'fat_loss';
-export type DaySchedulePreset = 'mwf' | 'tts' | 'custom';
+export type DaySchedulePreset = 'sequence' | 'mwf' | 'tts' | 'custom';
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export type MuscleZoneKey =
@@ -265,6 +265,7 @@ export interface AppState {
   programMode: ProgramMode;
   schedulePreset: DaySchedulePreset;
   trainingDaysLabels: Record<WorkoutDayKey, string>;
+  nextSequenceDay: WorkoutDayKey;
   activeWorkoutDay: WorkoutDayKey | null;
   activeMealPreset: 'training' | 'rest';
   muscleFilter: MuscleZoneKey | 'ALL';

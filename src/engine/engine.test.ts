@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import { EXERCISES_DB } from '../data/exercises';
 import { MOROCCAN_FOOD_DB } from '../data/nutrition';
 import { MUSCLE_ZONE_ORDER } from '../data/muscles';
-import { createDefaultAppState, migrateState, validateAndImportBackup } from './storage';
+import {
+  computeSessionStreakAndDelay,
+  createDefaultAppState,
+  getNextSequenceDay,
+  migrateState,
+  validateAndImportBackup,
+} from './storage';
 import { computeWeeklyVolume, estimateE1RM, evaluateDoubleProgression } from './volume';
 import { buildWeeklyGroceryList, calculateBiometrics, calculateMealsTotals } from './nutrition';
 import { generateCoachInsights } from './coach';
@@ -160,4 +166,59 @@ test('actualRir persists across migration and calibrates effective volume & inte
   assert.equal(dp.readyToIncrease, true);
   assert.equal(dp.suggestedWeightKg, 27.25);
 });
+
+test('dynamic sequence rotation (A->B->C->D->A) and >3-day delay warning work accurately', () => {
+  assert.equal(getNextSequenceDay('A'), 'B');
+  assert.equal(getNextSequenceDay('B'), 'C');
+  assert.equal(getNextSequenceDay('C'), 'D');
+  assert.equal(getNextSequenceDay('D'), 'A');
+
+  const delayedHistory = [
+    {
+      id: 'S1',
+      date: '2026-11-05',
+      day: 'A' as const,
+      totalWorkingSets: 18,
+      totalVolumeKg: 6500,
+      preJointDiscomfort: 1,
+      postJointDiscomfort: 1,
+    },
+    {
+      id: 'S2',
+      date: '2026-11-09',
+      day: 'B' as const,
+      totalWorkingSets: 18,
+      totalVolumeKg: 7100,
+      preJointDiscomfort: 1,
+      postJointDiscomfort: 1,
+    },
+  ];
+
+  // 5 days elapsed (2026-11-09 -> 2026-11-14) > 3 days -> isDelayed = true, next in sequence = C
+  const checkDelayed = computeSessionStreakAndDelay(delayedHistory, undefined, '2026-11-14');
+  assert.equal(checkDelayed.totalSessions, 2);
+  assert.equal(checkDelayed.daysSinceLastWorkout, 5);
+  assert.equal(checkDelayed.isDelayed, true);
+  assert.equal(checkDelayed.nextDayInSequence, 'C');
+
+  // After finishing Session C on 2026-11-14 -> isDelayed = false, totalSessions = 3, next in sequence = D
+  const updatedHistory = [
+    ...delayedHistory,
+    {
+      id: 'S3',
+      date: '2026-11-14',
+      day: 'C' as const,
+      totalWorkingSets: 18,
+      totalVolumeKg: 7400,
+      preJointDiscomfort: 1,
+      postJointDiscomfort: 1,
+    },
+  ];
+  const checkActive = computeSessionStreakAndDelay(updatedHistory, undefined, '2026-11-14');
+  assert.equal(checkActive.totalSessions, 3);
+  assert.equal(checkActive.daysSinceLastWorkout, 0);
+  assert.equal(checkActive.isDelayed, false);
+  assert.equal(checkActive.nextDayInSequence, 'D');
+});
+
 

@@ -71,24 +71,21 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
   const coachRecs = generateCoachInsights(state, exercises, volumeMap);
   const chartPoints = state.e1rmHistory[selectedExId] || [];
 
-  const subTabs: { id: ProgSubTab; label: string; icon: React.ReactNode; activeClass: string }[] = [
+  const subTabs: { id: ProgSubTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'metrics',
       label: tr(lang, 'القياسات وتطور القوة', 'Mesures & Force e1RM', 'Metrics & e1RM PRs'),
-      icon: <TrendingUp className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/20',
+      icon: <TrendingUp className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'coach',
       label: tr(lang, 'المدرب الذكي والمفاصل', 'Coach IA & Articulations', 'Smart Coach & Joints'),
-      icon: <Bot className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/20',
+      icon: <Bot className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'refs',
       label: tr(lang, 'النسخ الاحتياطي والمراجع', 'Sauvegarde & Science', 'Backup & Science'),
-      icon: <BookOpen className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/20',
+      icon: <BookOpen className="w-4 h-4 shrink-0" />,
     },
   ];
 
@@ -157,9 +154,8 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-44" role="img" aria-label="e1RM Strength Progression Chart">
         <defs>
           <linearGradient id="e1rmGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#0ea5e9" />
-            <stop offset="50%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#f97316" />
+            <stop offset="0%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#fb923c" />
           </linearGradient>
         </defs>
         <line x1={padX} y1={h - padY} x2={w - padX} y2={h - padY} stroke="currentColor" strokeOpacity="0.2" />
@@ -176,7 +172,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
         )}
         {coords.map((c, idx) => (
           <g key={`PT_${idx}`}>
-            <circle cx={c.x} cy={c.y} r="5" fill="#6366f1" stroke="#ffffff" strokeWidth="2" />
+            <circle cx={c.x} cy={c.y} r="5" fill="#f97316" stroke="#ffffff" strokeWidth="2" />
             <text x={c.x} y={c.y - 9} textAnchor="middle" fill="currentColor" fontSize="10" fontWeight="bold">
               {c.pt.value}kg
             </text>
@@ -191,16 +187,16 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-sky-100 dark:border-slate-800 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetProgSubTab(t.id)}
-            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
               progSubTab === t.id
-                ? t.activeClass
-                : 'text-slate-600 dark:text-slate-300 hover:bg-sky-50/70 dark:hover:bg-slate-800'
+                ? 'bg-orange-500 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             {t.icon}

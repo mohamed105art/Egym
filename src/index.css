@@ -11,6 +11,18 @@
   body {
     overflow-x: hidden;
   }
+
+  /* Remove native number input spinners for strict grid symmetry */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 @layer utilities {
@@ -36,7 +48,7 @@
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.35);
+  background: rgba(249, 115, 22, 0.35);
   border-radius: 9999px;
 }
 

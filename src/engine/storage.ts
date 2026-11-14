@@ -1,27 +1,135 @@
 import { CORE_ABC_PROGRAM } from '../data/exercises';
 import { PRESET_MEAL_PLANS } from '../data/nutrition';
-import { AppState, GoalMode, MealBlock, SetLog, WorkoutDayKey } from '../types/app';
+import {
+  AppState,
+  GoalMode,
+  MealBlock,
+  SetLog,
+  WorkoutDayKey,
+  WorkoutSessionRecord,
+} from '../types/app';
 
 export const STORAGE_KEY = 'HYPERTROPHY_OS_STATE_V1';
 export const CURRENT_SCHEMA_VERSION = 5;
 
+export const SEQUENCE_ORDER: WorkoutDayKey[] = ['A', 'B', 'C', 'D'];
+
+export function getNextSequenceDay(completedDay: WorkoutDayKey): WorkoutDayKey {
+  const idx = SEQUENCE_ORDER.indexOf(completedDay);
+  if (idx === -1) return 'A';
+  return SEQUENCE_ORDER[(idx + 1) % SEQUENCE_ORDER.length];
+}
+
+function getIsoDateDaysAgo(daysAgo: number): string {
+  const d = new Date();
+  d.setUTCHours(12, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return d.toISOString().slice(0, 10);
+}
+
+export interface SessionStreakAndDelaySummary {
+  totalSessions: number;
+  totalVolumeAllTimeKg: number;
+  totalWorkingSetsAllTime: number;
+  lastSession: WorkoutSessionRecord | null;
+  lastSessionDate: string | null;
+  daysSinceLastWorkout: number | null;
+  isDelayed: boolean; // True when > 3 days have elapsed since the last saved session
+  activeStreakCount: number;
+  nextDayInSequence: WorkoutDayKey;
+}
+
+export function computeSessionStreakAndDelay(
+  sessionHistory: WorkoutSessionRecord[],
+  explicitNextDay?: WorkoutDayKey,
+  referenceDateStr?: string
+): SessionStreakAndDelaySummary {
+  const totalSessions = sessionHistory.length;
+  const totalVolumeAllTimeKg = sessionHistory.reduce((acc, s) => acc + (s.totalVolumeKg || 0), 0);
+  const totalWorkingSetsAllTime = sessionHistory.reduce((acc, s) => acc + (s.totalWorkingSets || 0), 0);
+
+  if (totalSessions === 0) {
+    return {
+      totalSessions: 0,
+      totalVolumeAllTimeKg: 0,
+      totalWorkingSetsAllTime: 0,
+      lastSession: null,
+      lastSessionDate: null,
+      daysSinceLastWorkout: null,
+      isDelayed: false,
+      activeStreakCount: 0,
+      nextDayInSequence: explicitNextDay || 'A',
+    };
+  }
+
+  // Last recorded session in chronological/append order
+  const lastSession = sessionHistory[sessionHistory.length - 1];
+  const lastSessionDate = lastSession.date;
+  const nextDayInSequence = explicitNextDay || getNextSequenceDay(lastSession.day);
+
+  const todayIso = referenceDateStr || new Date().toISOString().slice(0, 10);
+  const todayMs = Date.parse(`${todayIso}T00:00:00Z`);
+  const lastMs = Date.parse(`${lastSessionDate}T00:00:00Z`);
+
+  let daysSinceLastWorkout: number | null = null;
+  if (!Number.isNaN(todayMs) && !Number.isNaN(lastMs)) {
+    daysSinceLastWorkout = Math.max(0, Math.round((todayMs - lastMs) / 86400000));
+  }
+
+  const isDelayed = daysSinceLastWorkout !== null && daysSinceLastWorkout > 3;
+
+  // Calculate active streak (consecutive sessions separated by <= 3 days, and not currently delayed)
+  let activeStreakCount = 0;
+  if (!isDelayed) {
+    activeStreakCount = 1;
+    for (let i = sessionHistory.length - 1; i > 0; i--) {
+      const curMs = Date.parse(`${sessionHistory[i].date}T00:00:00Z`);
+      const prevMs = Date.parse(`${sessionHistory[i - 1].date}T00:00:00Z`);
+      if (!Number.isNaN(curMs) && !Number.isNaN(prevMs)) {
+        const diffDays = Math.max(0, Math.round((curMs - prevMs) / 86400000));
+        if (diffDays <= 4) {
+          activeStreakCount += 1;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+  return {
+    totalSessions,
+    totalVolumeAllTimeKg,
+    totalWorkingSetsAllTime,
+    lastSession,
+    lastSessionDate,
+    daysSinceLastWorkout,
+    isDelayed,
+    activeStreakCount,
+    nextDayInSequence,
+  };
+}
+
 export function createDefaultAppState(): AppState {
+  const date9DaysAgo = getIsoDateDaysAgo(9);
+  const date5DaysAgo = getIsoDateDaysAgo(5);
+
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     lang: 'ar',
-    theme: 'light',
+    theme: 'dark',
     mainTab: 'home',
     exSubTab: 'library',
     nutriSubTab: 'calc',
     progSubTab: 'metrics',
     programMode: 'joint_safe',
-    schedulePreset: 'mwf',
+    schedulePreset: 'sequence',
     trainingDaysLabels: {
-      A: 'Mon / الإثنين',
-      B: 'Wed / الأربعاء',
-      C: 'Fri / الجمعة',
-      D: 'Optional / اختياري',
+      A: 'الدور 1 · Sequence 1',
+      B: 'الدور 2 · Sequence 2',
+      C: 'الدور 3 · Sequence 3',
+      D: 'الدور 4 · Sequence 4',
     },
+    nextSequenceDay: 'B',
     activeWorkoutDay: null,
     activeMealPreset: 'training',
     muscleFilter: 'ALL',
@@ -51,7 +159,7 @@ export function createDefaultAppState(): AppState {
     volumeSettings: {
       indirectCoefficient: 0.5,
       minProximityRir: 3,
-      includeOptionalDayD: false,
+      includeOptionalDayD: true,
     },
     customDayExercises: {
       joint_safe: { ...CORE_ABC_PROGRAM.joint_safe },
@@ -61,16 +169,16 @@ export function createDefaultAppState(): AppState {
     sessionHistory: [
       {
         id: 'SES_INIT_1',
-        date: '2026-11-08',
-        day: 'C',
-        totalWorkingSets: 18,
-        totalVolumeKg: 6420,
+        date: date9DaysAgo,
+        day: 'D',
+        totalWorkingSets: 16,
+        totalVolumeKg: 5840,
         preJointDiscomfort: 1,
         postJointDiscomfort: 1,
       },
       {
         id: 'SES_INIT_2',
-        date: '2026-11-11',
+        date: date5DaysAgo,
         day: 'A',
         totalWorkingSets: 18,
         totalVolumeKg: 7150,
@@ -80,7 +188,7 @@ export function createDefaultAppState(): AppState {
     ],
     jointResponseLogs: [
       {
-        date: '2026-11-11',
+        date: date5DaysAgo,
         preDiscomfort: 1,
         postDiscomfort: 1,
         nextDayDiscomfort: 1,
@@ -97,19 +205,19 @@ export function createDefaultAppState(): AppState {
         { date: '2026-10-18', value: 30.5 },
         { date: '2026-10-25', value: 32.0 },
         { date: '2026-11-04', value: 33.5 },
-        { date: '2026-11-11', value: 34.7 },
+        { date: date5DaysAgo, value: 34.7 },
       ],
       EX03: [
         { date: '2026-10-18', value: 165.0 },
         { date: '2026-10-25', value: 175.0 },
         { date: '2026-11-04', value: 184.0 },
-        { date: '2026-11-11', value: 191.3 },
+        { date: date5DaysAgo, value: 191.3 },
       ],
       EX07: [
         { date: '2026-10-20', value: 36.0 },
         { date: '2026-10-27', value: 38.5 },
         { date: '2026-11-06', value: 40.0 },
-        { date: '2026-11-13', value: 42.0 },
+        { date: date5DaysAgo, value: 42.0 },
       ],
     },
     customMeals: JSON.parse(JSON.stringify(PRESET_MEAL_PLANS)) as { training: MealBlock[]; rest: MealBlock[] },
@@ -180,7 +288,7 @@ export function migrateState(raw: unknown): AppState {
   }
   if (r.activeMealPreset === 'training' || r.activeMealPreset === 'rest') base.activeMealPreset = r.activeMealPreset;
 
-  if (r.schedulePreset === 'mwf' || r.schedulePreset === 'tts' || r.schedulePreset === 'custom') {
+  if (r.schedulePreset === 'sequence' || r.schedulePreset === 'mwf' || r.schedulePreset === 'tts' || r.schedulePreset === 'custom') {
     base.schedulePreset = r.schedulePreset;
   }
 
@@ -270,6 +378,13 @@ export function migrateState(raw: unknown): AppState {
         postJointDiscomfort: typeof s.postJointDiscomfort === 'number' ? s.postJointDiscomfort : 1,
         sessionNotes: typeof s.sessionNotes === 'string' ? s.sessionNotes : undefined,
       }));
+  }
+
+  if (r.nextSequenceDay === 'A' || r.nextSequenceDay === 'B' || r.nextSequenceDay === 'C' || r.nextSequenceDay === 'D') {
+    base.nextSequenceDay = r.nextSequenceDay;
+  } else if (base.sessionHistory.length > 0) {
+    const lastDay = base.sessionHistory[base.sessionHistory.length - 1].day;
+    base.nextSequenceDay = getNextSequenceDay(lastDay);
   }
 
   if (Array.isArray(r.jointResponseLogs)) {

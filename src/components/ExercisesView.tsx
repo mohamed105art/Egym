@@ -96,36 +96,31 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
     return matchesSearch && matchesMuscle && matchesEquip && matchesDiff && matchesFav;
   });
 
-  const subTabs: { id: ExSubTab; label: string; icon: React.ReactNode; activeClass: string }[] = [
+  const subTabs: { id: ExSubTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'library',
       label: tr(lang, `المكتبة المصورة (${exercises.length})`, `Photos & Exercices (${exercises.length})`, `Photo Library (${exercises.length})`),
-      icon: <ImageIcon className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/20',
+      icon: <ImageIcon className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'map',
       label: tr(lang, 'خريطة العضلات (14)', 'Carte Muscles (14)', '14-Muscle Map'),
-      icon: <Layers className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20',
+      icon: <Layers className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'compare',
       label: tr(lang, 'مقارنة تمرينين بالصور', 'Comparer 2 Exercices', 'Photo Compare'),
-      icon: <GitCompare className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/20',
+      icon: <GitCompare className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'science_pick',
       label: tr(lang, 'ملخص الأبحاث', 'Science & Études', 'Science Summary'),
-      icon: <Sparkles className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20',
+      icon: <Sparkles className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'quality',
       label: tr(lang, 'توثيق الصور', 'Sources Photos', 'Photo Sources'),
-      icon: <ShieldCheck className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-md shadow-cyan-500/20',
+      icon: <ShieldCheck className="w-4 h-4 shrink-0" />,
     },
   ];
 
@@ -146,16 +141,16 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Clear Sub-Navigation Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-indigo-100 dark:border-slate-800 shadow-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetExSubTab(t.id)}
-            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
               exSubTab === t.id
-                ? t.activeClass
-                : 'text-slate-600 dark:text-slate-300 hover:bg-indigo-50/70 dark:hover:bg-slate-800'
+                ? 'bg-orange-500 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             {t.icon}
@@ -244,10 +239,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                     key={mg.key}
                     type="button"
                     onClick={() => onSetMuscleFilter(mg.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 transition ${
+                    className={`h-8 px-3 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 transition cursor-pointer ${
                       active
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-indigo-50/70 dark:bg-slate-800 text-indigo-900 dark:text-slate-300 hover:bg-indigo-100'
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-orange-500'
                     }`}
                   >
                     {mg.label}
@@ -265,14 +260,14 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
               return (
                 <div
                   key={ex.id}
-                  className="rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex flex-col justify-between shadow-xs hover:border-orange-500/50 transition"
                 >
                   <div>
                     <div className="relative h-52 bg-slate-100 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => onOpenExercise(ex.id)}
-                        className="w-full h-full block"
+                        className="w-full h-full block cursor-pointer"
                         aria-label={trText(lang, ex.name)}
                       >
                         <ExerciseImage
@@ -288,10 +283,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                         type="button"
                         onClick={() => onToggleFavorite(ex.id)}
                         aria-label={tr(lang, 'مفضلة', 'Favori', 'Toggle Favorite')}
-                        className={`absolute top-2.5 start-2.5 p-2 rounded-xl backdrop-blur-md border transition ${
+                        className={`absolute top-2.5 start-2.5 w-8 h-8 rounded-xl backdrop-blur-md border flex items-center justify-center transition cursor-pointer ${
                           isFav
-                            ? 'bg-amber-400 text-slate-950 border-amber-300 shadow'
-                            : 'bg-slate-900/65 text-white border-white/15 hover:bg-slate-900'
+                            ? 'bg-orange-500 text-white border-orange-400 shadow'
+                            : 'bg-slate-900/75 text-white border-white/15 hover:bg-slate-900'
                         }`}
                       >
                         <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
@@ -302,19 +297,19 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                         type="button"
                         onClick={() => onOpenLightbox(ex.id)}
                         aria-label={tr(lang, 'تكبير الصورة', 'Zoom image', 'Zoom Photo')}
-                        className="absolute top-2.5 end-2.5 p-2 rounded-xl bg-slate-900/65 text-white border border-white/15 hover:bg-indigo-600 transition"
+                        className="absolute top-2.5 end-2.5 w-8 h-8 rounded-xl bg-slate-900/75 text-white border border-white/15 hover:bg-orange-500 flex items-center justify-center transition cursor-pointer"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Direct 1. Start / 2. Peak Photo Toggle on Card */}
                       <div className="absolute bottom-2.5 inset-x-2.5 flex items-center justify-between gap-2">
-                        <div className="inline-flex rounded-xl bg-slate-950/80 backdrop-blur-md p-0.5 border border-white/15 text-[11px] font-extrabold text-white">
+                        <div className="grid grid-cols-2 rounded-xl bg-slate-950/85 backdrop-blur-md p-0.5 border border-white/15 text-[11px] font-extrabold text-white">
                           <button
                             type="button"
                             onClick={() => setCardFrameMap((prev) => ({ ...prev, [ex.id]: 0 }))}
-                            className={`px-2.5 py-1 rounded-lg transition ${
-                              frame === 0 ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:text-white'
+                            className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition cursor-pointer ${
+                              frame === 0 ? 'bg-orange-500 text-white' : 'text-slate-300 hover:text-white'
                             }`}
                           >
                             {tr(lang, '1. البداية', '1. Départ', '1. Start')}
@@ -322,7 +317,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                           <button
                             type="button"
                             onClick={() => setCardFrameMap((prev) => ({ ...prev, [ex.id]: 1 }))}
-                            className={`px-2.5 py-1 rounded-lg transition ${
+                            className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition cursor-pointer ${
                               frame === 1 ? 'bg-orange-500 text-white' : 'text-slate-300 hover:text-white'
                             }`}
                           >
@@ -330,16 +325,16 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                           </button>
                         </div>
 
-                        <span className="px-2.5 py-1 rounded-xl bg-slate-950/75 text-white text-[11px] font-extrabold mono-num">
+                        <span className="px-2.5 py-1 rounded-xl bg-slate-950/80 text-white text-[11px] font-extrabold mono-num whitespace-nowrap">
                           {ex.sets}×{ex.repsLabel}
                         </span>
                       </div>
                     </div>
 
                     <div className="p-4 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                        <span>{trText(lang, ex.muscleLabel)}</span>
-                        <span className="mono-num text-slate-500 dark:text-slate-400">{ex.equipment}</span>
+                      <div className="flex items-center justify-between text-xs font-bold text-orange-500">
+                        <span className="truncate">{trText(lang, ex.muscleLabel)}</span>
+                        <span className="mono-num text-slate-500 dark:text-slate-400 shrink-0">{ex.equipment}</span>
                       </div>
                       <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
                         {trText(lang, ex.name)}
@@ -350,11 +345,11 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="px-4 pb-4 pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                  <div className="px-4 pb-4 pt-2 grid grid-cols-[1fr_auto] items-center gap-2 border-t border-slate-100 dark:border-slate-800 text-xs">
                     <button
                       type="button"
                       onClick={() => onOpenExercise(ex.id)}
-                      className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-extrabold hover:from-indigo-500 hover:to-violet-500 transition text-center shadow-sm"
+                      className="h-9 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold whitespace-nowrap transition text-center shadow-xs cursor-pointer"
                     >
                       {tr(lang, 'عرض الصور والنصائح', 'Photos & Conseils', 'Photos & Tips')}
                     </button>
@@ -362,10 +357,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                       href={ex.media.youtubeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-900/60 font-extrabold hover:bg-rose-600 hover:text-white transition"
+                      className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-extrabold whitespace-nowrap hover:border-orange-500 transition"
                       aria-label={`YouTube ${trText(lang, ex.name)}`}
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                       <span>{tr(lang, 'فيديو', 'Vidéo', 'Video')}</span>
                     </a>
                   </div>

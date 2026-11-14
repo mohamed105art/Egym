@@ -47,30 +47,26 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   const trainingDays = state.volumeSettings.includeOptionalDayD ? 4 : 3;
   const groceryList = buildWeeklyGroceryList(customMeals, MOROCCAN_FOOD_DB, trainingDays);
 
-  const subTabs: { id: NutriSubTab; label: string; icon: React.ReactNode; activeClass: string }[] = [
+  const subTabs: { id: NutriSubTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'calc',
       label: tr(lang, 'حاسبة السعرات والماكرو', 'Calculateur & Macros', 'Calorie & Macro Calc'),
-      icon: <Calculator className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20',
+      icon: <Calculator className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'meals',
       label: tr(lang, 'الوجبات اليومية', 'Repas du Jour', 'Daily Meals'),
-      icon: <Utensils className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/20',
+      icon: <Utensils className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'foods',
       label: tr(lang, 'قائمة التسوق والأغذية', 'Courses & Aliments', 'Grocery & Foods'),
-      icon: <ShoppingBasket className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20',
+      icon: <ShoppingBasket className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'supps',
       label: tr(lang, 'دليل المكملات', 'Suppléments', 'Supplements'),
-      icon: <Pill className="w-4 h-4" />,
-      activeClass: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20',
+      icon: <Pill className="w-4 h-4 shrink-0" />,
     },
   ];
 
@@ -110,16 +106,16 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Sub-tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-amber-100 dark:border-slate-800 shadow-sm no-print">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs no-print">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetNutriSubTab(t.id)}
-            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
               nutriSubTab === t.id
-                ? t.activeClass
-                : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-slate-800'
+                ? 'bg-orange-500 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             {t.icon}
@@ -422,36 +418,36 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                       return (
                         <div
                           key={`${item.foodId}_${itemIdx}`}
-                          className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs"
+                          className="grid grid-cols-[1fr_auto] items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 text-xs"
                         >
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0">
                             <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
                               {trText(lang, food.name)}
                             </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mono-num">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mono-num truncate">
                               {trText(lang, food.stateLabel)} · {Math.round(food.kcal * ratio)} kcal · P {(food.p * ratio).toFixed(0)}g · C {(food.c * ratio).toFixed(0)}g · F {(food.f * ratio).toFixed(0)}g
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1">
+                          <div className="grid grid-cols-[2.25rem_3.75rem_2.25rem] items-center gap-1">
                             <button
                               type="button"
                               onClick={() => updateItemGrams(mealIdx, itemIdx, item.grams - 10)}
-                              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-orange-400"
+                              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
                               aria-label="Decrease 10g"
                             >
-                              <Minus className="w-3 h-3" />
+                              <Minus className="w-3.5 h-3.5" />
                             </button>
-                            <span className="w-14 text-center font-extrabold mono-num text-slate-900 dark:text-slate-100">
+                            <span className="text-center font-extrabold mono-num text-slate-900 dark:text-slate-100">
                               {item.grams}g
                             </span>
                             <button
                               type="button"
                               onClick={() => updateItemGrams(mealIdx, itemIdx, item.grams + 10)}
-                              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-orange-400"
+                              className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
                               aria-label="Increase 10g"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -460,12 +456,12 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   </div>
 
                   {/* Quick Add Food */}
-                  <div className="flex items-center gap-2 pt-1 text-xs">
+                  <div className="grid grid-cols-[1fr_auto] items-center gap-2 pt-1 text-xs">
                     <select
                       aria-label="Add food to meal"
                       value={addFoodSelection[mealIdx] || MOROCCAN_FOOD_DB[0].id}
                       onChange={(e) => setAddFoodSelection((prev) => ({ ...prev, [mealIdx]: e.target.value }))}
-                      className="flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-semibold"
+                      className="h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-semibold min-w-0"
                     >
                       {MOROCCAN_FOOD_DB.map((f) => (
                         <option key={f.id} value={f.id}>
@@ -476,7 +472,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                     <button
                       type="button"
                       onClick={() => addFoodToMeal(mealIdx)}
-                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold hover:from-orange-600 hover:to-rose-600 transition shrink-0 shadow-sm"
+                      className="h-9 px-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold whitespace-nowrap transition shrink-0 shadow-xs cursor-pointer"
                     >
                       +100g
                     </button>

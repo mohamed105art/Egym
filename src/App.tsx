@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
+  BellRing,
   Dumbbell,
   Moon,
   Pause,
@@ -26,7 +27,11 @@ import { ProgressView } from './components/ProgressView';
 import { WorkoutView } from './components/WorkoutView';
 import { EXERCISES_DB } from './data/exercises';
 import { tr } from './engine/i18n';
-import { loadSavedState, saveAppState } from './engine/storage';
+import {
+  getNextSequenceDay,
+  loadSavedState,
+  saveAppState,
+} from './engine/storage';
 import { computeWeeklyVolume } from './engine/volume';
 import { useOnlineStatus, usePWAInstall } from './hooks/usePWAInstall';
 import {
@@ -40,20 +45,22 @@ import {
 
 function playTimerChime() {
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.16);
-    gain.gain.setValueAtTime(0.18, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.18);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    osc.stop(ctx.currentTime + 0.45);
+    osc.stop(ctx.currentTime + 0.5);
   } catch {
     // Ignore audio context block before user gesture
   }
@@ -65,15 +72,17 @@ export default function App() {
   const [lightboxExId, setLightboxExId] = useState<string | null>(null);
   const [swapSourceExId, setSwapSourceExId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [restCompleteFlash, setRestCompleteFlash] = useState(false);
 
   const isOnline = useOnlineStatus();
   const { isInstallable, isInstalled, install } = usePWAInstall();
   const toastTimerRef = useRef<number | null>(null);
+  const restFlashRef = useRef<number | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToast(null), 3200);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 3800);
   }, []);
 
   // Sync <html lang dir class="dark|light"> & save to localStorage
@@ -89,7 +98,7 @@ export default function App() {
     }
   }, [state]);
 
-  // Timestamp-resilient Rest Timer
+  // Timestamp-resilient Rest Timer with Vibration API + Visual Alert
   useEffect(() => {
     if (!state.timer.running || !state.timer.endMs) return;
 
@@ -99,9 +108,17 @@ export default function App() {
       const rem = Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
       if (rem <= 0) {
         if (state.timer.audioEnabled) playTimerChime();
-        if (state.timer.hapticsEnabled && typeof navigator !== 'undefined' && navigator.vibrate) {
-          navigator.vibrate([180, 90, 180]);
+        if (state.timer.hapticsEnabled && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          try {
+            navigator.vibrate([220, 100, 220, 100, 300]);
+          } catch {
+            // Ignore vibration error on unsupported devices
+          }
         }
+        setRestCompleteFlash(true);
+        if (restFlashRef.current) window.clearTimeout(restFlashRef.current);
+        restFlashRef.current = window.setTimeout(() => setRestCompleteFlash(false), 5500);
+
         setState((prev) => ({
           ...prev,
           timer: {
@@ -111,7 +128,14 @@ export default function App() {
             remainingSec: prev.timer.durationSec,
           },
         }));
-        showToast(tr(state.lang, 'انتهت فترة الراحة — جاهز للمجموعة التالية!', 'Temps de repos terminé !', 'Rest complete — ready for your next set!'));
+        showToast(
+          tr(
+            state.lang,
+            'انتهى وقت الراحة — حان وقت المجموعة التالية!',
+            'Temps de repos terminé — prêt pour la série suivante !',
+            'Rest timer complete — ready for your next set!'
+          )
+        );
       } else if (rem !== state.timer.remainingSec) {
         setState((prev) => ({
           ...prev,
@@ -130,10 +154,19 @@ export default function App() {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [state.timer.running, state.timer.endMs, state.timer.audioEnabled, state.timer.hapticsEnabled, state.timer.remainingSec, state.lang, showToast]);
+  }, [
+    state.timer.running,
+    state.timer.endMs,
+    state.timer.audioEnabled,
+    state.timer.hapticsEnabled,
+    state.timer.remainingSec,
+    state.lang,
+    showToast,
+  ]);
 
   const startRestTimer = useCallback((seconds: number) => {
     const dur = Math.max(15, Math.min(600, Math.round(seconds)));
+    setRestCompleteFlash(false);
     setState((prev) => ({
       ...prev,
       timer: {
@@ -147,9 +180,12 @@ export default function App() {
   }, []);
 
   const toggleRestTimer = () => {
+    setRestCompleteFlash(false);
     setState((prev) => {
       if (prev.timer.running) {
-        const rem = prev.timer.endMs ? Math.max(0, Math.ceil((prev.timer.endMs - Date.now()) / 1000)) : prev.timer.remainingSec;
+        const rem = prev.timer.endMs
+          ? Math.max(0, Math.ceil((prev.timer.endMs - Date.now()) / 1000))
+          : prev.timer.remainingSec;
         return {
           ...prev,
           timer: { ...prev.timer, running: false, endMs: null, remainingSec: rem },
@@ -158,12 +194,18 @@ export default function App() {
       const rem = prev.timer.remainingSec > 0 ? prev.timer.remainingSec : prev.timer.durationSec;
       return {
         ...prev,
-        timer: { ...prev.timer, running: true, endMs: Date.now() + rem * 1000, remainingSec: rem },
+        timer: {
+          ...prev.timer,
+          running: true,
+          endMs: Date.now() + rem * 1000,
+          remainingSec: rem,
+        },
       };
     });
   };
 
   const resetRestTimer = () => {
+    setRestCompleteFlash(false);
     setState((prev) => ({
       ...prev,
       timer: {
@@ -179,10 +221,17 @@ export default function App() {
 
   const setSchedulePreset = (preset: DaySchedulePreset) => {
     const labels: Record<WorkoutDayKey, string> =
-      preset === 'mwf'
-        ? { A: 'Mon / الإثنين', B: 'Wed / الأربعاء', C: 'Fri / الجمعة', D: 'Optional / اختياري' }
+      preset === 'sequence'
+        ? {
+            A: 'الدور 1 · Sequence 1',
+            B: 'الدور 2 · Sequence 2',
+            C: 'الدور 3 · Sequence 3',
+            D: 'الدور 4 · Sequence 4',
+          }
+        : preset === 'mwf'
+        ? { A: 'Mon / الإثنين', B: 'Wed / الأربعاء', C: 'Fri / الجمعة', D: 'Bonus / إضافي' }
         : preset === 'tts'
-        ? { A: 'Tue / الثلاثاء', B: 'Thu / الخميس', C: 'Sat / السبت', D: 'Optional / اختياري' }
+        ? { A: 'Tue / الثلاثاء', B: 'Thu / الخميس', C: 'Sat / السبت', D: 'Bonus / إضافي' }
         : { ...state.trainingDaysLabels };
 
     setState((prev) => ({
@@ -222,7 +271,14 @@ export default function App() {
         },
       };
     });
-    showToast(tr(state.lang, 'تم استبدال التمرين في برنامجك.', 'Exercice remplacé dans votre programme.', 'Exercise swapped in your active split.'));
+    showToast(
+      tr(
+        state.lang,
+        'تم استبدال التمرين في برنامجك.',
+        'Exercice remplacé dans votre programme.',
+        'Exercise swapped in your active split.'
+      )
+    );
   };
 
   const handleApplyCoachAction = (actionType: NonNullable<CoachRecommendation['actionType']>) => {
@@ -241,7 +297,14 @@ export default function App() {
           workoutLogs: nextLogs,
         };
       });
-      showToast(tr(state.lang, 'تم تطبيق تخفيف 15% على الأحمال المسجلة بناءً على موافقتك.', 'Allègement de 15% appliqué sur vos charges.', 'Approved 15% load reduction applied to logged weights.'));
+      showToast(
+        tr(
+          state.lang,
+          'تم تطبيق تخفيف 15% على الأحمال المسجلة بناءً على موافقتك.',
+          'Allègement de 15% appliqué sur vos charges.',
+          'Approved 15% load reduction applied to logged weights.'
+        )
+      );
     }
   };
 
@@ -257,62 +320,47 @@ export default function App() {
     label: string;
     subtitle: string;
     icon: React.ReactNode;
-    activeGrad: string;
-    mobileText: string;
-    softCard: string;
   }[] = [
     {
       id: 'home',
       step: '1',
       label: tr(state.lang, 'حصتي التدريبية', 'Ma Séance', 'My Workout'),
-      subtitle: tr(state.lang, 'الأيام A / B / C وتسجيل المجموعات', 'Séances A/B/C & suivi', 'Sessions A/B/C & Set Logger'),
-      icon: <Dumbbell className="w-4 h-4" />,
-      activeGrad: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/25',
-      mobileText: 'text-orange-600 dark:text-orange-400',
-      softCard: 'border-orange-200/80 dark:border-orange-900/40 bg-orange-50/60 dark:bg-orange-950/20 text-orange-900 dark:text-orange-200',
+      subtitle: tr(state.lang, 'تدوير الحصص A/B/C/D وتسجيل المجموعات', 'Rotation A/B/C/D & suivi', 'Sequence A/B/C/D & Set Logger'),
+      icon: <Dumbbell className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'exercises',
       step: '2',
       label: tr(state.lang, 'التمارين بالصور', 'Photos & Exercices', 'Exercise Photos'),
       subtitle: tr(state.lang, '32 تمريناً بالصور وخريطة العضلات', '32 exercices illustrés & carte', '32 Photo Guides & Muscle Map'),
-      icon: <Activity className="w-4 h-4" />,
-      activeGrad: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25',
-      mobileText: 'text-indigo-600 dark:text-indigo-400',
-      softCard: 'border-indigo-200/80 dark:border-indigo-900/40 bg-indigo-50/60 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200',
+      icon: <Activity className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'nutrition',
       step: '3',
       label: tr(state.lang, 'التغذية والوجبات', 'Nutrition & Repas', 'Meals & Macros'),
       subtitle: tr(state.lang, 'حاسبة السعرات والوجبات والتسوق', 'Calories, repas & courses', 'Calculator, Meals & Grocery'),
-      icon: <Utensils className="w-4 h-4" />,
-      activeGrad: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25',
-      mobileText: 'text-amber-600 dark:text-amber-400',
-      softCard: 'border-amber-200/80 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200',
+      icon: <Utensils className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'progress',
       step: '4',
       label: tr(state.lang, 'تقدمي والمدرب', 'Progrès & Coach', 'Progress & Coach'),
       subtitle: tr(state.lang, 'تطور القوة والقياسات والنسخ الاحتياطي', 'Force e1RM, coach & sauvegarde', 'Strength Curve, Coach & Backup'),
-      icon: <TrendingUp className="w-4 h-4" />,
-      activeGrad: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25',
-      mobileText: 'text-sky-600 dark:text-sky-400',
-      softCard: 'border-sky-200/80 dark:border-sky-900/40 bg-sky-50/60 dark:bg-sky-950/20 text-sky-900 dark:text-sky-200',
+      icon: <TrendingUp className="w-4 h-4 shrink-0" />,
     },
   ];
 
   const detailEx = detailExId ? EXERCISES_DB.find((e) => e.id === detailExId) || null : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/30 via-slate-50 to-indigo-50/30 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100 pb-20 md:pb-8 transition-colors">
-      {/* Compact Sticky Top Bar (< 64px to stay comfortably below mobile sticky chrome cap) */}
-      <header className="sticky top-0 z-40 border-b border-indigo-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md no-print">
+    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 pb-20 md:pb-8 transition-colors">
+      {/* Compact Sticky Top Bar */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
           {/* Brand */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-orange-500 via-rose-500 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20">
+            <div className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Dumbbell className="w-4 h-4" />
             </div>
             <div className="min-w-0 leading-tight">
@@ -323,16 +371,19 @@ export default function App() {
             </div>
           </div>
 
-          {/* Desktop 4-Tab Nav */}
-          <nav className="hidden md:flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800" aria-label="Main Navigation">
+          {/* Desktop 4-Tab Nav (Unified Dark Minimalist + Sporty Orange Active State) */}
+          <nav
+            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800"
+            aria-label="Main Navigation"
+          >
             {navItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap shrink-0 ${
+                className={`inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
                   state.mainTab === item.id
-                    ? item.activeGrad
+                    ? 'bg-orange-500 text-white shadow-xs'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900'
                 }`}
               >
@@ -344,17 +395,33 @@ export default function App() {
 
           {/* Compact Utility Cluster: Rest Timer + Lang + Theme + Install */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Rest Timer Control */}
-            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50/90 dark:bg-slate-950 border border-indigo-200/80 dark:border-slate-800 text-xs">
-              <Timer className={`w-3.5 h-3.5 ${state.timer.running ? 'text-orange-500' : 'text-indigo-500'}`} />
-              <span className="font-mono font-extrabold tabular-nums w-10 text-center text-slate-900 dark:text-white">
+            {/* Rest Timer Control with Visual Flash Alert */}
+            <div
+              className={`inline-flex items-center gap-1 h-9 px-2.5 rounded-xl border text-xs transition ${
+                restCompleteFlash
+                  ? 'bg-orange-500 text-white border-orange-400 animate-pulse'
+                  : state.timer.running
+                  ? 'bg-orange-500/10 border-orange-500/50 text-slate-900 dark:text-white'
+                  : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white'
+              }`}
+            >
+              {restCompleteFlash ? (
+                <BellRing className="w-3.5 h-3.5 text-white shrink-0" />
+              ) : (
+                <Timer className={`w-3.5 h-3.5 shrink-0 ${state.timer.running ? 'text-orange-500' : 'text-slate-400'}`} />
+              )}
+              <span className="font-mono font-extrabold tabular-nums w-10 text-center">
                 {formatSec(state.timer.remainingSec)}
               </span>
               <button
                 type="button"
                 onClick={toggleRestTimer}
                 aria-label={state.timer.running ? 'Pause Rest Timer' : 'Start Rest Timer'}
-                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-orange-600 dark:text-orange-400"
+                className={`w-6 h-6 rounded-lg flex items-center justify-center transition cursor-pointer ${
+                  restCompleteFlash
+                    ? 'bg-white/20 text-white'
+                    : 'hover:bg-white dark:hover:bg-slate-800 text-orange-500'
+                }`}
               >
                 {state.timer.running ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
               </button>
@@ -362,7 +429,7 @@ export default function App() {
                 type="button"
                 onClick={resetRestTimer}
                 aria-label="Reset Rest Timer"
-                className="hidden sm:inline-flex p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500"
+                className="hidden sm:inline-flex w-6 h-6 items-center justify-center rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
               </button>
@@ -375,22 +442,22 @@ export default function App() {
                   }))
                 }
                 aria-label={state.timer.audioEnabled ? 'Mute Timer' : 'Unmute Timer'}
-                className="hidden sm:inline-flex p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500"
+                className="hidden sm:inline-flex w-6 h-6 items-center justify-center rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
               >
                 {state.timer.audioEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
               </button>
             </div>
 
             {/* Language Selector */}
-            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-extrabold">
+            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-extrabold h-9 items-center">
               {(['ar', 'fr', 'en'] as Lang[]).map((l) => (
                 <button
                   key={l}
                   type="button"
                   onClick={() => setState((prev) => ({ ...prev, lang: l }))}
-                  className={`px-1.5 sm:px-2 py-1 rounded-lg uppercase transition ${
+                  className={`h-7 px-2 rounded-lg uppercase transition cursor-pointer ${
                     state.lang === l
-                      ? 'bg-indigo-600 text-white shadow-xs'
+                      ? 'bg-orange-500 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -406,9 +473,9 @@ export default function App() {
                 setState((prev) => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }))
               }
               aria-label={state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-xl bg-amber-50 dark:bg-slate-950 border border-amber-200 dark:border-slate-800 text-amber-600 dark:text-amber-400 hover:border-orange-500 transition"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-orange-500 transition cursor-pointer"
             >
-              {state.theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+              {state.theme === 'dark' ? <Sun className="w-4 h-4 text-orange-400" /> : <Moon className="w-4 h-4" />}
             </button>
 
             {isInstallable && !isInstalled && (
@@ -416,7 +483,7 @@ export default function App() {
                 type="button"
                 onClick={() => void install()}
                 aria-label="Install PWA"
-                className="hidden lg:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold hover:from-indigo-500 hover:to-violet-500 transition shadow-sm"
+                className="hidden lg:inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold whitespace-nowrap transition shadow-xs cursor-pointer"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>{tr(state.lang, 'تثبيت', 'Installer', 'Install')}</span>
@@ -425,6 +492,33 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Visual Rest Timer Completed Banner */}
+      {restCompleteFlash && (
+        <div
+          role="status"
+          className="bg-orange-500 text-white text-xs font-extrabold py-2 px-4 flex items-center justify-between gap-2 no-print shadow-sm"
+        >
+          <div className="flex items-center gap-2">
+            <BellRing className="w-4 h-4 shrink-0" />
+            <span>
+              {tr(
+                state.lang,
+                'انتهى وقت الراحة! يمكنك الآن بدء المجموعة التالية بكل تركيز.',
+                'Temps de repos écoulé ! Vous pouvez lancer votre prochaine série.',
+                'Rest timer finished! Start your next working set with clean form.'
+              )}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRestCompleteFlash(false)}
+            className="px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[11px] font-bold whitespace-nowrap cursor-pointer"
+          >
+            {tr(state.lang, 'إخفاء', 'Fermer', 'Dismiss')}
+          </button>
+        </div>
+      )}
 
       {/* Offline Banner */}
       {!isOnline && (
@@ -443,7 +537,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4 space-y-4">
-        {/* Clear 4-Section Quick Switcher Cards (Makes navigation obvious & effortless on all devices) */}
+        {/* Clear 4-Section Quick Switcher Cards (Strict 4-Column CSS Grid) */}
         <section
           aria-label={tr(state.lang, 'أقسام التطبيق الرئيسية', 'Sections principales', 'Main Sections')}
           className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 no-print"
@@ -455,26 +549,34 @@ export default function App() {
                 key={`HERO_NAV_${item.id}`}
                 type="button"
                 onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-start transition active:scale-[0.99] ${
+                className={`flex items-center gap-3 p-3 rounded-xl border text-start transition active:scale-[0.99] cursor-pointer ${
                   isActive
-                    ? `${item.activeGrad} border-transparent`
-                    : `bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-slate-700 shadow-xs`
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs ${
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-extrabold text-xs ${
                     isActive
                       ? 'bg-white/20 text-white'
-                      : `${item.softCard}`
+                      : 'bg-slate-100 dark:bg-slate-800 text-orange-500'
                   }`}
                 >
                   {item.icon}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className={`text-xs sm:text-sm font-extrabold truncate ${isActive ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                  <div
+                    className={`text-xs sm:text-sm font-extrabold truncate ${
+                      isActive ? 'text-white' : 'text-slate-900 dark:text-white'
+                    }`}
+                  >
                     {item.step}. {item.label}
                   </div>
-                  <div className={`text-[11px] truncate ${isActive ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <div
+                    className={`text-[11px] truncate ${
+                      isActive ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
                     {item.subtitle}
                   </div>
                 </div>
@@ -515,6 +617,7 @@ export default function App() {
             onStartRestTimer={startRestTimer}
             onFinishSession={(payload) => {
               const today = new Date().toISOString().slice(0, 10);
+              const nextDay = getNextSequenceDay(payload.day);
               setState((prev) => {
                 const nextE1rm = { ...prev.e1rmHistory };
                 for (const [exId, val] of Object.entries(payload.e1rmUpdates)) {
@@ -525,6 +628,7 @@ export default function App() {
                 return {
                   ...prev,
                   activeWorkoutDay: null,
+                  nextSequenceDay: nextDay,
                   sessionHistory: [
                     ...prev.sessionHistory,
                     {
@@ -555,9 +659,9 @@ export default function App() {
               showToast(
                 tr(
                   state.lang,
-                  `أحسنت! تم حفظ الحصة ${payload.day}: ${payload.totalWorkingSets} مجموعات (${payload.totalVolumeKg} كغ)!`,
-                  `Séance ${payload.day} enregistrée : ${payload.totalWorkingSets} séries (${payload.totalVolumeKg} kg) !`,
-                  `Saved Workout ${payload.day}: ${payload.totalWorkingSets} working sets (${payload.totalVolumeKg} kg)!`
+                  `تم حفظ الحصة ${payload.day} بنجاح! الحصة التالية في الدور الآن هي: الحصة ${nextDay}`,
+                  `Séance ${payload.day} enregistrée ! Prochaine séance dans la séquence : Séance ${nextDay}`,
+                  `Saved Session ${payload.day}! Next up in sequence rotation: Session ${nextDay}`
                 )
               );
             }}
@@ -636,9 +740,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Mobile Bottom 4-Tab Bar (compact ~56px, one-thumb reachability) */}
+      {/* Mobile Bottom 4-Tab Bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-indigo-100 dark:border-slate-800 grid grid-cols-4 no-print"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-4 no-print"
         aria-label="Mobile Navigation"
       >
         {navItems.map((item) => {
@@ -648,9 +752,9 @@ export default function App() {
               key={`MOB_${item.id}`}
               type="button"
               onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-              className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold transition ${
+              className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold transition cursor-pointer ${
                 active
-                  ? item.mobileText
+                  ? 'text-orange-500'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
@@ -696,7 +800,7 @@ export default function App() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center"
+          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-orange-500 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center border border-orange-500/40"
         >
           {toast}
         </div>
