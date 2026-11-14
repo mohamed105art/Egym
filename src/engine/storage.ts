@@ -9,7 +9,7 @@ export function createDefaultAppState(): AppState {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     lang: 'ar',
-    theme: 'dark',
+    theme: 'light',
     mainTab: 'home',
     exSubTab: 'library',
     nutriSubTab: 'calc',
@@ -162,6 +162,18 @@ export function migrateState(raw: unknown): AppState {
 
   if (r.lang === 'ar' || r.lang === 'fr' || r.lang === 'en') base.lang = r.lang;
   if (r.theme === 'dark' || r.theme === 'light') base.theme = r.theme;
+  if (r.mainTab === 'home' || r.mainTab === 'exercises' || r.mainTab === 'nutrition' || r.mainTab === 'progress') {
+    base.mainTab = r.mainTab;
+  }
+  if (r.exSubTab === 'library' || r.exSubTab === 'map' || r.exSubTab === 'compare' || r.exSubTab === 'quality' || r.exSubTab === 'science_pick') {
+    base.exSubTab = r.exSubTab;
+  }
+  if (r.nutriSubTab === 'calc' || r.nutriSubTab === 'meals' || r.nutriSubTab === 'foods' || r.nutriSubTab === 'supps') {
+    base.nutriSubTab = r.nutriSubTab;
+  }
+  if (r.progSubTab === 'metrics' || r.progSubTab === 'coach' || r.progSubTab === 'refs') {
+    base.progSubTab = r.progSubTab;
+  }
   if (r.programMode === 'joint_safe' || r.programMode === 'benchmark') base.programMode = r.programMode;
   if (r.activeWorkoutDay === 'A' || r.activeWorkoutDay === 'B' || r.activeWorkoutDay === 'C' || r.activeWorkoutDay === 'D') {
     base.activeWorkoutDay = r.activeWorkoutDay;

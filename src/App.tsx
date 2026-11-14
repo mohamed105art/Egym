@@ -251,46 +251,88 @@ export default function App() {
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
-  const navItems: { id: MainTab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: tr(state.lang, 'حصتي', 'Séance', 'Workout'), icon: <Dumbbell className="w-4 h-4" /> },
-    { id: 'exercises', label: tr(state.lang, 'التمارين', 'Exercices', 'Exercises'), icon: <Activity className="w-4 h-4" /> },
-    { id: 'nutrition', label: tr(state.lang, 'التغذية', 'Nutrition', 'Nutrition'), icon: <Utensils className="w-4 h-4" /> },
-    { id: 'progress', label: tr(state.lang, 'تقدمي', 'Progrès', 'Progress'), icon: <TrendingUp className="w-4 h-4" /> },
+  const navItems: {
+    id: MainTab;
+    step: string;
+    label: string;
+    subtitle: string;
+    icon: React.ReactNode;
+    activeGrad: string;
+    mobileText: string;
+    softCard: string;
+  }[] = [
+    {
+      id: 'home',
+      step: '1',
+      label: tr(state.lang, 'حصتي التدريبية', 'Ma Séance', 'My Workout'),
+      subtitle: tr(state.lang, 'الأيام A / B / C وتسجيل المجموعات', 'Séances A/B/C & suivi', 'Sessions A/B/C & Set Logger'),
+      icon: <Dumbbell className="w-4 h-4" />,
+      activeGrad: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/25',
+      mobileText: 'text-orange-600 dark:text-orange-400',
+      softCard: 'border-orange-200/80 dark:border-orange-900/40 bg-orange-50/60 dark:bg-orange-950/20 text-orange-900 dark:text-orange-200',
+    },
+    {
+      id: 'exercises',
+      step: '2',
+      label: tr(state.lang, 'التمارين بالصور', 'Photos & Exercices', 'Exercise Photos'),
+      subtitle: tr(state.lang, '32 تمريناً بالصور وخريطة العضلات', '32 exercices illustrés & carte', '32 Photo Guides & Muscle Map'),
+      icon: <Activity className="w-4 h-4" />,
+      activeGrad: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/25',
+      mobileText: 'text-indigo-600 dark:text-indigo-400',
+      softCard: 'border-indigo-200/80 dark:border-indigo-900/40 bg-indigo-50/60 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200',
+    },
+    {
+      id: 'nutrition',
+      step: '3',
+      label: tr(state.lang, 'التغذية والوجبات', 'Nutrition & Repas', 'Meals & Macros'),
+      subtitle: tr(state.lang, 'حاسبة السعرات والوجبات والتسوق', 'Calories, repas & courses', 'Calculator, Meals & Grocery'),
+      icon: <Utensils className="w-4 h-4" />,
+      activeGrad: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25',
+      mobileText: 'text-amber-600 dark:text-amber-400',
+      softCard: 'border-amber-200/80 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200',
+    },
+    {
+      id: 'progress',
+      step: '4',
+      label: tr(state.lang, 'تقدمي والمدرب', 'Progrès & Coach', 'Progress & Coach'),
+      subtitle: tr(state.lang, 'تطور القوة والقياسات والنسخ الاحتياطي', 'Force e1RM, coach & sauvegarde', 'Strength Curve, Coach & Backup'),
+      icon: <TrendingUp className="w-4 h-4" />,
+      activeGrad: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25',
+      mobileText: 'text-sky-600 dark:text-sky-400',
+      softCard: 'border-sky-200/80 dark:border-sky-900/40 bg-sky-50/60 dark:bg-sky-950/20 text-sky-900 dark:text-sky-200',
+    },
   ];
 
   const detailEx = detailExId ? EXERCISES_DB.find((e) => e.id === detailExId) || null : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 pb-20 md:pb-8 transition-colors">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/30 via-slate-50 to-indigo-50/30 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100 pb-20 md:pb-8 transition-colors">
       {/* Compact Sticky Top Bar (< 64px to stay comfortably below mobile sticky chrome cap) */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md no-print">
+      <header className="sticky top-0 z-40 border-b border-indigo-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
           {/* Brand */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-orange-500 via-rose-500 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20">
               <Dumbbell className="w-4 h-4" />
             </div>
             <div className="min-w-0 leading-tight">
-              <h1 className="text-xs sm:text-sm font-extrabold truncate">
+              <h1 className="text-xs sm:text-sm font-extrabold truncate text-slate-900 dark:text-white">
                 <span className="sm:hidden">{tr(state.lang, 'بناء العضلات', 'Hypertrophie', 'Hypertrophy')}</span>
-                <span className="hidden sm:inline">{tr(state.lang, 'نظام البناء وصحة المفاصل', 'Hypertrophie & Articulations', 'Hypertrophy & Joint OS')}</span>
+                <span className="hidden sm:inline">{tr(state.lang, 'منظومة البناء العضلي والتغذية', 'Hypertrophie & Nutrition', 'Hypertrophy & Nutrition OS')}</span>
               </h1>
-              <span className="hidden sm:block text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                {tr(state.lang, 'بناء عضلي مبني على الأدلة · A/B/C', 'Basé sur la science · Split A/B/C', 'Evidence-Based · 3-Day Core Split')}
-              </span>
             </div>
           </div>
 
           {/* Desktop 4-Tab Nav */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800" aria-label="Main Navigation">
+          <nav className="hidden md:flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800" aria-label="Main Navigation">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap shrink-0 ${
                   state.mainTab === item.id
-                    ? 'bg-emerald-600 text-white shadow-sm'
+                    ? item.activeGrad
                     : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900'
                 }`}
               >
@@ -302,17 +344,17 @@ export default function App() {
 
           {/* Compact Utility Cluster: Rest Timer + Lang + Theme + Install */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Rest Timer Pill */}
-            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
-              <Timer className={`w-3.5 h-3.5 ${state.timer.running ? 'text-emerald-500' : 'text-slate-500'}`} />
-              <span className="font-mono font-extrabold tabular-nums w-10 text-center">
+            {/* Rest Timer Control */}
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50/90 dark:bg-slate-950 border border-indigo-200/80 dark:border-slate-800 text-xs">
+              <Timer className={`w-3.5 h-3.5 ${state.timer.running ? 'text-orange-500' : 'text-indigo-500'}`} />
+              <span className="font-mono font-extrabold tabular-nums w-10 text-center text-slate-900 dark:text-white">
                 {formatSec(state.timer.remainingSec)}
               </span>
               <button
                 type="button"
                 onClick={toggleRestTimer}
                 aria-label={state.timer.running ? 'Pause Rest Timer' : 'Start Rest Timer'}
-                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400"
+                className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-orange-600 dark:text-orange-400"
               >
                 {state.timer.running ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
               </button>
@@ -339,7 +381,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Language Cycle / Selector */}
+            {/* Language Selector */}
             <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-extrabold">
               {(['ar', 'fr', 'en'] as Lang[]).map((l) => (
                 <button
@@ -348,7 +390,7 @@ export default function App() {
                   onClick={() => setState((prev) => ({ ...prev, lang: l }))}
                   className={`px-1.5 sm:px-2 py-1 rounded-lg uppercase transition ${
                     state.lang === l
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-indigo-600 text-white shadow-xs'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -364,9 +406,9 @@ export default function App() {
                 setState((prev) => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }))
               }
               aria-label={state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-emerald-500 transition"
+              className="p-2 rounded-xl bg-amber-50 dark:bg-slate-950 border border-amber-200 dark:border-slate-800 text-amber-600 dark:text-amber-400 hover:border-orange-500 transition"
             >
-              {state.theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+              {state.theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4 text-indigo-600" />}
             </button>
 
             {isInstallable && !isInstalled && (
@@ -374,7 +416,7 @@ export default function App() {
                 type="button"
                 onClick={() => void install()}
                 aria-label="Install PWA"
-                className="hidden lg:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-sky-600 text-white text-xs font-bold hover:bg-sky-500 transition"
+                className="hidden lg:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold hover:from-indigo-500 hover:to-violet-500 transition shadow-sm"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>{tr(state.lang, 'تثبيت', 'Installer', 'Install')}</span>
@@ -400,7 +442,47 @@ export default function App() {
       )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4 sm:py-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4 space-y-4">
+        {/* Clear 4-Section Quick Switcher Cards (Makes navigation obvious & effortless on all devices) */}
+        <section
+          aria-label={tr(state.lang, 'أقسام التطبيق الرئيسية', 'Sections principales', 'Main Sections')}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 no-print"
+        >
+          {navItems.map((item) => {
+            const isActive = state.mainTab === item.id;
+            return (
+              <button
+                key={`HERO_NAV_${item.id}`}
+                type="button"
+                onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-start transition active:scale-[0.99] ${
+                  isActive
+                    ? `${item.activeGrad} border-transparent`
+                    : `bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-slate-700 shadow-xs`
+                }`}
+              >
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : `${item.softCard}`
+                  }`}
+                >
+                  {item.icon}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className={`text-xs sm:text-sm font-extrabold truncate ${isActive ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                    {item.step}. {item.label}
+                  </div>
+                  <div className={`text-[11px] truncate ${isActive ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'}`}>
+                    {item.subtitle}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </section>
+
         {state.mainTab === 'home' && (
           <WorkoutView
             state={state}
@@ -473,7 +555,7 @@ export default function App() {
               showToast(
                 tr(
                   state.lang,
-                  `تم حفظ الحصة ${payload.day}: ${payload.totalWorkingSets} مجموعات عمل (${payload.totalVolumeKg} كغ)!`,
+                  `أحسنت! تم حفظ الحصة ${payload.day}: ${payload.totalWorkingSets} مجموعات (${payload.totalVolumeKg} كغ)!`,
                   `Séance ${payload.day} enregistrée : ${payload.totalWorkingSets} séries (${payload.totalVolumeKg} kg) !`,
                   `Saved Workout ${payload.day}: ${payload.totalWorkingSets} working sets (${payload.totalVolumeKg} kg)!`
                 )
@@ -556,7 +638,7 @@ export default function App() {
 
       {/* Mobile Bottom 4-Tab Bar (compact ~56px, one-thumb reachability) */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-4 no-print"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-indigo-100 dark:border-slate-800 grid grid-cols-4 no-print"
         aria-label="Mobile Navigation"
       >
         {navItems.map((item) => {
@@ -568,12 +650,12 @@ export default function App() {
               onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
               className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold transition ${
                 active
-                  ? 'text-emerald-600 dark:text-emerald-400'
+                  ? item.mobileText
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span className="truncate max-w-[90%]">{item.label}</span>
             </button>
           );
         })}
@@ -614,7 +696,7 @@ export default function App() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900 dark:bg-emerald-600 text-white text-xs font-extrabold shadow-xl border border-slate-700 dark:border-emerald-500 max-w-[90vw] text-center"
+          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center"
         >
           {toast}
         </div>

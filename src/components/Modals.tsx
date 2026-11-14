@@ -19,7 +19,6 @@ import { SCIENTIFIC_STUDIES } from '../data/studies';
 import { tr, trText } from '../engine/i18n';
 import { EquipmentType, Exercise, Lang } from '../types/app';
 import { ExerciseImage } from './ExerciseImage';
-import { KinematicRigViewer } from './KinematicRigViewer';
 
 interface ExerciseDetailModalProps {
   exercise: Exercise | null;
@@ -40,13 +39,21 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
   onOpenLightbox,
   onOpenSwap,
 }) => {
-  const [visualMode, setVisualMode] = useState<'rig' | 'photos'>('rig');
-  const [photoFrame, setPhotoFrame] = useState<0 | 1>(0);
+  const [activeFrame, setActiveFrame] = useState<0 | 1>(0);
+  const [autoFlip, setAutoFlip] = useState(false);
 
   useEffect(() => {
-    setVisualMode('rig');
-    setPhotoFrame(0);
+    setActiveFrame(0);
+    setAutoFlip(false);
   }, [exercise?.id]);
+
+  useEffect(() => {
+    if (!autoFlip || !exercise) return;
+    const timer = window.setInterval(() => {
+      setActiveFrame((prev) => (prev === 0 ? 1 : 0));
+    }, 950);
+    return () => window.clearInterval(timer);
+  }, [autoFlip, exercise]);
 
   if (!exercise) return null;
 
@@ -61,20 +68,20 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400">
               <span>{exercise.id}</span>
               <span>·</span>
               <span>{exercise.equipment}</span>
               <span>·</span>
               <span>{trText(lang, exercise.muscleLabel)}</span>
             </div>
-            <h2 className="text-lg sm:text-xl font-extrabold mt-0.5">
+            <h2 className="text-lg sm:text-xl font-extrabold mt-0.5 text-slate-900 dark:text-white">
               {trText(lang, exercise.name)}
             </h2>
           </div>
@@ -83,7 +90,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               type="button"
               onClick={() => onToggleFavorite(exercise.id)}
               aria-label={tr(lang, 'إضافة للمفضلة', 'Favori', 'Toggle Favorite')}
-              className={`p-2 rounded-xl border transition ${
+              className={`p-2.5 rounded-xl border transition ${
                 isFavorite
                   ? 'bg-amber-100 text-amber-600 border-amber-300 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
@@ -95,142 +102,140 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label={tr(lang, 'إغلاق', 'Fermer', 'Close')}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Visual Mode Switcher */}
-        <div className="flex items-center justify-between gap-2 bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <div className="grid grid-cols-2 gap-1.5 flex-1">
-            <button
-              type="button"
-              onClick={() => setVisualMode('rig')}
-              className={`py-2 px-3 rounded-xl text-xs font-extrabold transition ${
-                visualMode === 'rig'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900'
-              }`}
-            >
-              {tr(lang, 'النموذج الحركي 5 إطارات', 'Cinématique 5 Images', '5-Frame Kinematic Rig')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setVisualMode('photos')}
-              className={`py-2 px-3 rounded-xl text-xs font-extrabold transition ${
-                visualMode === 'photos'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900'
-              }`}
-            >
-              {tr(lang, 'الصور المرجعية الموثقة', 'Photos Références', 'Verified Reference Photos')}
-            </button>
-          </div>
-        </div>
-
-        {/* Visual Display */}
-        {visualMode === 'rig' ? (
-          <KinematicRigViewer rigType={exercise.rigType} lang={lang} />
-        ) : (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 space-y-2.5">
-            <div className="relative h-60 sm:h-72 rounded-xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <ExerciseImage
-                exercise={exercise}
-                frameIdx={photoFrame}
-                alt={trText(lang, exercise.name)}
-                className="w-full h-full object-contain"
-              />
+        {/* Verified Reference Photos (Start & Peak Side-by-Side + Interactive Controls) */}
+        <div className="rounded-2xl border border-indigo-100 dark:border-slate-800 bg-gradient-to-br from-indigo-50/60 via-white to-orange-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3.5 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">
+              {tr(lang, 'الصور المرجعية الموثقة للتمرين (البداية والذروة)', 'Photos de référence (Départ & Pic)', 'Verified Reference Photos (Start & Peak)')}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setAutoFlip((v) => !v)}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                  autoFlip
+                    ? 'bg-orange-500 text-white shadow-sm'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                {autoFlip ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{tr(lang, 'عرض متتابع', 'Animation', 'Auto-Flip')}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => onOpenLightbox(exercise.id)}
-                className="absolute top-2 end-2 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900/80 text-white text-xs font-bold hover:bg-slate-900 transition"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition shadow-sm"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>{tr(lang, 'تكبير', 'Agrandir', 'Zoom')}</span>
+                <span>{tr(lang, 'تكبير الشاشة', 'Plein écran', 'Full Zoom')}</span>
               </button>
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setPhotoFrame(0)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${
-                    photoFrame === 0
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
-                  }`}
-                >
-                  {tr(lang, '1. البداية', '1. Départ', '1. Start')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhotoFrame(1)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${
-                    photoFrame === 1
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
-                  }`}
-                >
-                  {tr(lang, '2. الذروة', '2. Pic', '2. Peak')}
-                </button>
-              </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                {exercise.media.source} · {exercise.media.license}
-              </span>
-            </div>
           </div>
-        )}
 
-        {/* Biomechanics & Prescription Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-            <span className="text-slate-500 dark:text-slate-400 block">{tr(lang, 'النمط الحركي', 'Schéma', 'Pattern')}</span>
-            <strong className="text-slate-900 dark:text-slate-100">{trText(lang, exercise.movementPattern)}</strong>
-          </div>
-          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-            <span className="text-slate-500 dark:text-slate-400 block">{tr(lang, 'الوصفة القياسية', 'Prescription', 'Prescription')}</span>
-            <strong className="mono-num text-slate-900 dark:text-slate-100">{exercise.sets}×{exercise.repsLabel} · {exercise.rirLabel}</strong>
-          </div>
-          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-            <span className="text-slate-500 dark:text-slate-400 block">{tr(lang, 'الراحة', 'Repos', 'Rest')}</span>
-            <strong className="mono-num text-slate-900 dark:text-slate-100">{exercise.restSec}s</strong>
-          </div>
-          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-            <span className="text-slate-500 dark:text-slate-400 block">{tr(lang, 'قوة الدليل', 'Niveau preuve', 'Evidence')}</span>
-            <strong className="uppercase text-emerald-700 dark:text-emerald-400">{exercise.evidenceGrade}</strong>
+          {autoFlip ? (
+            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-indigo-200 dark:border-slate-800">
+              <ExerciseImage
+                exercise={exercise}
+                frameIdx={activeFrame}
+                alt={trText(lang, exercise.name)}
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute bottom-2.5 start-2.5 px-3 py-1 rounded-xl bg-slate-900/80 text-white text-xs font-bold">
+                {activeFrame === 0
+                  ? tr(lang, '1. وضعية البداية', '1. Position de départ', '1. Starting Position')
+                  : tr(lang, '2. وضعية الذروة والانقباض', '2. Position de pic', '2. Peak Contraction')}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {([0, 1] as const).map((frame) => (
+                <button
+                  key={frame}
+                  type="button"
+                  onClick={() => onOpenLightbox(exercise.id)}
+                  className="group relative h-52 sm:h-60 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 transition text-start"
+                >
+                  <ExerciseImage
+                    exercise={exercise}
+                    frameIdx={frame}
+                    alt={`${trText(lang, exercise.name)} - ${frame + 1}`}
+                    className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform"
+                  />
+                  <div
+                    className={`absolute bottom-2 start-2 px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-white shadow ${
+                      frame === 0 ? 'bg-indigo-600/90' : 'bg-orange-500/90'
+                    }`}
+                  >
+                    {frame === 0
+                      ? tr(lang, '1. وضعية البداية', '1. Départ', '1. Start Position')
+                      : tr(lang, '2. وضعية الذروة', '2. Pic', '2. Peak Position')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+            <span>{tr(lang, 'اضغط على أي صورة للتكبير والتبديل الحر', 'Cliquez sur une photo pour zoomer', 'Click any photo to zoom full-screen')}</span>
+            <span>{exercise.media.source} · {exercise.media.license}</span>
           </div>
         </div>
 
-        {/* Form Cues & Joint Safety */}
+        {/* Prescription Summary Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+          <div className="rounded-2xl bg-orange-50/80 dark:bg-orange-950/25 border border-orange-200/80 dark:border-orange-900/50 p-3">
+            <span className="text-orange-700 dark:text-orange-300 font-semibold block">{tr(lang, 'المجموعات والتكرار', 'Séries & Reps', 'Sets & Reps')}</span>
+            <strong className="mono-num text-sm text-slate-900 dark:text-white">{exercise.sets} × {exercise.repsLabel}</strong>
+          </div>
+          <div className="rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-900/50 p-3">
+            <span className="text-indigo-700 dark:text-indigo-300 font-semibold block">{tr(lang, 'الجهد المستهدف', 'Effort RIR', 'Target Effort')}</span>
+            <strong className="mono-num text-sm text-slate-900 dark:text-white">{exercise.rirLabel}</strong>
+          </div>
+          <div className="rounded-2xl bg-sky-50/80 dark:bg-sky-950/25 border border-sky-200/80 dark:border-sky-900/50 p-3">
+            <span className="text-sky-700 dark:text-sky-300 font-semibold block">{tr(lang, 'وقت الراحة', 'Temps de repos', 'Rest Time')}</span>
+            <strong className="mono-num text-sm text-slate-900 dark:text-white">{exercise.restSec}s</strong>
+          </div>
+          <div className="rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-900/50 p-3">
+            <span className="text-amber-700 dark:text-amber-300 font-semibold block">{tr(lang, 'النمط الحركي', 'Schéma', 'Pattern')}</span>
+            <strong className="text-slate-900 dark:text-white truncate block">{trText(lang, exercise.movementPattern)}</strong>
+          </div>
+        </div>
+
+        {/* Concise Execution & Joint Comfort */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3.5 space-y-1.5">
-            <div className="font-extrabold text-emerald-700 dark:text-emerald-400">
-              {tr(lang, 'وضعية البداية والتنفيذ', 'Mise en place & Exécution', 'Setup & Execution')}
+            <div className="font-extrabold text-indigo-600 dark:text-indigo-400">
+              {tr(lang, 'نقاط الأداء السريعة', 'Points clés d’exécution', 'Quick Setup & Cues')}
             </div>
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.startCue)}</p>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{trText(lang, exercise.steps)}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3.5 space-y-1.5">
-            <div className="font-extrabold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5" />
-              {tr(lang, 'أخطاء شائعة', 'Erreurs fréquentes', 'Common Errors')}
+            <div className="font-extrabold text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4" />
+              {tr(lang, 'راحة وحماية المفاصل', 'Confort articulaire', 'Joint Comfort Tip')}
             </div>
-            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.commonErrors)}</p>
-            <div className="font-extrabold text-sky-700 dark:text-sky-400 flex items-center gap-1.5 pt-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {tr(lang, 'حماية المفاصل', 'Sécurité articulaire', 'Joint Longevity')}
+            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.jointSafety)}</p>
+            <div className="font-extrabold text-rose-600 dark:text-rose-400 flex items-center gap-1.5 pt-1">
+              <AlertCircle className="w-4 h-4" />
+              {tr(lang, 'تجنّب هذا الخطأ', 'Erreur à éviter', 'Avoid This Mistake')}
             </div>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{trText(lang, exercise.jointSafety)}</p>
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{trText(lang, exercise.commonErrors)}</p>
           </div>
         </div>
 
         {/* Science Note & References */}
-        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/20 p-3.5 space-y-2 text-xs">
-          <div className="font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" />
-            {tr(lang, 'الأساس العلمي والتنبيه الحيادي', 'Note scientifique', 'Scientific Note')}
+        <div className="rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/60 dark:bg-violet-950/20 p-3.5 space-y-2 text-xs">
+          <div className="font-extrabold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+            {tr(lang, 'لماذا اخترنا هذا التمرين علمياً؟', 'Pourquoi cet exercice ?', 'Why This Exercise Works')}
           </div>
           <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.scienceNote)}</p>
           {linkedStudies.length > 0 && (
@@ -241,7 +246,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   href={st.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-sky-700 dark:text-sky-400 hover:underline"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-violet-200 dark:border-slate-700 text-[11px] font-semibold text-violet-700 dark:text-violet-300 hover:underline"
                 >
                   <BookOpen className="w-3 h-3" />
                   <span>{st.id} ({st.year})</span>
@@ -258,11 +263,11 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
             href={exercise.media.youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-500 transition"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-extrabold hover:bg-rose-500 transition shadow-sm"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>
-              {tr(lang, 'فيديو الشرح العملي', 'Vidéo technique', 'Technique Video')} ({exercise.media.youtubeAuthor})
+              {tr(lang, 'مشاهدة الفيديو التوضيحي', 'Voir la vidéo', 'Watch Video')} ({exercise.media.youtubeAuthor})
             </span>
           </a>
 
@@ -270,10 +275,10 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
             <button
               type="button"
               onClick={() => onOpenSwap(exercise.id)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 text-xs font-bold hover:border-emerald-500 transition"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-500 transition shadow-sm"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>{tr(lang, 'تبديل ببديل مناسب', 'Remplacer', 'Smart Swap')}</span>
+              <span>{tr(lang, 'استبدال بتمرين بديل', 'Remplacer l’exercice', 'Swap Exercise')}</span>
             </button>
           )}
         </div>
@@ -334,7 +339,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
     >
       <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800">
         <div className="min-w-0">
-          <div className="text-xs font-bold text-emerald-400 mono-num">
+          <div className="text-xs font-bold text-orange-400 mono-num">
             {exercise.id} · {idx + 1}/{exercises.length}
           </div>
           <h3 className="text-sm sm:text-base font-extrabold truncate">
@@ -345,7 +350,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
           type="button"
           onClick={onClose}
           aria-label={tr(lang, 'إغلاق', 'Fermer', 'Close')}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white transition"
+          className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-white transition"
         >
           <X className="w-5 h-5" />
         </button>
@@ -389,17 +394,17 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
           <button
             type="button"
             onClick={() => setFrameIdx(frameIdx === 0 ? 1 : 0)}
-            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold"
+            className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold"
           >
             {frameIdx === 0
-              ? tr(lang, '1/2 البداية', '1/2 Départ', '1/2 Start')
-              : tr(lang, '2/2 الذروة', '2/2 Pic', '2/2 Peak')}
+              ? tr(lang, '1/2 وضعية البداية', '1/2 Départ', '1/2 Start')
+              : tr(lang, '2/2 وضعية الذروة', '2/2 Pic', '2/2 Peak')}
           </button>
           <button
             type="button"
             onClick={() => setAutoPlay((p) => !p)}
             className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl font-bold ${
-              autoPlay ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-200'
+              autoPlay ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-200'
             }`}
           >
             {autoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -415,7 +420,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
               type="button"
               onClick={() => setZoom(z)}
               className={`px-2.5 py-1.5 rounded-lg font-bold mono-num ${
-                zoom === z ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300'
+                zoom === z ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300'
               }`}
             >
               {z.toFixed(1)}x
@@ -467,16 +472,16 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-base font-extrabold">
-              {tr(lang, 'استبدال التمرين ببديل مناسب', 'Substitution d’exercice', 'Biomechanically Similar Swap')}
+            <h3 className="text-base font-extrabold text-indigo-700 dark:text-indigo-300">
+              {tr(lang, 'استبدال التمرين ببديل مناسب', 'Substitution d’exercice', 'Smart Exercise Swap')}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {tr(lang, 'التمرين الحالي:', 'Actuel :', 'Current:')} <strong>{trText(lang, source.name)}</strong>
+              {tr(lang, 'التمرين الحالي:', 'Actuel :', 'Current:')} <strong className="text-slate-900 dark:text-white">{trText(lang, source.name)}</strong>
             </p>
           </div>
           <button
@@ -489,24 +494,15 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
           </button>
         </div>
 
-        <p className="text-xs rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 p-2.5 text-amber-900 dark:text-amber-200">
-          {tr(
-            lang,
-            'ملاحظة علمية: التمارين البديلة تستهدف نفس المجموعة العضلية لكنها قد تختلف قليلاً في منحنى المقاومة وزاوية المفصل — اضبط الوزن المبدئي بتدرج آمن.',
-            'Note : Les variantes ciblent le même groupe musculaire mais avec un profil de résistance différent ; ajustez la charge prudemment.',
-            'Note: Substitutions target similar muscle groups with slightly different resistance curves—calibrate your starting load conservatively.'
-          )}
-        </p>
-
         <div className="flex flex-wrap gap-1.5 text-xs">
           {(['ALL', 'Dumbbell', 'Machine', 'Cable', 'Barbell', 'Bodyweight'] as const).map((eq) => (
             <button
               key={eq}
               type="button"
               onClick={() => setEquipFilter(eq)}
-              className={`px-2.5 py-1.5 rounded-xl font-bold border ${
+              className={`px-3 py-1.5 rounded-xl font-bold border transition ${
                 equipFilter === eq
-                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                   : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
               }`}
             >
@@ -526,21 +522,26 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
               return (
                 <div
                   key={cand.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:border-indigo-300 transition"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">
-                        {trText(lang, cand.name)}
-                      </span>
-                      {isSuggested && (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
-                          {tr(lang, 'مقترح', 'Suggéré', 'Match')}
-                        </span>
-                      )}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                      <ExerciseImage exercise={cand} frameIdx={0} alt={trText(lang, cand.name)} />
                     </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {cand.equipment} · {trText(lang, cand.movementPattern)} · {cand.sets}×{cand.repsLabel}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                          {trText(lang, cand.name)}
+                        </span>
+                        {isSuggested && (
+                          <span className="text-[10px] font-extrabold text-orange-600 dark:text-orange-400">
+                            ★ {tr(lang, 'مقترح', 'Suggéré', 'Best Match')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {cand.equipment} · {trText(lang, cand.movementPattern)} · {cand.sets}×{cand.repsLabel}
+                      </div>
                     </div>
                   </div>
                   <button
@@ -549,9 +550,9 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
                       onSwap(source.id, cand.id);
                       onClose();
                     }}
-                    className="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition"
+                    className="shrink-0 px-3.5 py-2 rounded-xl bg-orange-500 text-white text-xs font-extrabold hover:bg-orange-600 transition shadow-sm"
                   >
-                    {tr(lang, 'اعتماد', 'Choisir', 'Select')}
+                    {tr(lang, 'اختيار', 'Choisir', 'Select')}
                   </button>
                 </div>
               );

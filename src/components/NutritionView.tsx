@@ -47,11 +47,31 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   const trainingDays = state.volumeSettings.includeOptionalDayD ? 4 : 3;
   const groceryList = buildWeeklyGroceryList(customMeals, MOROCCAN_FOOD_DB, trainingDays);
 
-  const subTabs: { id: NutriSubTab; label: string }[] = [
-    { id: 'calc', label: tr(lang, 'حاسبة السعرات والماكرو', 'Calculateur & Macros', 'Calorie & Macro Calc') },
-    { id: 'meals', label: tr(lang, 'الوجبات اليومية', 'Repas du Jour', 'Daily Meals') },
-    { id: 'foods', label: tr(lang, 'الأطعمة وقائمة التسوق', 'Aliments & Courses', 'Foods & Grocery') },
-    { id: 'supps', label: tr(lang, 'المكملات المبنية على الأدلة', 'Suppléments', 'Supplements') },
+  const subTabs: { id: NutriSubTab; label: string; icon: React.ReactNode; activeClass: string }[] = [
+    {
+      id: 'calc',
+      label: tr(lang, 'حاسبة السعرات والماكرو', 'Calculateur & Macros', 'Calorie & Macro Calc'),
+      icon: <Calculator className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20',
+    },
+    {
+      id: 'meals',
+      label: tr(lang, 'الوجبات اليومية', 'Repas du Jour', 'Daily Meals'),
+      icon: <Utensils className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/20',
+    },
+    {
+      id: 'foods',
+      label: tr(lang, 'قائمة التسوق والأغذية', 'Courses & Aliments', 'Grocery & Foods'),
+      icon: <ShoppingBasket className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20',
+    },
+    {
+      id: 'supps',
+      label: tr(lang, 'دليل المكملات', 'Suppléments', 'Supplements'),
+      icon: <Pill className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20',
+    },
   ];
 
   const updateItemGrams = (mealIdx: number, itemIdx: number, grams: number) => {
@@ -90,19 +110,20 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Sub-tabs */}
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 no-print">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-amber-100 dark:border-slate-800 shadow-sm no-print">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetNutriSubTab(t.id)}
-            className={`px-3 py-2 rounded-xl text-xs font-extrabold transition ${
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap ${
               nutriSubTab === t.id
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? t.activeClass
+                : 'text-slate-600 dark:text-slate-300 hover:bg-amber-50/70 dark:hover:bg-slate-800'
             }`}
           >
-            {t.label}
+            {t.icon}
+            <span className="truncate">{t.label}</span>
           </button>
         ))}
       </div>
@@ -110,12 +131,21 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 1. CALCULATOR */}
       {nutriSubTab === 'calc' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-emerald-500" />
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                {tr(lang, 'حاسبة الاحتياج الحراري (Mifflin-St Jeor)', 'Calculateur Mifflin-St Jeor', 'Mifflin-St Jeor Metabolic & Macro Engine')}
-              </h3>
+          <div className="rounded-3xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-5 h-5 text-orange-500" />
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                  {tr(lang, 'حاسبة الاحتياج اليومي الذكية (السعرات والماكرو)', 'Calculateur Intelligent de Calories & Macros', 'Smart Calorie & Macro Calculator')}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onSetNutriSubTab('meals')}
+                className="px-3.5 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 text-xs font-extrabold hover:bg-orange-500 hover:text-white transition"
+              >
+                {tr(lang, 'انتقل إلى الوجبات اليومية ←', 'Voir les repas →', 'Go to Daily Meals →')}
+              </button>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
@@ -127,7 +157,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   max={90}
                   value={profile.age}
                   onChange={(e) => onUpdateProfile({ age: Math.max(15, Math.min(90, Number(e.target.value) || 25)) })}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
                 />
               </div>
               <div>
@@ -138,7 +168,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   max={230}
                   value={profile.heightCm}
                   onChange={(e) => onUpdateProfile({ heightCm: Math.max(130, Math.min(230, Number(e.target.value) || 175)) })}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
                 />
               </div>
               <div>
@@ -150,7 +180,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   max={220}
                   value={profile.weightKg}
                   onChange={(e) => onUpdateProfile({ weightKg: Math.max(35, Math.min(220, Number(e.target.value) || 75)) })}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
                 />
               </div>
               <div>
@@ -158,7 +188,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <select
                   value={profile.sex}
                   onChange={(e) => onUpdateProfile({ sex: e.target.value as 'male' | 'female' })}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
                 >
                   <option value="male">{tr(lang, 'ذكر', 'Homme', 'Male')}</option>
                   <option value="female">{tr(lang, 'أنثى', 'Femme', 'Female')}</option>
@@ -169,7 +199,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <select
                   value={profile.activityFactor}
                   onChange={(e) => onUpdateProfile({ activityFactor: Number(e.target.value) })}
-                  className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
                 >
                   <option value={1.35}>1.35 ({tr(lang, 'مكتبي + 3 حصص', 'Sédentaire + 3j', 'Desk + 3d')})</option>
                   <option value={1.5}>1.50 ({tr(lang, 'نشاط متوسط', 'Modéré', 'Moderate')})</option>
@@ -183,19 +213,34 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
               {(
                 [
-                  { id: 'recomp', label: tr(lang, 'تثبيت / إعادة تركيب (Recomp)', 'Recomposition (Maintien)', 'Body Recomposition'), delta: 0 },
-                  { id: 'lean_bulk', label: tr(lang, 'بناء صافي (+220 سعرة)', 'Prise de masse propre (+220)', 'Lean Bulk (+220 kcal)'), delta: 220 },
-                  { id: 'fat_loss', label: tr(lang, 'تنشيف تدريجي (-380 سعرة)', 'Sèche contrôlée (-380)', 'Fat Loss (-380 kcal)'), delta: -380 },
-                ] as { id: GoalMode; label: string; delta: number }[]
+                  {
+                    id: 'recomp',
+                    label: tr(lang, 'تثبيت وبناء متوازن (Recomp)', 'Recomposition (Maintien)', 'Body Recomposition'),
+                    delta: 0,
+                    activeCls: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-indigo-600 shadow-sm',
+                  },
+                  {
+                    id: 'lean_bulk',
+                    label: tr(lang, 'زيادة عضلية صافية (+220 سعرة)', 'Prise de masse propre (+220)', 'Lean Bulk (+220 kcal)'),
+                    delta: 220,
+                    activeCls: 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-500 shadow-sm',
+                  },
+                  {
+                    id: 'fat_loss',
+                    label: tr(lang, 'تنشيف وخسارة دهون (-380 سعرة)', 'Sèche contrôlée (-380)', 'Fat Loss (-380 kcal)'),
+                    delta: -380,
+                    activeCls: 'bg-gradient-to-r from-rose-500 to-pink-600 text-white border-rose-500 shadow-sm',
+                  },
+                ] as { id: GoalMode; label: string; delta: number; activeCls: string }[]
               ).map((g) => (
                 <button
                   key={g.id}
                   type="button"
                   onClick={() => onUpdateProfile({ goalMode: g.id, caloricDelta: g.delta })}
-                  className={`p-3 rounded-xl border font-extrabold text-start transition ${
+                  className={`p-3 rounded-2xl border font-extrabold text-start transition ${
                     profile.goalMode === g.id
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-emerald-500'
+                      ? g.activeCls
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-orange-400'
                   }`}
                 >
                   {g.label}
@@ -207,8 +252,8 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 flex justify-between">
-                  <span>{tr(lang, 'تخصيص البروتين (ISSN 1.4–2.2 g/kg):', 'Protéines (ISSN 1.4–2.2 g/kg) :', 'Protein Target (ISSN 1.4–2.2 g/kg):')}</span>
-                  <span className="mono-num text-emerald-600 dark:text-emerald-400">{profile.proteinPerKg.toFixed(1)} g/kg</span>
+                  <span>{tr(lang, 'كمية البروتين اليومية (1.4–2.2 غ/كغ):', 'Protéines (1.4–2.2 g/kg) :', 'Protein Target (1.4–2.2 g/kg):')}</span>
+                  <span className="mono-num text-rose-600 dark:text-rose-400 font-extrabold">{profile.proteinPerKg.toFixed(1)} g/kg</span>
                 </label>
                 <input
                   type="range"
@@ -217,13 +262,13 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   step={0.1}
                   value={profile.proteinPerKg}
                   onChange={(e) => onUpdateProfile({ proteinPerKg: Number(e.target.value) })}
-                  className="w-full accent-emerald-600 mt-1"
+                  className="w-full accent-rose-500 mt-1"
                 />
               </div>
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 flex justify-between">
                   <span>{tr(lang, 'تعديل الفائض / العجز الحراري:', 'Ajustement calorique :', 'Caloric Delta Adjustment:')}</span>
-                  <span className="mono-num text-sky-600 dark:text-sky-400">{profile.caloricDelta >= 0 ? `+${profile.caloricDelta}` : profile.caloricDelta} kcal</span>
+                  <span className="mono-num text-orange-600 dark:text-orange-400 font-extrabold">{profile.caloricDelta >= 0 ? `+${profile.caloricDelta}` : profile.caloricDelta} kcal</span>
                 </label>
                 <input
                   type="range"
@@ -232,41 +277,41 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   step={20}
                   value={profile.caloricDelta}
                   onChange={(e) => onUpdateProfile({ caloricDelta: Number(e.target.value) })}
-                  className="w-full accent-sky-600 mt-1"
+                  className="w-full accent-orange-500 mt-1"
                 />
               </div>
             </div>
           </div>
 
-          {/* Output Targets Cards */}
+          {/* Colorful Output Targets Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { label: 'BMR', val: `${targets.bmr}`, unit: 'kcal', accent: 'text-slate-900 dark:text-slate-100' },
-              { label: 'TDEE', val: `${targets.tdee}`, unit: 'kcal', accent: 'text-sky-600 dark:text-sky-400' },
-              { label: tr(lang, 'الهدف اليومي', 'Cible Kcal', 'Target'), val: `${targets.targetKcal}`, unit: 'kcal', accent: 'text-emerald-600 dark:text-emerald-400' },
-              { label: tr(lang, 'بروتين', 'Protéines', 'Protein'), val: `${targets.proteinG}g`, unit: `${Math.round((targets.proteinG * 4 / targets.targetKcal) * 100)}%`, accent: 'text-emerald-600 dark:text-emerald-400' },
-              { label: tr(lang, 'كربوهيدرات', 'Glucides', 'Carbs'), val: `${targets.carbsG}g`, unit: `${Math.round((targets.carbsG * 4 / targets.targetKcal) * 100)}%`, accent: 'text-amber-600 dark:text-amber-400' },
-              { label: tr(lang, 'دهون صحية', 'Lipides', 'Fats'), val: `${targets.fatG}g`, unit: `BMI ${targets.bmi}`, accent: 'text-rose-600 dark:text-rose-400' },
+              { label: 'BMR', val: `${targets.bmr}`, unit: 'kcal', cardBg: 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800', accent: 'text-slate-900 dark:text-slate-100' },
+              { label: 'TDEE', val: `${targets.tdee}`, unit: 'kcal', cardBg: 'bg-sky-50/80 dark:bg-sky-950/30 border-sky-200 dark:border-sky-900/50', accent: 'text-sky-600 dark:text-sky-400' },
+              { label: tr(lang, 'الهدف اليومي', 'Cible Kcal', 'Target'), val: `${targets.targetKcal}`, unit: 'kcal', cardBg: 'bg-orange-50/80 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50', accent: 'text-orange-600 dark:text-orange-400' },
+              { label: tr(lang, 'بروتين', 'Protéines', 'Protein'), val: `${targets.proteinG}g`, unit: `${Math.round((targets.proteinG * 4 / targets.targetKcal) * 100)}%`, cardBg: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50', accent: 'text-rose-600 dark:text-rose-400' },
+              { label: tr(lang, 'كربوهيدرات', 'Glucides', 'Carbs'), val: `${targets.carbsG}g`, unit: `${Math.round((targets.carbsG * 4 / targets.targetKcal) * 100)}%`, cardBg: 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50', accent: 'text-amber-600 dark:text-amber-400' },
+              { label: tr(lang, 'دهون صحية', 'Lipides', 'Fats'), val: `${targets.fatG}g`, unit: `BMI ${targets.bmi}`, cardBg: 'bg-violet-50/80 dark:bg-violet-950/30 border-violet-200 dark:border-violet-900/50', accent: 'text-violet-600 dark:text-violet-400' },
             ].map((c) => (
               <div
                 key={c.label}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-center"
+                className={`rounded-2xl border p-3.5 text-center shadow-xs ${c.cardBg}`}
               >
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">{c.label}</span>
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">{c.label}</span>
                 <span className={`text-xl font-extrabold mono-num mt-0.5 block ${c.accent}`}>{c.val}</span>
                 <span className="text-[10px] font-semibold mono-num text-slate-500 dark:text-slate-400">{c.unit}</span>
               </div>
             ))}
           </div>
 
-          <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 p-3 flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+          <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 p-3 flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
               {tr(
                 lang,
-                'تقدير استهلالي: معادلة Mifflin-St Jeor تمنحك نقطة انطلاق علمية وليست رقماً مطلقاً؛ راقب متوسط الوزن الأسبوعي وقياس الخصر خلال 14 يوماً وعدّل السعرات بـ ±150 سعرة حسب الاستجابة الفعلية.',
-                'Estimation initiale : Mifflin-St Jeor sert de point de départ ; ajustez de ±150 kcal selon la tendance réelle de votre poids sur 2 semaines.',
-                'Starting estimate only: Mifflin-St Jeor provides an initial baseline—track weekly body-weight averages over 14 days and adjust by ±150 kcal based on real trends.'
+                'نصيحة عملية: هذه الأرقام نقطة بداية ممتازة؛ راقب متوسط وزنك كل أسبوعين وعدّل السعرات بـ ±150 سعرة حسب هدفك.',
+                'Conseil pratique : surveillez votre poids sur 2 semaines et ajustez de ±150 kcal.',
+                'Practical tip: track your 2-week weight trend and adjust by ±150 kcal as needed.'
               )}
             </span>
           </div>
@@ -276,12 +321,12 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 2. DAILY MEALS */}
       {nutriSubTab === 'meals' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+          <div className="rounded-3xl border border-orange-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Utensils className="w-4 h-4 text-emerald-500" />
-                <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                  {tr(lang, 'مخطط الوجبات اليومية التفاعلي', 'Planificateur de Repas Quotidien', 'Interactive Daily Meal Planner')}
+                <Utensils className="w-5 h-5 text-orange-500" />
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                  {tr(lang, 'جدول الوجبات اليومية التفاعلي', 'Planificateur de Repas Quotidien', 'Interactive Daily Meal Planner')}
                 </h3>
               </div>
 
@@ -289,9 +334,9 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetMealPreset('training')}
-                  className={`px-3 py-1.5 rounded-xl font-bold border ${
+                  className={`px-3.5 py-1.5 rounded-xl font-extrabold border transition ${
                     activeMealPreset === 'training'
-                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white border-orange-500 shadow-sm'
                       : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
                   }`}
                 >
@@ -300,9 +345,9 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetMealPreset('rest')}
-                  className={`px-3 py-1.5 rounded-xl font-bold border ${
+                  className={`px-3.5 py-1.5 rounded-xl font-extrabold border transition ${
                     activeMealPreset === 'rest'
-                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-indigo-600 shadow-sm'
                       : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
                   }`}
                 >
@@ -311,7 +356,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onUpdateMeals(activeMealPreset, JSON.parse(JSON.stringify(PRESET_MEAL_PLANS[activeMealPreset])))}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-rose-50 hover:text-rose-600 transition"
                   title={tr(lang, 'إعادة للقالب الافتراضي', 'Réinitialiser', 'Reset preset')}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -319,25 +364,25 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               </div>
             </div>
 
-            {/* Totals vs Target Bar */}
+            {/* Totals vs Target Bars with Lively Colors */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
               {[
-                { label: tr(lang, 'السعرات', 'Calories', 'Calories'), cur: dayTotals.kcal, tgt: targets.targetKcal, unit: 'kcal' },
-                { label: tr(lang, 'البروتين', 'Protéines', 'Protein'), cur: dayTotals.protein, tgt: targets.proteinG, unit: 'g' },
-                { label: tr(lang, 'الكربوهيدرات', 'Glucides', 'Carbs'), cur: dayTotals.carbs, tgt: targets.carbsG, unit: 'g' },
-                { label: tr(lang, 'الدهون', 'Lipides', 'Fat'), cur: dayTotals.fat, tgt: targets.fatG, unit: 'g' },
+                { label: tr(lang, 'السعرات', 'Calories', 'Calories'), cur: dayTotals.kcal, tgt: targets.targetKcal, unit: 'kcal', barCls: 'bg-gradient-to-r from-orange-500 to-amber-500' },
+                { label: tr(lang, 'البروتين', 'Protéines', 'Protein'), cur: dayTotals.protein, tgt: targets.proteinG, unit: 'g', barCls: 'bg-gradient-to-r from-rose-500 to-pink-500' },
+                { label: tr(lang, 'الكربوهيدرات', 'Glucides', 'Carbs'), cur: dayTotals.carbs, tgt: targets.carbsG, unit: 'g', barCls: 'bg-gradient-to-r from-amber-500 to-yellow-500' },
+                { label: tr(lang, 'الدهون', 'Lipides', 'Fat'), cur: dayTotals.fat, tgt: targets.fatG, unit: 'g', barCls: 'bg-gradient-to-r from-violet-500 to-indigo-500' },
               ].map((m) => {
                 const pct = Math.min(100, Math.round((m.cur / Math.max(1, m.tgt)) * 100));
                 return (
-                  <div key={m.label} className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 space-y-1">
+                  <div key={m.label} className="rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-1.5">
                     <div className="flex justify-between font-bold">
                       <span className="text-slate-600 dark:text-slate-400">{m.label}</span>
                       <span className="mono-num text-slate-900 dark:text-slate-100">
                         {m.cur} / {m.tgt}{m.unit}
                       </span>
                     </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                      <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />
+                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                      <div className={`h-full ${m.barCls}`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
@@ -349,16 +394,22 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {currentMeals.map((meal, mealIdx) => {
               const mealTotals = calculateMealsTotals([meal], MOROCCAN_FOOD_DB);
+              const badgeColors = [
+                'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40',
+                'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40',
+                'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40',
+                'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40',
+              ];
               return (
                 <div
                   key={`MEAL_${mealIdx}`}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3"
+                  className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                       {trText(lang, meal.title)}
                     </h4>
-                    <span className="text-xs font-bold mono-num text-emerald-700 dark:text-emerald-400">
+                    <span className={`px-2.5 py-1 rounded-xl text-xs font-extrabold mono-num ${badgeColors[mealIdx % badgeColors.length]}`}>
                       {mealTotals.kcal} kcal · P {mealTotals.protein}g
                     </span>
                   </div>
@@ -371,7 +422,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                       return (
                         <div
                           key={`${item.foodId}_${itemIdx}`}
-                          className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs"
+                          className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs"
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
@@ -386,7 +437,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                             <button
                               type="button"
                               onClick={() => updateItemGrams(mealIdx, itemIdx, item.grams - 10)}
-                              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-orange-400"
                               aria-label="Decrease 10g"
                             >
                               <Minus className="w-3 h-3" />
@@ -397,7 +448,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                             <button
                               type="button"
                               onClick={() => updateItemGrams(mealIdx, itemIdx, item.grams + 10)}
-                              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-orange-400"
                               aria-label="Increase 10g"
                             >
                               <Plus className="w-3 h-3" />
@@ -425,7 +476,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                     <button
                       type="button"
                       onClick={() => addFoodToMeal(mealIdx)}
-                      className="px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition shrink-0"
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold hover:from-orange-600 hover:to-rose-600 transition shrink-0 shadow-sm"
                     >
                       +100g
                     </button>
@@ -441,13 +492,13 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {nutriSubTab === 'foods' && (
         <div className="space-y-4">
           {/* 7-Day Grocery List */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+          <div className="rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <ShoppingBasket className="w-4 h-4 text-emerald-500" />
+                <ShoppingBasket className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                    {tr(lang, `قائمة التسوق الأسبوعية (${trainingDays} تدريب + ${7 - trainingDays} راحة)`, `Liste de Courses 7 Jours (${trainingDays} entraînement)`, `7-Day Printable Grocery List (${trainingDays}T / ${7 - trainingDays}R)`)}
+                    {tr(lang, `قائمة التسوق الأسبوعية الجاهزة (${trainingDays} تدريب + ${7 - trainingDays} راحة)`, `Liste de Courses 7 Jours (${trainingDays} entraînement)`, `7-Day Printable Grocery List (${trainingDays}T / ${7 - trainingDays}R)`)}
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     {tr(
@@ -462,7 +513,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="no-print inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-bold hover:border-emerald-500 border border-slate-200 dark:border-slate-700"
+                className="no-print inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-500 transition shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>{tr(lang, 'طباعة القائمة', 'Imprimer', 'Print List')}</span>
@@ -473,7 +524,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               {groceryList.map((item) => (
                 <div
                   key={`GROC_${item.food.id}`}
-                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                  className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
                 >
                   <div className="min-w-0">
                     <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
@@ -483,7 +534,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                       {tr(lang, 'المستهلك:', 'Consommé:', 'Logged:')} {item.weeklyLoggedGrams}g ({trText(lang, item.food.stateLabel)})
                     </div>
                   </div>
-                  <span className="shrink-0 px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-extrabold mono-num">
+                  <span className="shrink-0 px-2.5 py-1 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 font-extrabold mono-num">
                     {item.formattedRawAmount}
                   </span>
                 </div>
@@ -492,10 +543,10 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
           </div>
 
           {/* 22-Food Reference Table */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 no-print">
+          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm no-print">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                {tr(lang, `قاعدة الأغذية المغربية والمتوسطية (${MOROCCAN_FOOD_DB.length} عنصراً / 100g)`, `Base Alimentaire Marocaine (${MOROCCAN_FOOD_DB.length} aliments)`, `Moroccan & Mediterranean Food Reference (${MOROCCAN_FOOD_DB.length} items / 100g)`)}
+                {tr(lang, `جدول الأغذية المغربية والمتوسطية (${MOROCCAN_FOOD_DB.length} عنصراً لكل 100 غرام)`, `Base Alimentaire Marocaine (${MOROCCAN_FOOD_DB.length} aliments)`, `Moroccan & Mediterranean Food Reference (${MOROCCAN_FOOD_DB.length} items / 100g)`)}
               </h3>
               <input
                 type="search"
@@ -524,10 +575,10 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                     <tr key={f.id} className="border-b border-slate-100 dark:border-slate-800/70">
                       <td className="py-2 px-2 font-bold text-slate-900 dark:text-slate-100">{trText(lang, f.name)}</td>
                       <td className="py-2 px-2 text-slate-600 dark:text-slate-300">{trText(lang, f.stateLabel)}</td>
-                      <td className="py-2 px-2 font-mono font-bold">{f.kcal}</td>
-                      <td className="py-2 px-2 font-mono font-bold text-emerald-600 dark:text-emerald-400">{f.p}</td>
-                      <td className="py-2 px-2 font-mono">{f.c}</td>
-                      <td className="py-2 px-2 font-mono">{f.f}</td>
+                      <td className="py-2 px-2 font-mono font-bold text-orange-600 dark:text-orange-400">{f.kcal}</td>
+                      <td className="py-2 px-2 font-mono font-bold text-rose-600 dark:text-rose-400">{f.p}</td>
+                      <td className="py-2 px-2 font-mono text-amber-700 dark:text-amber-300">{f.c}</td>
+                      <td className="py-2 px-2 font-mono text-violet-600 dark:text-violet-400">{f.f}</td>
                       <td className="py-2 px-2 text-[11px] text-slate-500 dark:text-slate-400">{f.sourceDb}</td>
                     </tr>
                   ))}
@@ -541,27 +592,27 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 4. NON-COMMERCIAL SUPPLEMENTS GUIDE */}
       {nutriSubTab === 'supps' && (
         <div className="space-y-3">
-          <div className="rounded-xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/60 p-3 text-xs text-sky-900 dark:text-sky-200">
+          <div className="rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/60 p-3 text-xs text-sky-900 dark:text-sky-200">
             {tr(
               lang,
-              'ملاحظة موضوعية: الغذاء المتكامل، التمرين المتدرج، والنوم هي الأساس (95%+ من النتائج). المكملات أدناه اختيارية ولا تُروّج كبديل عن الأكل الطبيعي.',
-              'Note objective : Alimentation, entraînement et sommeil assurent l’essentiel des résultats. Les compléments ci-dessous sont strictement optionnels.',
-              'Non-commercial guidance: Whole food, progressive training, and sleep drive results. Listed supplements are optional aids with safety cautions.'
+              'ملاحظة موضوعية: الغذاء الطبيعي المتكامل، التمرين المنتظم، والنوم الجيد تصنع 95%+ من النتائج. المكملات التالية اختيارية تماماً.',
+              'Note objective : Alimentation, entraînement et sommeil assurent l’essentiel des résultats. Les compléments sont optionnels.',
+              'Whole food, consistent training, and sleep drive 95%+ of results. Supplements below are strictly optional.'
             )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {SUPPLEMENTS_DB.map((sup) => (
               <div
                 key={sup.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs"
+                className="rounded-3xl border border-sky-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs shadow-sm"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                      <Pill className="w-4 h-4 text-emerald-500" />
+                      <Pill className="w-4 h-4 text-sky-500" />
                       {trText(lang, sup.name)}
                     </h4>
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">{sup.evidenceGrade}</span>
+                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">{sup.evidenceGrade}</span>
                   </div>
                   <a
                     href={sup.refUrl}
@@ -574,7 +625,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   </a>
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, sup.roleNote)}</p>
-                <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 font-bold text-slate-900 dark:text-slate-100">
+                <div className="rounded-xl bg-sky-50/70 dark:bg-slate-950 border border-sky-200/70 dark:border-slate-800 p-2.5 font-bold text-slate-900 dark:text-slate-100">
                   {tr(lang, 'الجرعة المرجعية:', 'Dosage indicatif :', 'Reference Dose:')} {trText(lang, sup.doseFormula(profile.weightKg))}
                 </div>
                 <p className="text-[11px] text-amber-800 dark:text-amber-300">

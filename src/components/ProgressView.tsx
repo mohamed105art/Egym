@@ -71,10 +71,25 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
   const coachRecs = generateCoachInsights(state, exercises, volumeMap);
   const chartPoints = state.e1rmHistory[selectedExId] || [];
 
-  const subTabs: { id: ProgSubTab; label: string }[] = [
-    { id: 'metrics', label: tr(lang, 'القياسات وتطور القوة', 'Mesures & Force e1RM', 'Metrics & e1RM PRs') },
-    { id: 'coach', label: tr(lang, 'المدرب الذكي والمفاصل', 'Coach IA & Articulations', 'AI Coach & Joints') },
-    { id: 'refs', label: tr(lang, 'الدراسات والنسخ الاحتياطي', 'Science & Sauvegarde', 'Science & Backup') },
+  const subTabs: { id: ProgSubTab; label: string; icon: React.ReactNode; activeClass: string }[] = [
+    {
+      id: 'metrics',
+      label: tr(lang, 'القياسات وتطور القوة', 'Mesures & Force e1RM', 'Metrics & e1RM PRs'),
+      icon: <TrendingUp className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md shadow-sky-500/20',
+    },
+    {
+      id: 'coach',
+      label: tr(lang, 'المدرب الذكي والمفاصل', 'Coach IA & Articulations', 'Smart Coach & Joints'),
+      icon: <Bot className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-indigo-500/20',
+    },
+    {
+      id: 'refs',
+      label: tr(lang, 'النسخ الاحتياطي والمراجع', 'Sauvegarde & Science', 'Backup & Science'),
+      icon: <BookOpen className="w-4 h-4" />,
+      activeClass: 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/20',
+    },
   ];
 
   const handleExportJson = () => {
@@ -140,13 +155,20 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
     return (
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-44" role="img" aria-label="e1RM Strength Progression Chart">
+        <defs>
+          <linearGradient id="e1rmGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#0ea5e9" />
+            <stop offset="50%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#f97316" />
+          </linearGradient>
+        </defs>
         <line x1={padX} y1={h - padY} x2={w - padX} y2={h - padY} stroke="currentColor" strokeOpacity="0.2" />
         <line x1={padX} y1={padY} x2={w - padX} y2={padY} stroke="currentColor" strokeOpacity="0.1" strokeDasharray="4 4" />
         {coords.length > 1 && (
           <polyline
             fill="none"
-            stroke="#10b981"
-            strokeWidth="3"
+            stroke="url(#e1rmGrad)"
+            strokeWidth="3.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             points={polyline}
@@ -154,7 +176,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
         )}
         {coords.map((c, idx) => (
           <g key={`PT_${idx}`}>
-            <circle cx={c.x} cy={c.y} r="4.5" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" />
+            <circle cx={c.x} cy={c.y} r="5" fill="#6366f1" stroke="#ffffff" strokeWidth="2" />
             <text x={c.x} y={c.y - 9} textAnchor="middle" fill="currentColor" fontSize="10" fontWeight="bold">
               {c.pt.value}kg
             </text>
@@ -169,19 +191,20 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-sky-100 dark:border-slate-800 shadow-sm">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetProgSubTab(t.id)}
-            className={`px-3 py-2 rounded-xl text-xs font-extrabold transition ${
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap ${
               progSubTab === t.id
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? t.activeClass
+                : 'text-slate-600 dark:text-slate-300 hover:bg-sky-50/70 dark:hover:bg-slate-800'
             }`}
           >
-            {t.label}
+            {t.icon}
+            <span className="truncate">{t.label}</span>
           </button>
         ))}
       </div>
@@ -191,19 +214,19 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Dynamic e1RM Chart */}
-            <div className="lg:col-span-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+            <div className="lg:col-span-7 rounded-3xl border border-sky-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                    {tr(lang, 'تطور القوة التقديرية (e1RM — Epley)', 'Évolution de la Force (e1RM)', 'Dynamic Strength Progression (e1RM)')}
+                  <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                    {tr(lang, 'منحنى تطور القوة التقديرية (e1RM)', 'Évolution de la Force (e1RM)', 'Strength Progression Curve (e1RM)')}
                   </h3>
                 </div>
                 <select
                   aria-label="Select Exercise for e1RM chart"
                   value={selectedExId}
                   onChange={(e) => setSelectedExId(e.target.value)}
-                  className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-bold"
+                  className="p-2 rounded-xl border border-indigo-200 dark:border-slate-700 bg-indigo-50/40 dark:bg-slate-950 text-xs font-bold"
                 >
                   {exercises.filter((ex) => trackedIds.includes(ex.id)).map((ex) => (
                     <option key={ex.id} value={ex.id}>
@@ -212,14 +235,14 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   ))}
                 </select>
               </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2">
+              <div className="rounded-2xl bg-gradient-to-br from-sky-50/50 via-white to-indigo-50/50 dark:from-slate-950 dark:to-slate-950 border border-slate-200 dark:border-slate-800 p-2">
                 {renderE1RMChart()}
               </div>
             </div>
 
             {/* Body Measurement Logger */}
-            <div className="lg:col-span-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs">
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+            <div className="lg:col-span-5 rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs shadow-sm">
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
                 {tr(lang, 'تسجيل القياسات الجسدية', 'Journal des Mensurations', 'Body Measurements Logger')}
               </h3>
               <div className="grid grid-cols-3 gap-2">
@@ -265,20 +288,20 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   });
                   onNotify(tr(lang, 'تم تسجيل القياس الجديد.', 'Mesure enregistrée.', 'Measurement logged.'));
                 }}
-                className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 text-white font-extrabold hover:bg-emerald-500 transition"
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-extrabold hover:from-indigo-500 hover:to-violet-500 transition shadow-sm"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>{tr(lang, 'إضافة قياس اليوم', 'Ajouter Mesure', 'Log Measurement')}</span>
+                <span>{tr(lang, 'حفظ قياس اليوم', 'Ajouter Mesure', 'Log Measurement')}</span>
               </button>
 
               <div className="space-y-1.5 max-h-36 overflow-y-auto pt-1">
                 {[...state.measurements].reverse().map((m, idx) => (
                   <div
                     key={`M_${idx}`}
-                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 mono-num"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 mono-num"
                   >
                     <span className="text-slate-500 dark:text-slate-400">{m.date}</span>
-                    <span className="font-bold">{m.weight} kg · {m.waist} cm · {m.arm} cm</span>
+                    <span className="font-bold text-indigo-700 dark:text-indigo-300">{m.weight} kg · {m.waist} cm · {m.arm} cm</span>
                   </div>
                 ))}
               </div>
@@ -286,23 +309,23 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
           </div>
 
           {/* Completed Sessions History */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2.5 text-xs">
+          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2.5 text-xs shadow-sm">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
               {tr(lang, 'سجل الحصص التدريبية المكتملة', 'Historique des Séances', 'Completed Workout Sessions')}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {[...state.sessionHistory].reverse().map((ses) => (
                 <div
                   key={ses.id}
-                  className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1"
+                  className="p-3.5 rounded-2xl bg-gradient-to-br from-orange-50/50 via-white to-indigo-50/40 dark:from-slate-950 dark:to-slate-950 border border-slate-200 dark:border-slate-800 space-y-1"
                 >
                   <div className="flex justify-between font-extrabold">
-                    <span className="text-emerald-700 dark:text-emerald-400">
+                    <span className="text-orange-600 dark:text-orange-400">
                       {tr(lang, `الحصة ${ses.day}`, `Séance ${ses.day}`, `Day ${ses.day}`)}
                     </span>
                     <span className="mono-num text-slate-500 dark:text-slate-400">{ses.date}</span>
                   </div>
-                  <div className="mono-num font-bold text-slate-800 dark:text-slate-200">
+                  <div className="mono-num font-bold text-slate-900 dark:text-slate-100">
                     {ses.totalWorkingSets} {tr(lang, 'مجموعات عمل', 'séries effectives', 'working sets')} · {ses.totalVolumeKg} kg
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mono-num">
@@ -319,38 +342,38 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       {progSubTab === 'coach' && (
         <div className="space-y-4">
           {/* Joint Response Logger */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs">
+          <div className="rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs shadow-sm">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-sky-500" />
+              <Activity className="w-5 h-5 text-sky-500" />
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                {tr(lang, 'متابعة استجابة المفاصل (قبل / بعد / اليوم التالي)', 'Suivi Articulaire (Avant / Après / Lendemain)', 'Joint Load Response Tracker (Non-Diagnostic)')}
+                {tr(lang, 'متابعة راحة واستجابة المفاصل (قبل / بعد / اليوم التالي)', 'Suivi Articulaire (Avant / Après / Lendemain)', 'Joint Comfort & Response Tracker')}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
                 <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                  {tr(lang, 'قبل التمرين:', 'Avant :', 'Pre-Session:')} <span className="mono-num">{jPre}/10</span>
+                  {tr(lang, 'قبل التمرين:', 'Avant :', 'Pre-Session:')} <span className="mono-num text-indigo-600 font-extrabold">{jPre}/10</span>
                 </label>
-                <input type="range" min={0} max={10} value={jPre} onChange={(e) => setJPre(Number(e.target.value))} className="w-full accent-emerald-600" />
+                <input type="range" min={0} max={10} value={jPre} onChange={(e) => setJPre(Number(e.target.value))} className="w-full accent-indigo-600" />
               </div>
               <div>
                 <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                  {tr(lang, 'بعد التمرين:', 'Après :', 'Post-Session:')} <span className="mono-num">{jPost}/10</span>
+                  {tr(lang, 'بعد التمرين:', 'Après :', 'Post-Session:')} <span className="mono-num text-sky-600 font-extrabold">{jPost}/10</span>
                 </label>
                 <input type="range" min={0} max={10} value={jPost} onChange={(e) => setJPost(Number(e.target.value))} className="w-full accent-sky-600" />
               </div>
               <div>
                 <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                  {tr(lang, 'اليوم التالي (24h):', 'Lendemain :', 'Next-Day (24h):')} <span className="mono-num">{jNextDay}/10</span>
+                  {tr(lang, 'اليوم التالي (24h):', 'Lendemain :', 'Next-Day (24h):')} <span className="mono-num text-orange-600 font-extrabold">{jNextDay}/10</span>
                 </label>
-                <input type="range" min={0} max={10} value={jNextDay} onChange={(e) => setJNextDay(Number(e.target.value))} className="w-full accent-amber-500" />
+                <input type="range" min={0} max={10} value={jNextDay} onChange={(e) => setJNextDay(Number(e.target.value))} className="w-full accent-orange-500" />
               </div>
               <div>
                 <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                  {tr(lang, 'جودة الأداء (1–5):', 'Qualité (1–5) :', 'Performance (1–5):')} <span className="mono-num">{jPerf}/5</span>
+                  {tr(lang, 'جودة الأداء (1–5):', 'Qualité (1–5) :', 'Performance (1–5):')} <span className="mono-num text-violet-600 font-extrabold">{jPerf}/5</span>
                 </label>
-                <input type="range" min={1} max={5} value={jPerf} onChange={(e) => setJPerf(Number(e.target.value))} className="w-full accent-emerald-600" />
+                <input type="range" min={1} max={5} value={jPerf} onChange={(e) => setJPerf(Number(e.target.value))} className="w-full accent-violet-600" />
               </div>
             </div>
 
@@ -359,7 +382,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 type="text"
                 value={jNote}
                 onChange={(e) => setJNote(e.target.value)}
-                placeholder={tr(lang, 'ملاحظة وظيفية (مثال: ثبات مريح في دفع الأرجل)...', 'Note fonctionnelle...', 'Functional note (e.g. comfortable leg press tracking)...')}
+                placeholder={tr(lang, 'ملاحظة سريعة (مثال: راحة ممتازة في تمارين الأرجل)...', 'Note fonctionnelle...', 'Functional note (e.g. comfortable leg press)...')}
                 className="flex-1 min-w-[200px] px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
               />
               <button
@@ -376,7 +399,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   setJNote('');
                   onNotify(tr(lang, 'تم تسجيل استجابة المفصل.', 'Suivi articulaire enregistré.', 'Joint response logged.'));
                 }}
-                className="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold hover:bg-sky-500 transition"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-extrabold hover:from-sky-600 hover:to-indigo-700 transition shadow-sm"
               >
                 {tr(lang, 'حفظ التقييم', 'Enregistrer', 'Save Check-In')}
               </button>
@@ -386,30 +409,30 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
           {/* Explainable AI Coach Cards */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-slate-100">
-              <Bot className="w-4 h-4 text-emerald-500" />
-              <span>{tr(lang, 'توصيات المدرب التحليلي القابلة للتفسير', 'Recommandations Explicables du Coach', 'Explainable Training Insights')}</span>
+              <Bot className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+              <span>{tr(lang, 'توصيات المدرب الذكي القابلة للتفسير', 'Recommandations Explicables du Coach', 'Explainable Smart Coach Insights')}</span>
             </div>
 
             {coachRecs.map((rec) => (
               <div
                 key={rec.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2.5 text-xs"
+                className="rounded-3xl border border-violet-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2.5 text-xs shadow-sm"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                     {trText(lang, rec.title)}
                   </h4>
-                  <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold uppercase text-[10px]">
-                    {tr(lang, 'الثقة:', 'Confiance :', 'Confidence:')} {rec.confidence}
+                  <span className="px-2.5 py-0.5 rounded-lg bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 font-bold uppercase text-[10px]">
+                    {tr(lang, 'درجة الثقة:', 'Confiance :', 'Confidence:')} {rec.confidence}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-                    <strong className="text-emerald-700 dark:text-emerald-400 block mb-0.5">{tr(lang, 'ما رُصد:', 'Observé :', 'Observed:')}</strong>
+                  <div className="rounded-2xl bg-indigo-50/60 dark:bg-slate-950 border border-indigo-100 dark:border-slate-800 p-3">
+                    <strong className="text-indigo-700 dark:text-indigo-400 block mb-0.5">{tr(lang, 'ما رُصد:', 'Observé :', 'Observed:')}</strong>
                     <p className="text-slate-700 dark:text-slate-300">{trText(lang, rec.observed)}</p>
                   </div>
-                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
+                  <div className="rounded-2xl bg-sky-50/60 dark:bg-slate-950 border border-sky-100 dark:border-slate-800 p-3">
                     <strong className="text-sky-700 dark:text-sky-400 block mb-0.5">{tr(lang, 'أساس البيانات:', 'Base de données :', 'Data Basis:')}</strong>
                     <p className="text-slate-700 dark:text-slate-300">{trText(lang, rec.dataBasis)}</p>
                   </div>
@@ -421,15 +444,12 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 <p className="text-slate-600 dark:text-slate-400">
                   <strong>{tr(lang, 'التغير المتوقع:', 'Impact attendu :', 'Expected Change:')}</strong> {trText(lang, rec.expectedChange)}
                 </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  <strong>{tr(lang, 'الحدود:', 'Limites :', 'Limitations:')}</strong> {trText(lang, rec.limitationsNote)}
-                </p>
 
                 {rec.actionType && rec.actionLabel && (
                   <button
                     type="button"
                     onClick={() => onApplyCoachAction(rec.actionType!)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white font-bold hover:bg-amber-500 transition"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold hover:from-orange-600 hover:to-rose-600 transition shadow-sm"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{trText(lang, rec.actionLabel)}</span>
@@ -445,24 +465,24 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       {progSubTab === 'refs' && (
         <div className="space-y-4">
           {/* Backup & PWA Controls */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs">
+          <div className="rounded-3xl border border-orange-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs shadow-sm">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-              {tr(lang, 'إدارة البيانات والنسخ الاحتياطي وتثبيت التطبيق (PWA)', 'Sauvegarde JSON & Installation PWA', 'Data Backup (Validated JSON) & App Install')}
+              {tr(lang, 'حفظ واستعادة بياناتك وتثبيت التطبيق (PWA)', 'Sauvegarde JSON & Installation PWA', 'Data Backup (Validated JSON) & App Install')}
             </h3>
 
             <div className="flex flex-wrap items-center gap-2.5">
               <button
                 type="button"
                 onClick={handleExportJson}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold hover:from-orange-600 hover:to-rose-600 transition shadow-sm"
               >
                 <Download className="w-4 h-4" />
                 <span>{tr(lang, 'تصدير نسخة احتياطية JSON', 'Exporter JSON', 'Export Backup JSON')}</span>
               </button>
 
-              <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 font-bold cursor-pointer hover:border-emerald-500">
+              <label className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-slate-800 text-indigo-800 dark:text-slate-100 border border-indigo-200 dark:border-slate-700 font-extrabold cursor-pointer hover:border-indigo-500 transition">
                 <Upload className="w-4 h-4" />
-                <span>{tr(lang, 'استيراد وتدقيق JSON', 'Importer JSON', 'Import & Validate JSON')}</span>
+                <span>{tr(lang, 'استيراد نسخة احتياطية JSON', 'Importer JSON', 'Import Backup JSON')}</span>
                 <input type="file" accept="application/json,.json" onChange={handleImportFile} className="hidden" />
               </label>
 
@@ -470,14 +490,14 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 <button
                   type="button"
                   onClick={() => void install()}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 text-white font-bold hover:bg-sky-500 transition"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-600 text-white font-extrabold hover:bg-sky-500 transition shadow-sm"
                 >
                   <Smartphone className="w-4 h-4" />
                   <span>{tr(lang, 'تثبيت التطبيق على الجهاز', 'Installer l’application', 'Install App (Offline)')}</span>
                 </button>
               )}
               {isInstalled && (
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold">
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {tr(lang, 'التطبيق مثبت للعمل دون إنترنت', 'Application installée', 'Installed as Offline App')}
                 </span>
@@ -506,19 +526,19 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
           {/* Evidence-Graded Study Registry */}
           <div className="space-y-3">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-emerald-500" />
+              <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>{tr(lang, `المراجع العلمية المعتمدة (${SCIENTIFIC_STUDIES.length})`, `Registre Scientifique (${SCIENTIFIC_STUDIES.length})`, `Audited Scientific Registry (${SCIENTIFIC_STUDIES.length})`)}</span>
             </h3>
             {SCIENTIFIC_STUDIES.map((st) => (
               <div
                 key={`REF_${st.id}`}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs shadow-xs"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-extrabold text-emerald-700 dark:text-emerald-400">
+                  <span className="font-extrabold text-indigo-600 dark:text-indigo-400">
                     {st.authors} ({st.year}) · {st.journal}
                   </span>
-                  <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold uppercase text-[10px]">
+                  <span className="px-2 py-0.5 rounded-lg bg-orange-50 dark:bg-slate-800 text-orange-700 dark:text-orange-300 font-bold uppercase text-[10px]">
                     {st.evidenceGrade}
                   </span>
                 </div>

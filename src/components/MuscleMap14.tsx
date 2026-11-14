@@ -29,37 +29,33 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
   const getStatusColors = (status: MuscleVolumeSummary['status'], selected: boolean) => {
     if (selected) {
       return {
-        fill: '#10b981',
-        stroke: '#34d399',
-        opacity: 0.92,
+        fill: '#7c3aed',
+        stroke: '#a78bfa',
+        opacity: 0.94,
       };
     }
     if (status === 'below_min') {
       return {
         fill: '#f59e0b',
         stroke: '#fbbf24',
-        opacity: 0.55,
+        opacity: 0.6,
       };
     }
     if (status === 'high_diminishing') {
       return {
-        fill: '#ef4444',
-        stroke: '#f87171',
-        opacity: 0.65,
+        fill: '#f43f5e',
+        stroke: '#fb7185',
+        opacity: 0.68,
       };
     }
     return {
       fill: '#0ea5e9',
       stroke: '#38bdf8',
-      opacity: 0.6,
+      opacity: 0.65,
     };
   };
 
-  const renderZonePath = (
-    key: MuscleZoneKey,
-    d: string,
-    label: string
-  ) => {
+  const renderZonePath = (key: MuscleZoneKey, d: string, label: string) => {
     const summary = volumeMap[key];
     const isSel = selectedMuscleKey === key;
     const c = getStatusColors(summary?.status || 'optimal', isSel);
@@ -89,23 +85,23 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
   const statusBadge = (status: MuscleVolumeSummary['status']) => {
     if (status === 'below_min') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-          <AlertTriangle className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+          <AlertTriangle className="w-3.5 h-3.5" />
           {tr(lang, 'أقل من الحد الأدنى', 'Sous le seuil', 'Below Min')}
         </span>
       );
     }
     if (status === 'high_diminishing') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
-          <Activity className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
+          <Activity className="w-3.5 h-3.5" />
           {tr(lang, 'حجم مرتفع (عائد متناقص)', 'Volume élevé', 'High / Diminishing')}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-        <CheckCircle2 className="w-3 h-3" />
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+        <CheckCircle2 className="w-3.5 h-3.5" />
         {tr(lang, 'النطاق الأمثل', 'Zone optimale', 'Optimal Range')}
       </span>
     );
@@ -118,10 +114,10 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
   return (
     <div className="space-y-4">
       {/* Volume Calibration Controls */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+      <div className="rounded-2xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <SlidersHorizontal className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
               {tr(lang, 'إعدادات احتساب الحجم العضلي الأسبوعي', 'Paramètres de Calcul du Volume', 'Weekly Volume Calibration')}
             </h3>
@@ -131,7 +127,7 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
               type="checkbox"
               checked={volumeSettings.includeOptionalDayD}
               onChange={(e) => onUpdateVolumeSettings({ includeOptionalDayD: e.target.checked })}
-              className="w-4 h-4 accent-emerald-600 rounded"
+              className="w-4 h-4 accent-indigo-600 rounded"
             />
             <span>
               {tr(lang, 'تضمين اليوم التكميلي الاختياري D', 'Inclure Jour D optionnel', 'Include Optional Bonus Day D')}
@@ -152,8 +148,8 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
                   onClick={() => onUpdateVolumeSettings({ indirectCoefficient: coeff })}
                   className={`py-1.5 px-2 rounded-xl font-bold mono-num border transition ${
                     volumeSettings.indirectCoefficient === coeff
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-emerald-500'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-400'
                   }`}
                 >
                   {coeff}x
@@ -174,8 +170,8 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
                   onClick={() => onUpdateVolumeSettings({ minProximityRir: rirMax })}
                   className={`py-1.5 px-2 rounded-xl font-bold mono-num border transition ${
                     volumeSettings.minProximityRir === rirMax
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-emerald-500'
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-orange-400'
                   }`}
                 >
                   ≤ {rirMax} RIR
@@ -188,7 +184,7 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
 
       {/* Main Split: Front/Back Anatomical SVG + Selected Muscle Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+        <div className="lg:col-span-7 rounded-2xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
               {tr(lang, 'خريطة العضلات التفاعلية (14 منطقة تشريحية)', 'Carte Anatomique Interactive (14 Zones)', 'Interactive 14-Zone Anatomical Map')}
@@ -197,45 +193,37 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
               <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-amber-500" /> {tr(lang, 'منخفض', 'Bas', 'Low')}</span>
               <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-sky-500" /> {tr(lang, 'أمثل', 'Optimal', 'Optimal')}</span>
               <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-rose-500" /> {tr(lang, 'مرتفع', 'Élevé', 'High')}</span>
-              <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> {tr(lang, 'محدد', 'Sélection', 'Selected')}</span>
+              <span className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-violet-600" /> {tr(lang, 'محدد', 'Sélection', 'Selected')}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-950 rounded-2xl p-3 border border-slate-200 dark:border-slate-800">
+          <div className="grid grid-cols-2 gap-3 bg-gradient-to-br from-indigo-50/50 via-white to-sky-50/50 dark:from-slate-950 dark:to-slate-950 rounded-2xl p-3 border border-indigo-100 dark:border-slate-800">
             {/* FRONT ANATOMY SVG */}
             <div className="flex flex-col items-center">
-              <span className="text-xs font-extrabold text-slate-600 dark:text-slate-400 mb-1">
+              <span className="text-xs font-extrabold text-indigo-700 dark:text-indigo-300 mb-1">
                 {tr(lang, 'الجهة الأمامية', 'Vue Antérieure', 'Front View')}
               </span>
               <svg viewBox="0 0 180 320" className="w-full max-w-[200px] h-auto" role="img" aria-label="Anterior anatomical muscle map">
-                {/* Silhouette Head & Body Outline */}
                 <circle cx="90" cy="26" r="16" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.8" />
                 <path d="M78 42 L102 42 L130 56 L146 118 L138 168 L124 166 L122 100 L118 168 L124 235 L118 302 L98 302 L95 232 L90 190 L85 232 L82 302 L62 302 L56 235 L62 168 L58 100 L56 166 L42 168 L34 118 L50 56 Z" fill="currentColor" fillOpacity="0.06" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1.5" />
 
-                {/* Front Deltoids */}
                 {renderZonePath('front_delts', 'M52 58 Q42 64 43 78 L57 82 L64 62 Z', 'fd_l')}
                 {renderZonePath('front_delts', 'M128 58 Q138 64 137 78 L123 82 L116 62 Z', 'fd_r')}
 
-                {/* Side Deltoids (Lateral cap) */}
                 {renderZonePath('side_delts', 'M43 60 Q33 68 35 84 L44 84 L45 70 Z', 'sd_l')}
                 {renderZonePath('side_delts', 'M137 60 Q147 68 145 84 L136 84 L135 70 Z', 'sd_r')}
 
-                {/* Chest (Upper/Mid/Lower) */}
                 {renderZonePath('chest', 'M62 63 L88 67 L88 94 Q68 96 59 84 Z', 'ch_l')}
                 {renderZonePath('chest', 'M118 63 L92 67 L92 94 Q112 96 121 84 Z', 'ch_r')}
 
-                {/* Biceps */}
                 {renderZonePath('biceps', 'M40 86 L55 86 L53 122 L38 120 Z', 'bi_l')}
                 {renderZonePath('biceps', 'M140 86 L125 86 L127 122 L142 120 Z', 'bi_r')}
 
-                {/* Forearms */}
                 {renderZonePath('forearms', 'M37 125 L52 126 L46 165 L35 162 Z', 'fa_l')}
                 {renderZonePath('forearms', 'M143 125 L128 126 L134 165 L145 162 Z', 'fa_r')}
 
-                {/* Abs & Core */}
                 {renderZonePath('abs', 'M72 96 L108 96 L105 160 L75 160 Z', 'abs')}
 
-                {/* Quads */}
                 {renderZonePath('quads', 'M62 170 L87 174 L84 236 L60 232 Z', 'q_l')}
                 {renderZonePath('quads', 'M118 170 L93 174 L96 236 L120 232 Z', 'q_r')}
               </svg>
@@ -243,36 +231,29 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
 
             {/* BACK ANATOMY SVG */}
             <div className="flex flex-col items-center">
-              <span className="text-xs font-extrabold text-slate-600 dark:text-slate-400 mb-1">
+              <span className="text-xs font-extrabold text-indigo-700 dark:text-indigo-300 mb-1">
                 {tr(lang, 'الجهة الخلفية', 'Vue Postérieure', 'Back View')}
               </span>
               <svg viewBox="0 0 180 320" className="w-full max-w-[200px] h-auto" role="img" aria-label="Posterior anatomical muscle map">
                 <circle cx="90" cy="26" r="16" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.8" />
                 <path d="M78 42 L102 42 L130 56 L146 118 L138 168 L124 166 L122 100 L118 168 L124 235 L118 302 L98 302 L95 232 L90 190 L85 232 L82 302 L62 302 L56 235 L62 168 L58 100 L56 166 L42 168 L34 118 L50 56 Z" fill="currentColor" fillOpacity="0.06" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1.5" />
 
-                {/* Traps */}
                 {renderZonePath('traps', 'M76 44 L104 44 L118 62 L90 88 L62 62 Z', 'traps')}
 
-                {/* Rear Delts */}
                 {renderZonePath('rear_delts', 'M46 58 L62 64 L57 83 L42 79 Z', 'rd_l')}
                 {renderZonePath('rear_delts', 'M134 58 L118 64 L123 83 L138 79 Z', 'rd_r')}
 
-                {/* Lats & Mid-Back */}
                 {renderZonePath('lats_back', 'M61 84 L88 90 L88 134 L67 128 Z', 'lat_l')}
                 {renderZonePath('lats_back', 'M119 84 L92 90 L92 134 L113 128 Z', 'lat_r')}
 
-                {/* Triceps */}
                 {renderZonePath('triceps', 'M39 86 L55 86 L53 122 L38 120 Z', 'tri_l')}
                 {renderZonePath('triceps', 'M141 86 L125 86 L127 122 L142 120 Z', 'tri_r')}
 
-                {/* Glutes */}
                 {renderZonePath('glutes', 'M63 144 Q90 140 117 144 L121 178 Q90 184 59 178 Z', 'glutes')}
 
-                {/* Hamstrings */}
                 {renderZonePath('hamstrings', 'M60 182 L86 184 L83 236 L59 232 Z', 'ham_l')}
                 {renderZonePath('hamstrings', 'M120 182 L94 184 L97 236 L121 232 Z', 'ham_r')}
 
-                {/* Calves */}
                 {renderZonePath('calves', 'M61 242 L83 242 L79 288 L63 288 Z', 'cal_l')}
                 {renderZonePath('calves', 'M119 242 L97 242 L101 288 L117 288 Z', 'cal_r')}
               </svg>
@@ -290,14 +271,14 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
                   key={key}
                   type="button"
                   onClick={() => onSelectMuscle(key)}
-                  className={`p-2 rounded-xl border text-start transition ${
+                  className={`p-2.5 rounded-xl border text-start transition ${
                     isSel
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-emerald-500'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-violet-600 shadow-sm'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-indigo-400'
                   }`}
                 >
                   <div className="text-[11px] font-bold truncate">{trText(lang, z.name)}</div>
-                  <div className={`text-[10px] mono-num mt-0.5 ${isSel ? 'text-emerald-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <div className={`text-[10px] mono-num mt-0.5 ${isSel ? 'text-indigo-100' : 'text-slate-500 dark:text-slate-400'}`}>
                     {vol?.effectivePlannedSets ?? 0} {tr(lang, 'مجموعة', 'séries', 'sets')} · {vol?.weeklyFrequency ?? 0}x/{tr(lang, 'أسبوع', 'sem', 'wk')}
                   </div>
                 </button>
@@ -307,7 +288,7 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
         </div>
 
         {/* Selected Zone Detailed Panel */}
-        <div className="lg:col-span-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
+        <div className="lg:col-span-5 rounded-2xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
@@ -322,35 +303,35 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
 
           {/* Quantitative Breakdown */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2.5">
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+            <div className="rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-900/50 p-2.5">
+              <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-semibold block">
                 {tr(lang, 'المجموعات المباشرة', 'Séries directes', 'Direct Sets')}
               </span>
               <span className="text-lg font-extrabold mono-num text-slate-900 dark:text-slate-100">
                 {selectedSummary?.plannedDirectSets ?? 0}
               </span>
             </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+            <div className="rounded-xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/70 dark:border-sky-900/50 p-2.5">
+              <span className="text-[11px] text-sky-700 dark:text-sky-300 font-semibold block">
                 {tr(lang, `غير المباشرة (${volumeSettings.indirectCoefficient}x)`, `Indirectes (${volumeSettings.indirectCoefficient}x)`, `Indirect (${volumeSettings.indirectCoefficient}x)`)}
               </span>
               <span className="text-lg font-extrabold mono-num text-sky-600 dark:text-sky-400">
                 +{selectedSummary?.plannedIndirectSets ?? 0}
               </span>
             </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+            <div className="rounded-xl bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200/70 dark:border-orange-900/50 p-2.5">
+              <span className="text-[11px] text-orange-700 dark:text-orange-300 font-semibold block">
                 {tr(lang, 'الإجمالي الفعال / الأسبوع', 'Total effectif / sem.', 'Effective Weekly Total')}
               </span>
-              <span className="text-lg font-extrabold mono-num text-emerald-600 dark:text-emerald-400">
+              <span className="text-lg font-extrabold mono-num text-orange-600 dark:text-orange-400">
                 {selectedSummary?.effectivePlannedSets ?? 0}
               </span>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 block mono-num">
                 {tr(lang, 'الهدف العام:', 'Cible:', 'Ref:')} {selectedZone.optimalRange[0]}–{selectedZone.optimalRange[1]}
               </span>
             </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+            <div className="rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/50 p-2.5">
+              <span className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold block">
                 {tr(lang, 'التكرار والاستشفاء', 'Fréquence & Récup.', 'Frequency & Recovery')}
               </span>
               <span className="text-lg font-extrabold mono-num text-slate-900 dark:text-slate-100">
@@ -384,7 +365,7 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
                     key={ex.id}
                     type="button"
                     onClick={() => onOpenExercise(ex.id)}
-                    className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:border-emerald-500 text-start transition"
+                    className="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:border-indigo-400 text-start transition"
                   >
                     <div className="min-w-0">
                       <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
@@ -397,7 +378,7 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
                     <span
                       className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold ${
                         isPrimary
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'
                           : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
