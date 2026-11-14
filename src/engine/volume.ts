@@ -1,5 +1,16 @@
 import { MUSCLE_ZONE_ORDER, MUSCLE_ZONES } from '../data/muscles';
-import { AppState, Exercise, MuscleZoneKey, SetLog, WorkoutDayKey } from '../types/app';
+import {
+  AppState,
+  EvidenceGrade,
+  Exercise,
+  MuscleZoneInfo,
+  MuscleZoneKey,
+  RigMovementType,
+  ScientificStudy,
+  SetLog,
+  TrilingualText,
+  WorkoutDayKey,
+} from '../types/app';
 
 export interface MuscleVolumeSummary {
   key: MuscleZoneKey;
@@ -10,6 +21,271 @@ export interface MuscleVolumeSummary {
   weeklyFrequency: number;
   exercises: { id: string; name: Exercise['name']; day: WorkoutDayKey; sets: number; role: 'direct' | 'indirect' }[];
   status: 'below_min' | 'optimal' | 'high_diminishing';
+}
+
+export interface KinematicRigDetails {
+  rigType: RigMovementType;
+  archetypeName: TrilingualText;
+  forceVector: TrilingualText;
+  resistanceProfile: TrilingualText;
+  jointAngles: TrilingualText;
+  romTypeLabel: TrilingualText;
+  movementPattern: TrilingualText;
+  jointAction: TrilingualText;
+  startCue: TrilingualText;
+  steps: TrilingualText;
+  jointSafety: TrilingualText;
+  commonErrors: TrilingualText;
+}
+
+export interface ExerciseComparisonProfile {
+  exercise: Exercise;
+  primaryMuscle: MuscleZoneInfo;
+  secondaryMuscles: MuscleZoneInfo[];
+  evidenceGrade: EvidenceGrade;
+  evidenceGradeLabel: TrilingualText;
+  linkedStudies: ScientificStudy[];
+  kinematicRig: KinematicRigDetails;
+}
+
+export function getEvidenceGradeLabel(grade: EvidenceGrade): TrilingualText {
+  switch (grade) {
+    case 'strong':
+      return {
+        ar: 'درجة A — دليل علمي قوي (Strong)',
+        fr: 'Grade A — Preuve Scientifique Forte',
+        en: 'Grade A — Strong Evidence',
+      };
+    case 'moderate':
+      return {
+        ar: 'درجة B — دليل علمي متوسط (Moderate)',
+        fr: 'Grade B — Preuve Modérée',
+        en: 'Grade B — Moderate Evidence',
+      };
+    case 'limited':
+      return {
+        ar: 'درجة C — دليل محدود (Limited)',
+        fr: 'Grade C — Preuve Limitée',
+        en: 'Grade C — Limited Evidence',
+      };
+    default:
+      return {
+        ar: 'درجة C — دليل أولي (Preliminary)',
+        fr: 'Grade C — Preuve Préliminaire',
+        en: 'Grade C — Preliminary Evidence',
+      };
+  }
+}
+
+export function getRomTypeLabel(romType: Exercise['romType']): TrilingualText {
+  switch (romType) {
+    case 'lengthened_bias':
+      return {
+        ar: 'انحياز للإطالة القصوى (Lengthened Bias)',
+        fr: 'Biais d’étirement (Lengthened Bias)',
+        en: 'Lengthened-State Tension Bias',
+      };
+    case 'shortened_bias':
+      return {
+        ar: 'انحياز للانقباض الأقصى (Shortened Bias)',
+        fr: 'Biais de contraction (Shortened Bias)',
+        en: 'Shortened-Peak Tension Bias',
+      };
+    case 'isometric_safe':
+      return {
+        ar: 'ثبات محوري آمن (Isometric / Controlled)',
+        fr: 'Contrôle isométrique sécurisé',
+        en: 'Controlled / Isometric Joint-Safe',
+      };
+    default:
+      return {
+        ar: 'مدى حركي كامل متوازن (Full ROM)',
+        fr: 'Amplitude complète (Full ROM)',
+        en: 'Full Range of Motion (Full ROM)',
+      };
+  }
+}
+
+export function getKinematicRigSpec(rigType: RigMovementType): {
+  archetypeName: TrilingualText;
+  forceVector: TrilingualText;
+  resistanceProfile: TrilingualText;
+  jointAngles: TrilingualText;
+} {
+  if (rigType === 'incline_press' || rigType === 'flat_press' || rigType === 'shoulder_press') {
+    return {
+      archetypeName: {
+        ar: `نموذج الدفع متعدد المفاصل (${rigType})`,
+        fr: `Modèle de poussée polyarticulaire (${rigType})`,
+        en: `Multi-Joint Pressing Rig (${rigType})`,
+      },
+      forceVector: {
+        ar: 'متجه دفع محوري في المستوى الكتفي الآمن (30°–45°)',
+        fr: 'Vecteur de poussée dans le plan scapulaire (30°–45°)',
+        en: 'Scapular-plane pressing vector (30°–45° humeral path)',
+      },
+      resistanceProfile: {
+        ar: 'ذروة العزم الميكانيكي في الثلث السفلي (وضعية الإطالة)',
+        fr: 'Couple maximal en bas du mouvement (étirement)',
+        en: 'Peak mechanical torque in bottom lengthened third',
+      },
+      jointAngles: {
+        ar: 'زاوية العضد 45°–60° عن الجذع · معصم محايد تماماً',
+        fr: 'Angle huméral 45°–60° · Poignet neutre aligné',
+        en: '45°–60° humeral abduction · stacked neutral wrist',
+      },
+    };
+  }
+
+  if (
+    rigType === 'chest_row' ||
+    rigType === 'cable_row' ||
+    rigType === 'lat_pulldown' ||
+    rigType === 'face_pull' ||
+    rigType === 'reverse_fly'
+  ) {
+    return {
+      archetypeName: {
+        ar: `نموذج السحب الظهري والمفصلي (${rigType})`,
+        fr: `Modèle de tirage scapulo-huméral (${rigType})`,
+        en: `Scapulo-Humeral Pulling Rig (${rigType})`,
+      },
+      forceVector: {
+        ar: 'سحب محوري مع مسار إطالة أمامي/علوي كامل للوح الكتف',
+        fr: 'Traction axiale avec protraction/rétraction scapulaire',
+        en: 'Axial pull with controlled scapular protraction-retraction',
+      },
+      resistanceProfile: {
+        ar: 'توتر مستمر متوازن عبر كامل المسار الحركي',
+        fr: 'Tension continue équilibrée sur toute l’amplitude',
+        en: 'Smooth continuous tension curve across full excursion',
+      },
+      jointAngles: {
+        ar: 'مسار المرفق بمحاذاة الألياف المستهدفة (30°–75°)',
+        fr: 'Trajectoire du coude alignée aux fibres (30°–75°)',
+        en: 'Elbow path aligned to target fibers (30°–75°)',
+      },
+    };
+  }
+
+  if (
+    rigType === 'leg_press' ||
+    rigType === 'hack_squat' ||
+    rigType === 'split_squat' ||
+    rigType === 'leg_extension'
+  ) {
+    return {
+      archetypeName: {
+        ar: `نموذج الدفع السفلي وثبات الركبة (${rigType})`,
+        fr: `Modèle membre inférieur dominante genou (${rigType})`,
+        en: `Knee-Dominant Lower-Body Rig (${rigType})`,
+      },
+      forceVector: {
+        ar: 'توجيه الحمل عبر منتصف القدم مع ثبات الحوض والعمود الفقري',
+        fr: 'Charge dirigée au milieu du pied avec bassin stabilisé',
+        en: 'Mid-foot axial loading with externally stabilized pelvis',
+      },
+      resistanceProfile: {
+        ar: 'أقصى تحفيز للعضلة الرباعية عند ثني الركبة العميق والمتحكم به',
+        fr: 'Tension maximale sur le quadriceps en flexion contrôlée',
+        en: 'High quadriceps tension in controlled knee flexion',
+      },
+      jointAngles: {
+        ar: 'ثني الركبة 90°–115° بمحاذاة مشط القدم دون تقوس داخلي',
+        fr: 'Flexion genou 90°–115° alignée aux orteils sans valgus',
+        en: '90°–115° knee flexion tracking cleanly over toes',
+      },
+    };
+  }
+
+  if (
+    rigType === 'seated_leg_curl' ||
+    rigType === 'lying_leg_curl' ||
+    rigType === 'rdl' ||
+    rigType === 'hip_thrust' ||
+    rigType === 'back_extension'
+  ) {
+    return {
+      archetypeName: {
+        ar: `نموذج السلسلة الخلفية ومفصل الورك (${rigType})`,
+        fr: `Modèle chaîne postérieure & hanche (${rigType})`,
+        en: `Posterior-Chain & Hip-Hinge Rig (${rigType})`,
+      },
+      forceVector: {
+        ar: 'عزم دوران محوري على مفصل الورك/الركبة مع إطالة الأوتار الخلفية',
+        fr: 'Couple ciblé sur hanche/genou avec étirement des ischios',
+        en: 'Hip/knee hinge torque emphasizing biarticular hamstring stretch',
+      },
+      resistanceProfile: {
+        ar: 'تحفيز عالٍ في وضعية الإطالة (ثني الورك في الجلوس أو الانحناء)',
+        fr: 'Stimulus supérieur en position étirée (hanche fléchie)',
+        en: 'Elevated tension in hip-flexed lengthened position',
+      },
+      jointAngles: {
+        ar: 'ثبات العمود الفقري المحايد · حركة من الورك أو الركبة حصراً',
+        fr: 'Rachis neutre verrouillé · Mouvement pur hanche/genou',
+        en: 'Neutral spine lock · pure hip/knee articulation',
+      },
+    };
+  }
+
+  return {
+    archetypeName: {
+      ar: `نموذج العزل الميكانيكي الدقيق (${rigType})`,
+      fr: `Modèle d’isolation mono-articulaire (${rigType})`,
+      en: `Single-Joint Isolation Rig (${rigType})`,
+    },
+    forceVector: {
+      ar: 'مسار دائري معزول حول محور مفصل واحد دون أرجحة الجذع',
+      fr: 'Arc mono-articulaire strict sans élan du buste',
+      en: 'Strict rotary arc around a single joint axis without momentum',
+    },
+    resistanceProfile: {
+      ar: 'توتر مباشر ومستمر على العضلة المستهدفة بأقل إجهاد مفصلي',
+      fr: 'Tension ciblée directe avec stress articulaire minimal',
+      en: 'Direct isolated tension with minimal systemic joint stress',
+    },
+    jointAngles: {
+      ar: 'تثبيت المفصل المجاور بالكامل وعزل الحركة في المفصل العامل',
+      fr: 'Articulation proximale fixe · Isolation pure',
+      en: 'Proximal joint locked · pure distal joint excursion',
+    },
+  };
+}
+
+export function buildExerciseComparisonProfile(
+  exercise: Exercise,
+  studiesDb: ScientificStudy[]
+): ExerciseComparisonProfile {
+  const primaryMuscle = MUSCLE_ZONES[exercise.primaryMuscle];
+  const secondaryMuscles = exercise.secondaryMuscles
+    .map((mKey) => MUSCLE_ZONES[mKey])
+    .filter((m): m is MuscleZoneInfo => Boolean(m));
+  const linkedStudies = studiesDb.filter((st) => exercise.studyRefIds.includes(st.id));
+  const spec = getKinematicRigSpec(exercise.rigType);
+
+  return {
+    exercise,
+    primaryMuscle,
+    secondaryMuscles,
+    evidenceGrade: exercise.evidenceGrade,
+    evidenceGradeLabel: getEvidenceGradeLabel(exercise.evidenceGrade),
+    linkedStudies,
+    kinematicRig: {
+      rigType: exercise.rigType,
+      archetypeName: spec.archetypeName,
+      forceVector: spec.forceVector,
+      resistanceProfile: spec.resistanceProfile,
+      jointAngles: spec.jointAngles,
+      romTypeLabel: getRomTypeLabel(exercise.romType),
+      movementPattern: exercise.movementPattern,
+      jointAction: exercise.jointAction,
+      startCue: exercise.startCue,
+      steps: exercise.steps,
+      jointSafety: exercise.jointSafety,
+      commonErrors: exercise.commonErrors,
+    },
+  };
 }
 
 export function estimateE1RM(weightKg: number, reps: number): number {

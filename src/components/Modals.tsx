@@ -61,20 +61,20 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1120]/80 p-3 sm:p-5 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label={trText(lang, exercise.name)}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-orange-500">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-teal-600 dark:text-teal-300">
               <span>{exercise.id}</span>
               <span>·</span>
               <span>{exercise.equipment}</span>
@@ -92,8 +92,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               aria-label={tr(lang, 'إضافة للمفضلة', 'Favori', 'Toggle Favorite')}
               className={`p-2.5 rounded-xl border transition cursor-pointer ${
                 isFavorite
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-slate-100 dark:bg-[#0f1423] text-slate-500 border-slate-200 dark:border-slate-700'
+                  ? 'bg-amber-500 text-slate-950 border-amber-400'
+                  : 'bg-slate-100 dark:bg-[#0B1120] text-slate-400 border-slate-200 dark:border-[#24324F]'
               }`}
             >
               <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
@@ -102,7 +102,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label={tr(lang, 'إغلاق', 'Fermer', 'Close')}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#0f1423] hover:bg-rose-600 hover:text-white text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#0B1120] hover:bg-rose-600 hover:text-white text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -110,7 +110,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
         </div>
 
         {/* Verified Reference Photos (Start & Peak Side-by-Side + Interactive Controls) — Solid Dark Canvas */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f1423] p-3.5 space-y-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] p-3.5 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-extrabold text-slate-900 dark:text-white">
               {tr(lang, 'الصور المرجعية الموثقة للتمرين (البداية والذروة)', 'Photos de référence (Départ & Pic)', 'Verified Reference Photos (Start & Peak)')}
@@ -121,8 +121,8 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                 onClick={() => setAutoFlip((v) => !v)}
                 className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                   autoFlip
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'bg-white dark:bg-[#13182b] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                    ? 'bg-teal-600 text-white shadow-xs'
+                    : 'bg-white dark:bg-[#131C31] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F]'
                 }`}
               >
                 {autoFlip ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -131,7 +131,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenLightbox(exercise.id)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-500 transition shadow-xs cursor-pointer"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
                 <span>{tr(lang, 'تكبير الشاشة', 'Plein écran', 'Full Zoom')}</span>
@@ -140,14 +140,14 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
           </div>
 
           {autoFlip ? (
-            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-white dark:bg-[#13182b] border border-slate-200 dark:border-slate-800">
+            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F]">
               <ExerciseImage
                 exercise={exercise}
                 frameIdx={activeFrame}
                 alt={trText(lang, exercise.name)}
                 className="w-full h-full object-contain"
               />
-              <div className="absolute bottom-2.5 start-2.5 px-3 py-1 rounded-xl bg-slate-900/90 text-white text-xs font-bold">
+              <div className="absolute bottom-2.5 start-2.5 px-3 py-1 rounded-xl bg-[#0B1120]/90 text-white text-xs font-bold">
                 {activeFrame === 0
                   ? tr(lang, '1. وضعية البداية', '1. Position de départ', '1. Starting Position')
                   : tr(lang, '2. وضعية الذروة والانقباض', '2. Position de pic', '2. Peak Contraction')}
@@ -160,7 +160,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   key={frame}
                   type="button"
                   onClick={() => onOpenLightbox(exercise.id)}
-                  className="group relative h-52 sm:h-60 rounded-2xl overflow-hidden bg-white dark:bg-[#13182b] border border-slate-200 dark:border-slate-800 hover:border-orange-500 transition text-start cursor-pointer"
+                  className="group relative h-52 sm:h-60 rounded-2xl overflow-hidden bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] hover:border-teal-500 transition text-start cursor-pointer"
                 >
                   <ExerciseImage
                     exercise={exercise}
@@ -170,7 +170,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   />
                   <div
                     className={`absolute bottom-2 start-2 px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-white shadow ${
-                      frame === 0 ? 'bg-slate-900/90' : 'bg-orange-500'
+                      frame === 0 ? 'bg-teal-600' : 'bg-sky-600'
                     }`}
                   >
                     {frame === 0
@@ -182,7 +182,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-300">
             <span>{tr(lang, 'اضغط على أي صورة للتكبير والتبديل الحر', 'Cliquez sur une photo pour zoomer', 'Click any photo to zoom full-screen')}</span>
             <span>{exercise.media.source} · {exercise.media.license}</span>
           </div>
@@ -190,54 +190,54 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
 
         {/* Prescription Summary Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-          <div className="rounded-2xl bg-orange-50/80 dark:bg-orange-950/25 border border-orange-200/80 dark:border-orange-900/50 p-3">
-            <span className="text-orange-700 dark:text-orange-300 font-semibold block">{tr(lang, 'المجموعات والتكرار', 'Séries & Reps', 'Sets & Reps')}</span>
+          <div className="rounded-2xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3">
+            <span className="text-teal-600 dark:text-teal-300 font-bold block">{tr(lang, 'المجموعات والتكرار', 'Séries & Reps', 'Sets & Reps')}</span>
             <strong className="mono-num text-sm text-slate-900 dark:text-white">{exercise.sets} × {exercise.repsLabel}</strong>
           </div>
-          <div className="rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-900/50 p-3">
-            <span className="text-indigo-700 dark:text-indigo-300 font-semibold block">{tr(lang, 'الجهد المستهدف', 'Effort RIR', 'Target Effort')}</span>
+          <div className="rounded-2xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3">
+            <span className="text-indigo-600 dark:text-indigo-300 font-bold block">{tr(lang, 'الجهد المستهدف', 'Effort RIR', 'Target Effort')}</span>
             <strong className="mono-num text-sm text-slate-900 dark:text-white">{exercise.rirLabel}</strong>
           </div>
-          <div className="rounded-2xl bg-sky-50/80 dark:bg-sky-950/25 border border-sky-200/80 dark:border-sky-900/50 p-3">
-            <span className="text-sky-700 dark:text-sky-300 font-semibold block">{tr(lang, 'وقت الراحة', 'Temps de repos', 'Rest Time')}</span>
+          <div className="rounded-2xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3">
+            <span className="text-sky-600 dark:text-sky-300 font-bold block">{tr(lang, 'وقت الراحة', 'Temps de repos', 'Rest Time')}</span>
             <strong className="mono-num text-sm text-slate-900 dark:text-white">{exercise.restSec}s</strong>
           </div>
-          <div className="rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-900/50 p-3">
-            <span className="text-amber-700 dark:text-amber-300 font-semibold block">{tr(lang, 'النمط الحركي', 'Schéma', 'Pattern')}</span>
+          <div className="rounded-2xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3">
+            <span className="text-amber-600 dark:text-amber-300 font-bold block">{tr(lang, 'النمط الحركي', 'Schéma', 'Pattern')}</span>
             <strong className="text-slate-900 dark:text-white truncate block">{trText(lang, exercise.movementPattern)}</strong>
           </div>
         </div>
 
         {/* Concise Execution & Joint Comfort */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3.5 space-y-1.5">
-            <div className="font-extrabold text-indigo-600 dark:text-indigo-400">
+          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] p-3.5 space-y-1.5">
+            <div className="font-extrabold text-teal-600 dark:text-teal-300">
               {tr(lang, 'نقاط الأداء السريعة', 'Points clés d’exécution', 'Quick Setup & Cues')}
             </div>
-            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.startCue)}</p>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{trText(lang, exercise.steps)}</p>
+            <p className="text-slate-700 dark:text-slate-200 leading-relaxed">{trText(lang, exercise.startCue)}</p>
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.steps)}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3.5 space-y-1.5">
-            <div className="font-extrabold text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] p-3.5 space-y-1.5">
+            <div className="font-extrabold text-sky-600 dark:text-sky-300 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4" />
               {tr(lang, 'راحة وحماية المفاصل', 'Confort articulaire', 'Joint Comfort Tip')}
             </div>
-            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.jointSafety)}</p>
+            <p className="text-slate-700 dark:text-slate-200 leading-relaxed">{trText(lang, exercise.jointSafety)}</p>
             <div className="font-extrabold text-rose-600 dark:text-rose-400 flex items-center gap-1.5 pt-1">
               <AlertCircle className="w-4 h-4" />
               {tr(lang, 'تجنّب هذا الخطأ', 'Erreur à éviter', 'Avoid This Mistake')}
             </div>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{trText(lang, exercise.commonErrors)}</p>
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.commonErrors)}</p>
           </div>
         </div>
 
         {/* Science Note & References */}
-        <div className="rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-violet-50/60 dark:bg-violet-950/20 p-3.5 space-y-2 text-xs">
-          <div className="font-extrabold text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+        <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] p-3.5 space-y-2 text-xs">
+          <div className="font-extrabold text-indigo-600 dark:text-indigo-300 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4" />
             {tr(lang, 'لماذا اخترنا هذا التمرين علمياً؟', 'Pourquoi cet exercice ?', 'Why This Exercise Works')}
           </div>
-          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, exercise.scienceNote)}</p>
+          <p className="text-slate-700 dark:text-slate-200 leading-relaxed">{trText(lang, exercise.scienceNote)}</p>
           {linkedStudies.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {linkedStudies.map((st) => (
@@ -246,7 +246,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   href={st.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#13182b] border border-violet-200 dark:border-slate-700 text-[11px] font-semibold text-violet-700 dark:text-violet-300 hover:underline"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] text-[11px] font-semibold text-indigo-600 dark:text-indigo-300 hover:underline"
                 >
                   <BookOpen className="w-3 h-3" />
                   <span>{st.id} ({st.year})</span>
@@ -258,12 +258,12 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
         </div>
 
         {/* Action Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-[#24324F]">
           <a
             href={exercise.media.youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-extrabold hover:bg-rose-500 transition shadow-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-sky-600 text-white text-xs font-extrabold hover:bg-sky-500 transition shadow-xs"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>
@@ -275,7 +275,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
             <button
               type="button"
               onClick={() => onOpenSwap(exercise.id)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-500 transition shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-500 transition shadow-xs cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>{tr(lang, 'استبدال بتمرين بديل', 'Remplacer l’exercice', 'Swap Exercise')}</span>
@@ -332,14 +332,14 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-slate-950/95 text-white p-3 sm:p-6"
+      className="fixed inset-0 z-50 flex flex-col bg-[#0B1120] text-white p-3 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label={trText(lang, exercise.name)}
     >
-      <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#24324F]">
         <div className="min-w-0">
-          <div className="text-xs font-bold text-orange-400 mono-num">
+          <div className="text-xs font-bold text-teal-300 mono-num">
             {exercise.id} · {idx + 1}/{exercises.length}
           </div>
           <h3 className="text-sm sm:text-base font-extrabold truncate">
@@ -350,7 +350,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
           type="button"
           onClick={onClose}
           aria-label={tr(lang, 'إغلاق', 'Fermer', 'Close')}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-rose-600 text-white transition"
+          className="p-2 rounded-xl bg-[#131C31] hover:bg-rose-600 text-white transition cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -358,7 +358,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
 
       <div className="flex-1 flex items-center justify-center overflow-auto my-3">
         <div
-          className="transition-transform duration-200 max-w-2xl w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 border border-slate-800"
+          className="transition-transform duration-200 max-w-2xl w-full aspect-[4/3] rounded-2xl overflow-hidden bg-[#131C31] border border-[#24324F]"
           style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
         >
           <ExerciseImage
@@ -370,12 +370,12 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#24324F] text-xs">
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={goPrev}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#131C31] hover:bg-[#1A2642] font-bold cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>{tr(lang, 'السابق', 'Précédent', 'Prev')}</span>
@@ -383,7 +383,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
           <button
             type="button"
             onClick={goNext}
-            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#131C31] hover:bg-[#1A2642] font-bold cursor-pointer"
           >
             <span>{tr(lang, 'التالي', 'Suivant', 'Next')}</span>
             <ChevronRight className="w-4 h-4" />
@@ -394,7 +394,7 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
           <button
             type="button"
             onClick={() => setFrameIdx(frameIdx === 0 ? 1 : 0)}
-            className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold"
+            className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold cursor-pointer"
           >
             {frameIdx === 0
               ? tr(lang, '1/2 وضعية البداية', '1/2 Départ', '1/2 Start')
@@ -403,8 +403,8 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
           <button
             type="button"
             onClick={() => setAutoPlay((p) => !p)}
-            className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl font-bold ${
-              autoPlay ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-200'
+            className={`inline-flex items-center gap-1 px-3 py-2 rounded-xl font-bold cursor-pointer ${
+              autoPlay ? 'bg-teal-600 text-white' : 'bg-[#131C31] text-slate-200'
             }`}
           >
             {autoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -419,8 +419,8 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
               key={z}
               type="button"
               onClick={() => setZoom(z)}
-              className={`px-2.5 py-1.5 rounded-lg font-bold mono-num ${
-                zoom === z ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300'
+              className={`px-2.5 py-1.5 rounded-lg font-bold mono-num cursor-pointer ${
+                zoom === z ? 'bg-teal-600 text-white' : 'bg-[#131C31] text-slate-300'
               }`}
             >
               {z.toFixed(1)}x
@@ -465,22 +465,22 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-3 sm:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1120]/80 p-3 sm:p-5"
       role="dialog"
       aria-modal="true"
       aria-label={tr(lang, 'استبدال التمرين', 'Remplacer l’exercice', 'Smart Exercise Swap')}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-[#13182b] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-base font-extrabold text-indigo-700 dark:text-indigo-300">
+            <h3 className="text-base font-extrabold text-teal-600 dark:text-teal-300">
               {tr(lang, 'استبدال التمرين ببديل مناسب', 'Substitution d’exercice', 'Smart Exercise Swap')}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-300 mt-0.5">
               {tr(lang, 'التمرين الحالي:', 'Actuel :', 'Current:')} <strong className="text-slate-900 dark:text-white">{trText(lang, source.name)}</strong>
             </p>
           </div>
@@ -488,7 +488,7 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label={tr(lang, 'إغلاق', 'Fermer', 'Close')}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-[#0B1120] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -500,10 +500,10 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
               key={eq}
               type="button"
               onClick={() => setEquipFilter(eq)}
-              className={`px-3 py-1.5 rounded-xl font-bold border transition ${
+              className={`px-3 py-1.5 rounded-xl font-bold border transition cursor-pointer ${
                 equipFilter === eq
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
+                  ? 'bg-teal-600 text-white border-teal-500 shadow-xs'
+                  : 'bg-slate-50 dark:bg-[#0B1120] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#24324F]'
               }`}
             >
               {eq === 'ALL' ? tr(lang, 'كل المعدات', 'Tout', 'All') : eq}
@@ -513,7 +513,7 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
 
         <div className="space-y-2 max-h-80 overflow-y-auto pe-1">
           {candidates.length === 0 ? (
-            <div className="text-center py-6 text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-center py-6 text-xs text-slate-500 dark:text-slate-300">
               {tr(lang, 'لا توجد بدائل مطابقة لهذا الفلتر.', 'Aucun substitut pour ce filtre.', 'No alternatives match this filter.')}
             </div>
           ) : (
@@ -522,24 +522,24 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
               return (
                 <div
                   key={cand.id}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:border-indigo-300 transition"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-2xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] hover:border-teal-500 transition"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] shrink-0">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] shrink-0">
                       <ExerciseImage exercise={cand} frameIdx={0} alt={trText(lang, cand.name)} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
                           {trText(lang, cand.name)}
                         </span>
                         {isSuggested && (
-                          <span className="text-[10px] font-extrabold text-orange-600 dark:text-orange-400">
+                          <span className="text-[10px] font-extrabold text-amber-600 dark:text-amber-300">
                             ★ {tr(lang, 'مقترح', 'Suggéré', 'Best Match')}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5">
                         {cand.equipment} · {trText(lang, cand.movementPattern)} · {cand.sets}×{cand.repsLabel}
                       </div>
                     </div>
@@ -550,7 +550,7 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
                       onSwap(source.id, cand.id);
                       onClose();
                     }}
-                    className="shrink-0 px-3.5 py-2 rounded-xl bg-orange-500 text-white text-xs font-extrabold hover:bg-orange-600 transition shadow-sm"
+                    className="shrink-0 px-3.5 py-2 rounded-xl bg-teal-600 text-white text-xs font-extrabold hover:bg-teal-500 transition shadow-xs cursor-pointer"
                   >
                     {tr(lang, 'اختيار', 'Choisir', 'Select')}
                   </button>

@@ -25,8 +25,8 @@ export const ExerciseImage: React.FC<ExerciseImageProps> = ({
 
   if (stage === 'fallback') {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-[#0f1423] p-2 text-center">
-        <Dumbbell className="w-6 h-6 text-orange-500 mb-1" />
+      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-[#0B1120] p-2 text-center">
+        <Dumbbell className="w-6 h-6 text-teal-500 mb-1" />
         <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 line-clamp-2">
           {alt}
         </span>

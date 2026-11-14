@@ -80,7 +80,7 @@ export function buildMacroPieData(targets: BiometricTargets, lang: Lang): MacroP
       grams: targets.proteinG,
       kcal: targets.proteinKcal,
       pct: targets.proteinPct,
-      color: '#f97316', // Sporty Orange
+      color: '#14b8a6', // Teal Emerald
     },
     {
       key: 'carbs',
@@ -88,7 +88,7 @@ export function buildMacroPieData(targets: BiometricTargets, lang: Lang): MacroP
       grams: targets.carbsG,
       kcal: targets.carbsKcal,
       pct: targets.carbsPct,
-      color: '#38bdf8', // Sky Blue
+      color: '#38bdf8', // Royal Sky Blue
     },
     {
       key: 'fat',
@@ -96,7 +96,7 @@ export function buildMacroPieData(targets: BiometricTargets, lang: Lang): MacroP
       grams: targets.fatG,
       kcal: targets.fatKcal,
       pct: targets.fatPct,
-      color: '#a855f7', // Violet
+      color: '#818cf8', // Soft Indigo
     },
   ];
 }

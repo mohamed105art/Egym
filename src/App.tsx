@@ -3,9 +3,11 @@ import {
   Activity,
   BellRing,
   Dumbbell,
+  GitCompare,
   Moon,
   Pause,
   Play,
+  RefreshCw,
   RotateCcw,
   Smartphone,
   Sun,
@@ -108,7 +110,11 @@ export default function App() {
       const rem = Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
       if (rem <= 0) {
         if (state.timer.audioEnabled) playTimerChime();
-        if (state.timer.hapticsEnabled && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        if (
+          state.timer.hapticsEnabled &&
+          typeof navigator !== 'undefined' &&
+          typeof navigator.vibrate === 'function'
+        ) {
           try {
             navigator.vibrate([220, 100, 220, 100, 300]);
           } catch {
@@ -217,6 +223,22 @@ export default function App() {
     }));
   };
 
+  const handlePurgeCacheAndReload = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch {
+      // Ignore
+    }
+    window.location.reload();
+  };
+
   const volumeMap = useMemo(() => computeWeeklyVolume(state, EXERCISES_DB), [state]);
 
   const setSchedulePreset = (preset: DaySchedulePreset) => {
@@ -314,12 +336,16 @@ export default function App() {
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
+  // Curated 5-Color Harmonious Web Palette Navigation Meta
   const navItems: {
     id: MainTab;
     step: string;
     label: string;
     subtitle: string;
     icon: React.ReactNode;
+    activeBgClass: string;
+    iconBadgeClass: string;
+    mobileTextClass: string;
   }[] = [
     {
       id: 'home',
@@ -327,13 +353,19 @@ export default function App() {
       label: tr(state.lang, 'حصتي التدريبية', 'Ma Séance', 'My Workout'),
       subtitle: tr(state.lang, 'تدوير الحصص A/B/C/D وتسجيل المجموعات', 'Rotation A/B/C/D & suivi', 'Sequence A/B/C/D & Set Logger'),
       icon: <Dumbbell className="w-4 h-4 shrink-0" />,
+      activeBgClass: 'bg-teal-600 text-white border-teal-500',
+      iconBadgeClass: 'bg-teal-500/15 text-teal-600 dark:text-teal-300',
+      mobileTextClass: 'text-teal-500 dark:text-teal-400',
     },
     {
       id: 'exercises',
       step: '2',
-      label: tr(state.lang, 'التمارين بالصور', 'Photos & Exercices', 'Exercise Photos'),
-      subtitle: tr(state.lang, '32 تمريناً بالصور وخريطة العضلات', '32 exercices illustrés & carte', '32 Photo Guides & Muscle Map'),
+      label: tr(state.lang, 'التمارين والمقارنة', 'Exercices & Comparaison', 'Exercises & Compare'),
+      subtitle: tr(state.lang, '32 تمريناً، مقارنة المفضلة، وخريطة العضلات', '32 exercices, comparateur & carte', '32 Guides, Favorites Compare & Map'),
       icon: <Activity className="w-4 h-4 shrink-0" />,
+      activeBgClass: 'bg-sky-600 text-white border-sky-500',
+      iconBadgeClass: 'bg-sky-500/15 text-sky-600 dark:text-sky-300',
+      mobileTextClass: 'text-sky-500 dark:text-sky-400',
     },
     {
       id: 'nutrition',
@@ -341,26 +373,32 @@ export default function App() {
       label: tr(state.lang, 'التغذية والوجبات', 'Nutrition & Repas', 'Meals & Macros'),
       subtitle: tr(state.lang, 'حاسبة السعرات والوجبات والتسوق', 'Calories, repas & courses', 'Calculator, Meals & Grocery'),
       icon: <Utensils className="w-4 h-4 shrink-0" />,
+      activeBgClass: 'bg-emerald-600 text-white border-emerald-500',
+      iconBadgeClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
+      mobileTextClass: 'text-emerald-500 dark:text-emerald-400',
     },
     {
       id: 'progress',
       step: '4',
       label: tr(state.lang, 'تقدمي والمدرب', 'Progrès & Coach', 'Progress & Coach'),
-      subtitle: tr(state.lang, 'تطور القوة والقياسات والنسخ الاحتياطي', 'Force e1RM, coach & sauvegarde', 'Strength Curve, Coach & Backup'),
+      subtitle: tr(state.lang, 'منحنى 30 يوماً والمدرب والنسخ الاحتياطي', 'Force e1RM, coach & sauvegarde', '30d Strength Curve, Coach & Backup'),
       icon: <TrendingUp className="w-4 h-4 shrink-0" />,
+      activeBgClass: 'bg-indigo-600 text-white border-indigo-500',
+      iconBadgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300',
+      mobileTextClass: 'text-indigo-500 dark:text-indigo-400',
     },
   ];
 
   const detailEx = detailExId ? EXERCISES_DB.find((e) => e.id === detailExId) || null : null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-[#0f1423] dark:text-slate-100 pb-20 md:pb-8 transition-colors">
-      {/* Compact Sticky Top Bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] no-print">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] dark:bg-[#0B1120] dark:text-[#F8FAFC] pb-20 md:pb-8 transition-colors">
+      {/* Compact Sticky Top Bar — Pure Solid Dark #131C31 */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
           {/* Brand */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
               <Dumbbell className="w-4 h-4" />
             </div>
             <div className="min-w-0 leading-tight">
@@ -371,9 +409,9 @@ export default function App() {
             </div>
           </div>
 
-          {/* Desktop 4-Tab Nav (Unified Dark Minimalist + Sporty Orange Active State) */}
+          {/* Desktop 4-Tab Nav */}
           <nav
-            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-[#0f1423] p-1 rounded-xl border border-slate-200 dark:border-slate-800"
+            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-[#0B1120] p-1 rounded-xl border border-slate-200 dark:border-[#24324F]"
             aria-label="Main Navigation"
           >
             {navItems.map((item) => (
@@ -383,8 +421,8 @@ export default function App() {
                 onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
                 className={`inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
                   state.mainTab === item.id
-                    ? 'bg-orange-500 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#13182b]'
+                    ? item.activeBgClass
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#1A2642]'
                 }`}
               >
                 {item.icon}
@@ -393,22 +431,43 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Compact Utility Cluster: Rest Timer + Lang + Theme + Install */}
+          {/* Compact Utility Cluster: Quick Compare + Rest Timer + Lang + Theme + Refresh Cache */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Quick Shortcut to Side-by-Side Favorites Comparison */}
+            <button
+              type="button"
+              onClick={() =>
+                setState((prev) => ({
+                  ...prev,
+                  mainTab: 'exercises',
+                  exSubTab: 'compare',
+                }))
+              }
+              title={tr(state.lang, 'مقارنة تمرينين من المفضلة جنباً إلى جنب', 'Comparer 2 favoris', 'Compare 2 favorite exercises')}
+              className={`hidden xl:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-extrabold whitespace-nowrap transition cursor-pointer ${
+                state.mainTab === 'exercises' && state.exSubTab === 'compare'
+                  ? 'bg-indigo-600 text-white border-indigo-500'
+                  : 'bg-slate-100 dark:bg-[#0B1120] border-slate-200 dark:border-[#24324F] text-indigo-600 dark:text-indigo-300 hover:border-indigo-500'
+              }`}
+            >
+              <GitCompare className="w-3.5 h-3.5 shrink-0" />
+              <span>{tr(state.lang, 'مقارنة المفضلة', 'Comparer', 'Compare')}</span>
+            </button>
+
             {/* Rest Timer Control with Visual Flash Alert */}
             <div
               className={`inline-flex items-center gap-1 h-9 px-2.5 rounded-xl border text-xs transition ${
                 restCompleteFlash
-                  ? 'bg-orange-500 text-white border-orange-400 animate-pulse'
+                  ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
                   : state.timer.running
-                  ? 'bg-orange-500/15 border-orange-500/50 text-slate-900 dark:text-white'
-                  : 'bg-slate-100 dark:bg-[#0f1423] border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white'
+                  ? 'bg-teal-500/15 border-teal-500/50 text-slate-900 dark:text-white'
+                  : 'bg-slate-100 dark:bg-[#0B1120] border-slate-200 dark:border-[#24324F] text-slate-900 dark:text-white'
               }`}
             >
               {restCompleteFlash ? (
                 <BellRing className="w-3.5 h-3.5 text-white shrink-0" />
               ) : (
-                <Timer className={`w-3.5 h-3.5 shrink-0 ${state.timer.running ? 'text-orange-500' : 'text-slate-400'}`} />
+                <Timer className={`w-3.5 h-3.5 shrink-0 ${state.timer.running ? 'text-teal-500 dark:text-teal-400' : 'text-slate-400'}`} />
               )}
               <span className="font-mono font-extrabold tabular-nums w-10 text-center">
                 {formatSec(state.timer.remainingSec)}
@@ -420,7 +479,7 @@ export default function App() {
                 className={`w-6 h-6 rounded-lg flex items-center justify-center transition cursor-pointer ${
                   restCompleteFlash
                     ? 'bg-white/20 text-white'
-                    : 'hover:bg-white dark:hover:bg-slate-800 text-orange-500'
+                    : 'hover:bg-white dark:hover:bg-[#1A2642] text-teal-600 dark:text-teal-400'
                 }`}
               >
                 {state.timer.running ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -429,7 +488,7 @@ export default function App() {
                 type="button"
                 onClick={resetRestTimer}
                 aria-label="Reset Rest Timer"
-                className="hidden sm:inline-flex w-6 h-6 items-center justify-center rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                className="hidden sm:inline-flex w-6 h-6 items-center justify-center rounded-lg hover:bg-white dark:hover:bg-[#1A2642] text-slate-500 dark:text-slate-300 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
               </button>
@@ -442,14 +501,14 @@ export default function App() {
                   }))
                 }
                 aria-label={state.timer.audioEnabled ? 'Mute Timer' : 'Unmute Timer'}
-                className="hidden sm:inline-flex w-6 h-6 items-center justify-center rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                className="hidden sm:inline-flex w-6 h-6 items-center justify-center rounded-lg hover:bg-white dark:hover:bg-[#1A2642] text-slate-500 dark:text-slate-300 cursor-pointer"
               >
                 {state.timer.audioEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
               </button>
             </div>
 
             {/* Language Selector */}
-            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-extrabold h-9 items-center">
+            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-0.5 text-[11px] font-extrabold h-9 items-center">
               {(['ar', 'fr', 'en'] as Lang[]).map((l) => (
                 <button
                   key={l}
@@ -457,7 +516,7 @@ export default function App() {
                   onClick={() => setState((prev) => ({ ...prev, lang: l }))}
                   className={`h-7 px-2 rounded-lg uppercase transition cursor-pointer ${
                     state.lang === l
-                      ? 'bg-orange-500 text-white shadow-xs'
+                      ? 'bg-teal-600 text-white'
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
@@ -473,9 +532,20 @@ export default function App() {
                 setState((prev) => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }))
               }
               aria-label={state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-orange-500 transition cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-teal-500 transition cursor-pointer"
             >
-              {state.theme === 'dark' ? <Sun className="w-4 h-4 text-orange-400" /> : <Moon className="w-4 h-4" />}
+              {state.theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* 1-Click Cache Refresh Button (Ensures GitHub Pages / PWA always shows latest clean UI) */}
+            <button
+              type="button"
+              onClick={() => void handlePurgeCacheAndReload()}
+              title={tr(state.lang, 'تحديث الكاش وإعادة تحميل الواجهة النظيفة', 'Actualiser le cache', 'Refresh cache & reload')}
+              aria-label="Refresh App Cache"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] text-sky-600 dark:text-sky-400 flex items-center justify-center hover:border-sky-500 transition cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
 
             {isInstallable && !isInstalled && (
@@ -483,7 +553,7 @@ export default function App() {
                 type="button"
                 onClick={() => void install()}
                 aria-label="Install PWA"
-                className="hidden lg:inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold whitespace-nowrap transition shadow-xs cursor-pointer"
+                className="hidden lg:inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-extrabold whitespace-nowrap transition cursor-pointer"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>{tr(state.lang, 'تثبيت', 'Installer', 'Install')}</span>
@@ -497,7 +567,7 @@ export default function App() {
       {restCompleteFlash && (
         <div
           role="status"
-          className="bg-orange-500 text-white text-xs font-extrabold py-2 px-4 flex items-center justify-between gap-2 no-print shadow-sm"
+          className="bg-rose-600 text-white text-xs font-extrabold py-2 px-4 flex items-center justify-between gap-2 no-print"
         >
           <div className="flex items-center gap-2">
             <BellRing className="w-4 h-4 shrink-0" />
@@ -537,7 +607,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4 space-y-4">
-        {/* Clear 4-Section Quick Switcher Cards (Strict 4-Column CSS Grid) */}
+        {/* Clear 4-Section Quick Switcher Cards (Harmonious 5-Color Web Palette on Solid Dark #131C31) */}
         <section
           aria-label={tr(state.lang, 'أقسام التطبيق الرئيسية', 'Sections principales', 'Main Sections')}
           className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 no-print"
@@ -551,15 +621,13 @@ export default function App() {
                 onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
                 className={`flex items-center gap-3 p-3 rounded-xl border text-start transition active:scale-[0.99] cursor-pointer ${
                   isActive
-                    ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                    : 'bg-white dark:bg-[#13182b] border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
+                    ? item.activeBgClass
+                    : 'bg-white dark:bg-[#131C31] border-slate-200 dark:border-[#24324F] hover:border-teal-500/50'
                 }`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-extrabold text-xs ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-100 dark:bg-[#0f1423] text-orange-500'
+                    isActive ? 'bg-white/20 text-white' : item.iconBadgeClass
                   }`}
                 >
                   {item.icon}
@@ -574,7 +642,7 @@ export default function App() {
                   </div>
                   <div
                     className={`text-[11px] truncate ${
-                      isActive ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'
+                      isActive ? 'text-white/90' : 'text-slate-500 dark:text-slate-300'
                     }`}
                   >
                     {item.subtitle}
@@ -742,7 +810,7 @@ export default function App() {
 
       {/* Mobile Bottom 4-Tab Bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 grid grid-cols-4 no-print"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white dark:bg-[#131C31] border-t border-slate-200 dark:border-[#24324F] grid grid-cols-4 no-print"
         aria-label="Mobile Navigation"
       >
         {navItems.map((item) => {
@@ -753,9 +821,7 @@ export default function App() {
               type="button"
               onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
               className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold transition cursor-pointer ${
-                active
-                  ? 'text-orange-500'
-                  : 'text-slate-500 dark:text-slate-400'
+                active ? item.mobileTextClass : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               {item.icon}
@@ -800,7 +866,7 @@ export default function App() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-orange-500 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center border border-orange-500/40"
+          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center border border-teal-400/40"
         >
           {toast}
         </div>

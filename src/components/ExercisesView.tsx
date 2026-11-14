@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Activity,
+  Award,
   BookOpen,
   CheckCircle2,
+  Compass,
   ExternalLink,
   GitCompare,
   Image as ImageIcon,
@@ -15,7 +18,10 @@ import {
 import { MUSCLE_ZONE_ORDER, MUSCLE_ZONES } from '../data/muscles';
 import { SCIENTIFIC_STUDIES } from '../data/studies';
 import { tr, trText } from '../engine/i18n';
-import { MuscleVolumeSummary } from '../engine/volume';
+import {
+  buildExerciseComparisonProfile,
+  MuscleVolumeSummary,
+} from '../engine/volume';
 import {
   AppState,
   DifficultyLevel,
@@ -74,6 +80,19 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
   } = state;
 
   const [cardFrameMap, setCardFrameMap] = useState<Record<string, 0 | 1>>({});
+  const [compareSourceScope, setCompareSourceScope] = useState<'favorites' | 'all'>('favorites');
+  const [activeSlotToAssign, setActiveSlotToAssign] = useState<0 | 1>(0);
+
+  const favoriteExerciseObjects = useMemo(
+    () => exercises.filter((ex) => favoriteExercises.includes(ex.id)),
+    [exercises, favoriteExercises]
+  );
+
+  // Pool of exercises shown in comparison selectors (defaults to user's favorites when >= 2 favorites exist)
+  const selectablePool =
+    compareSourceScope === 'favorites' && favoriteExerciseObjects.length >= 2
+      ? favoriteExerciseObjects
+      : exercises;
 
   const filteredExercises = exercises.filter((ex) => {
     const q = searchQuery.trim().toLowerCase();
@@ -99,7 +118,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
   const subTabs: { id: ExSubTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'library',
-      label: tr(lang, `المكتبة المصورة (${exercises.length})`, `Photos & Exercices (${exercises.length})`, `Photo Library (${exercises.length})`),
+      label: tr(
+        lang,
+        `المكتبة المصورة (${exercises.length})`,
+        `Photos & Exercices (${exercises.length})`,
+        `Photo Library (${exercises.length})`
+      ),
       icon: <ImageIcon className="w-4 h-4 shrink-0" />,
     },
     {
@@ -109,7 +133,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
     },
     {
       id: 'compare',
-      label: tr(lang, 'مقارنة تمرينين بالصور', 'Comparer 2 Exercices', 'Photo Compare'),
+      label: tr(
+        lang,
+        `مقارنة المفضلة (${favoriteExercises.length})`,
+        `Comparer Favoris (${favoriteExercises.length})`,
+        `Compare Favorites (${favoriteExercises.length})`
+      ),
       icon: <GitCompare className="w-4 h-4 shrink-0" />,
     },
     {
@@ -135,13 +164,53 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
     { key: 'triceps', label: tr(lang, 'الترايسبس', 'Triceps', 'Triceps') },
   ];
 
-  const exA = exercises.find((e) => e.id === state.compareIds[0]) || exercises[0];
-  const exB = exercises.find((e) => e.id === state.compareIds[1]) || exercises[1];
+  // Ensure exA and exB resolve cleanly, preferring favorite exercises when available
+  const fallbackFirst = favoriteExerciseObjects[0] || exercises[0];
+  const fallbackSecond =
+    favoriteExerciseObjects.find((e) => e.id !== fallbackFirst.id) ||
+    exercises.find((e) => e.id !== fallbackFirst.id) ||
+    exercises[1];
+
+  const exA = exercises.find((e) => e.id === state.compareIds[0]) || fallbackFirst;
+  const exB = exercises.find((e) => e.id === state.compareIds[1]) || fallbackSecond;
+
+  const profileA = useMemo(
+    () => buildExerciseComparisonProfile(exA, SCIENTIFIC_STUDIES),
+    [exA]
+  );
+  const profileB = useMemo(
+    () => buildExerciseComparisonProfile(exB, SCIENTIFIC_STUDIES),
+    [exB]
+  );
+
+  const handleQuickCompareFromCard = (exId: string) => {
+    if (!favoriteExercises.includes(exId)) {
+      onToggleFavorite(exId);
+    }
+    if (state.compareIds[0] === exId || state.compareIds[1] === exId) {
+      onSetExSubTab('compare');
+      return;
+    }
+    onSetCompareIds([state.compareIds[0], exId]);
+    onSetExSubTab('compare');
+  };
+
+  const assignFavoriteToSlot = (exId: string) => {
+    if (activeSlotToAssign === 0) {
+      const other = exB.id === exId ? exA.id : exB.id;
+      onSetCompareIds([exId, other]);
+      setActiveSlotToAssign(1);
+    } else {
+      const other = exA.id === exId ? exB.id : exA.id;
+      onSetCompareIds([other, exId]);
+      setActiveSlotToAssign(0);
+    }
+  };
 
   return (
     <div className="space-y-4">
       {/* Clear Sub-Navigation Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white dark:bg-[#13182b] p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white dark:bg-[#131C31] p-2 rounded-2xl border border-slate-200 dark:border-[#24324F] shadow-xs">
         {subTabs.map((t) => (
           <button
             key={t.id}
@@ -149,8 +218,8 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
             onClick={() => onSetExSubTab(t.id)}
             className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
               exSubTab === t.id
-                ? 'bg-orange-500 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0f1423]'
+                ? 'bg-teal-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A2642]'
             }`}
           >
             {t.icon}
@@ -163,16 +232,21 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
       {exSubTab === 'library' && (
         <div className="space-y-4">
           {/* Quick Search + One-Tap Muscle Filter Bar */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 shadow-xs">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
               <div className="md:col-span-5 relative">
-                <Search className="w-4 h-4 text-orange-500 absolute top-1/2 -translate-y-1/2 start-3" />
+                <Search className="w-4 h-4 text-teal-400 absolute top-1/2 -translate-y-1/2 start-3" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(e) => onSetSearch(e.target.value)}
-                  placeholder={tr(lang, 'ابحث باسم التمرين أو العضلة أو الأداة...', 'Rechercher exercice, muscle...', 'Search exercise, muscle, equipment...')}
-                  className="w-full ps-9 pe-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-xs font-semibold text-slate-900 dark:text-white focus:border-orange-500 focus:outline-none"
+                  placeholder={tr(
+                    lang,
+                    'ابحث باسم التمرين أو العضلة أو الأداة...',
+                    'Rechercher exercice, muscle...',
+                    'Search exercise, muscle, equipment...'
+                  )}
+                  className="w-full ps-9 pe-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-semibold text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
                 />
               </div>
               <div className="md:col-span-3">
@@ -180,9 +254,11 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'فلتر العضلة', 'Filtre muscle', 'Muscle Filter')}
                   value={muscleFilter}
                   onChange={(e) => onSetMuscleFilter(e.target.value as MuscleZoneKey | 'ALL')}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-xs font-bold text-slate-800 dark:text-slate-100"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-bold text-slate-800 dark:text-slate-100"
                 >
-                  <option value="ALL">{tr(lang, 'جميع العضلات (14)', 'Tous les muscles (14)', 'All 14 Muscle Zones')}</option>
+                  <option value="ALL">
+                    {tr(lang, 'جميع العضلات (14)', 'Tous les muscles (14)', 'All 14 Muscle Zones')}
+                  </option>
                   {MUSCLE_ZONE_ORDER.map((mKey) => (
                     <option key={mKey} value={mKey}>
                       {trText(lang, MUSCLE_ZONES[mKey].name)}
@@ -195,11 +271,15 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'المعدات', 'Équipement', 'Equipment')}
                   value={equipmentFilter}
                   onChange={(e) => onSetEquipmentFilter(e.target.value as EquipmentType | 'ALL')}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-xs font-bold text-slate-800 dark:text-slate-100"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-bold text-slate-800 dark:text-slate-100"
                 >
-                  <option value="ALL">{tr(lang, 'كل المعدات', 'Tout équipement', 'All Equipment')}</option>
+                  <option value="ALL">
+                    {tr(lang, 'كل المعدات', 'Tout équipement', 'All Equipment')}
+                  </option>
                   {(['Dumbbell', 'Machine', 'Cable', 'Barbell', 'Bodyweight'] as const).map((eq) => (
-                    <option key={eq} value={eq}>{eq}</option>
+                    <option key={eq} value={eq}>
+                      {eq}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -208,11 +288,13 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'المستوى', 'Niveau', 'Difficulty')}
                   value={difficultyFilter}
                   onChange={(e) => onSetDifficultyFilter(e.target.value as DifficultyLevel | 'ALL')}
-                  className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-xs font-bold text-slate-800 dark:text-slate-100"
+                  className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-bold text-slate-800 dark:text-slate-100"
                 >
                   <option value="ALL">{tr(lang, 'المستوى', 'Niveau', 'Level')}</option>
                   <option value="beginner">{tr(lang, 'مبتدئ', 'Débutant', 'Beginner')}</option>
-                  <option value="intermediate">{tr(lang, 'متوسط', 'Intermédiaire', 'Intermediate')}</option>
+                  <option value="intermediate">
+                    {tr(lang, 'متوسط', 'Intermédiaire', 'Intermediate')}
+                  </option>
                   <option value="advanced">{tr(lang, 'متقدم', 'Avancé', 'Advanced')}</option>
                 </select>
                 <button
@@ -221,8 +303,8 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'المفضلة فقط', 'Favoris uniquement', 'Favorites Only')}
                   className={`p-2.5 rounded-xl border shrink-0 transition cursor-pointer ${
                     favoritesOnly
-                      ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
-                      : 'bg-slate-50 dark:bg-[#0f1423] text-slate-500 border-slate-200 dark:border-slate-700'
+                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
+                      : 'bg-slate-50 dark:bg-[#0B1120] text-slate-500 dark:text-slate-300 border-slate-200 dark:border-[#24324F]'
                   }`}
                 >
                   <Star className={`w-4 h-4 ${favoritesOnly ? 'fill-current' : ''}`} />
@@ -230,25 +312,43 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
               </div>
             </div>
 
-            {/* One-Tap Quick Muscle Group Selector */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scroll">
-              {quickMuscleGroups.map((mg) => {
-                const active = muscleFilter === mg.key;
-                return (
-                  <button
-                    key={mg.key}
-                    type="button"
-                    onClick={() => onSetMuscleFilter(mg.key)}
-                    className={`h-8 px-3 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 transition cursor-pointer ${
-                      active
-                        ? 'bg-orange-500 text-white shadow-xs'
-                        : 'bg-slate-100 dark:bg-[#0f1423] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-orange-500'
-                    }`}
-                  >
-                    {mg.label}
-                  </button>
-                );
-              })}
+            {/* One-Tap Quick Muscle Group Selector + Favorites Compare Shortcut */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scroll">
+                {quickMuscleGroups.map((mg) => {
+                  const active = muscleFilter === mg.key;
+                  return (
+                    <button
+                      key={mg.key}
+                      type="button"
+                      onClick={() => onSetMuscleFilter(mg.key)}
+                      className={`h-8 px-3 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 transition cursor-pointer ${
+                        active
+                          ? 'bg-teal-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] hover:border-teal-500'
+                      }`}
+                    >
+                      {mg.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onSetExSubTab('compare')}
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold whitespace-nowrap transition shadow-xs cursor-pointer"
+              >
+                <GitCompare className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  {tr(
+                    lang,
+                    `مقارنة تمرينين من المفضلة (${favoriteExercises.length})`,
+                    `Comparer 2 Favoris (${favoriteExercises.length})`,
+                    `Compare 2 Favorites (${favoriteExercises.length})`
+                  )}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -256,14 +356,15 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredExercises.map((ex) => {
               const isFav = favoriteExercises.includes(ex.id);
+              const isInCompare = state.compareIds.includes(ex.id);
               const frame = cardFrameMap[ex.id] ?? 0;
               return (
                 <div
                   key={ex.id}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] overflow-hidden flex flex-col justify-between shadow-xs hover:border-orange-500/50 transition"
+                  className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] overflow-hidden flex flex-col justify-between shadow-xs hover:border-teal-500/60 transition"
                 >
                   <div>
-                    <div className="relative h-52 bg-slate-100 dark:bg-[#0f1423] border-b border-slate-100 dark:border-slate-800">
+                    <div className="relative h-52 bg-slate-100 dark:bg-[#0B1120] border-b border-slate-100 dark:border-[#24324F]">
                       <button
                         type="button"
                         onClick={() => onOpenExercise(ex.id)}
@@ -283,10 +384,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                         type="button"
                         onClick={() => onToggleFavorite(ex.id)}
                         aria-label={tr(lang, 'مفضلة', 'Favori', 'Toggle Favorite')}
-                        className={`absolute top-2.5 start-2.5 w-8 h-8 rounded-xl backdrop-blur-md border flex items-center justify-center transition cursor-pointer ${
+                        className={`absolute top-2.5 start-2.5 w-8 h-8 rounded-xl border flex items-center justify-center transition cursor-pointer ${
                           isFav
-                            ? 'bg-orange-500 text-white border-orange-400 shadow'
-                            : 'bg-slate-900/75 text-white border-white/15 hover:bg-slate-900'
+                            ? 'bg-amber-500 text-slate-950 border-amber-300 shadow'
+                            : 'bg-[#0B1120]/85 text-white border-white/15 hover:bg-[#131C31]'
                         }`}
                       >
                         <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
@@ -297,19 +398,19 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                         type="button"
                         onClick={() => onOpenLightbox(ex.id)}
                         aria-label={tr(lang, 'تكبير الصورة', 'Zoom image', 'Zoom Photo')}
-                        className="absolute top-2.5 end-2.5 w-8 h-8 rounded-xl bg-slate-900/75 text-white border border-white/15 hover:bg-orange-500 flex items-center justify-center transition cursor-pointer"
+                        className="absolute top-2.5 end-2.5 w-8 h-8 rounded-xl bg-[#0B1120]/85 text-white border border-white/15 hover:bg-teal-600 flex items-center justify-center transition cursor-pointer"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Direct 1. Start / 2. Peak Photo Toggle on Card */}
                       <div className="absolute bottom-2.5 inset-x-2.5 flex items-center justify-between gap-2">
-                        <div className="grid grid-cols-2 rounded-xl bg-slate-950/85 backdrop-blur-md p-0.5 border border-white/15 text-[11px] font-extrabold text-white">
+                        <div className="grid grid-cols-2 rounded-xl bg-[#0B1120]/90 p-0.5 border border-white/15 text-[11px] font-extrabold text-white">
                           <button
                             type="button"
                             onClick={() => setCardFrameMap((prev) => ({ ...prev, [ex.id]: 0 }))}
                             className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition cursor-pointer ${
-                              frame === 0 ? 'bg-orange-500 text-white' : 'text-slate-300 hover:text-white'
+                              frame === 0 ? 'bg-teal-600 text-white' : 'text-slate-300 hover:text-white'
                             }`}
                           >
                             {tr(lang, '1. البداية', '1. Départ', '1. Start')}
@@ -318,23 +419,25 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                             type="button"
                             onClick={() => setCardFrameMap((prev) => ({ ...prev, [ex.id]: 1 }))}
                             className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition cursor-pointer ${
-                              frame === 1 ? 'bg-orange-500 text-white' : 'text-slate-300 hover:text-white'
+                              frame === 1 ? 'bg-sky-600 text-white' : 'text-slate-300 hover:text-white'
                             }`}
                           >
                             {tr(lang, '2. الذروة', '2. Pic', '2. Peak')}
                           </button>
                         </div>
 
-                        <span className="px-2.5 py-1 rounded-xl bg-slate-950/80 text-white text-[11px] font-extrabold mono-num whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-xl bg-[#0B1120]/90 text-teal-300 border border-teal-500/30 text-[11px] font-extrabold mono-num whitespace-nowrap">
                           {ex.sets}×{ex.repsLabel}
                         </span>
                       </div>
                     </div>
 
                     <div className="p-4 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs font-bold text-orange-500">
+                      <div className="flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-300">
                         <span className="truncate">{trText(lang, ex.muscleLabel)}</span>
-                        <span className="mono-num text-slate-500 dark:text-slate-400 shrink-0">{ex.equipment}</span>
+                        <span className="mono-num text-sky-600 dark:text-sky-300 shrink-0">
+                          {ex.id} · {ex.equipment}
+                        </span>
                       </div>
                       <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
                         {trText(lang, ex.name)}
@@ -345,19 +448,32 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="px-4 pb-4 pt-2 grid grid-cols-[1fr_auto] items-center gap-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                  <div className="px-4 pb-4 pt-2 grid grid-cols-[1fr_auto_auto] items-center gap-1.5 border-t border-slate-100 dark:border-[#24324F] text-xs">
                     <button
                       type="button"
                       onClick={() => onOpenExercise(ex.id)}
-                      className="h-9 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-extrabold whitespace-nowrap transition text-center shadow-xs cursor-pointer"
+                      className="h-9 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold whitespace-nowrap transition text-center shadow-xs cursor-pointer"
                     >
-                      {tr(lang, 'عرض الصور والنصائح', 'Photos & Conseils', 'Photos & Tips')}
+                      {tr(lang, 'عرض التفاصيل', 'Détails & Photos', 'Details & Photos')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickCompareFromCard(ex.id)}
+                      className={`inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl border font-extrabold whitespace-nowrap transition cursor-pointer ${
+                        isInCompare
+                          ? 'bg-indigo-600 text-white border-indigo-500'
+                          : 'bg-slate-100 dark:bg-[#1A2642] text-indigo-600 dark:text-indigo-300 border-slate-200 dark:border-[#24324F] hover:border-indigo-400'
+                      }`}
+                      title={tr(lang, 'مقارنة مع تمرين آخر', 'Comparer cet exercice', 'Compare exercise')}
+                    >
+                      <GitCompare className="w-3.5 h-3.5 shrink-0" />
+                      <span>{tr(lang, 'قارن', 'Comparer', 'Compare')}</span>
                     </button>
                     <a
                       href={ex.media.youtubeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-extrabold whitespace-nowrap hover:border-orange-500 transition"
+                      className="inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#1A2642] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] font-extrabold whitespace-nowrap hover:border-sky-400 transition"
                       aria-label={`YouTube ${trText(lang, ex.name)}`}
                     >
                       <ExternalLink className="w-3.5 h-3.5 shrink-0" />
@@ -383,101 +499,557 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
         />
       )}
 
-      {/* 3. SIDE-BY-SIDE PHOTO COMPARE */}
+      {/* 3. SIDE-BY-SIDE FAVORITES COMPARISON VIEW (2-COLUMN BIOMECHANICAL & EVIDENCE MATRIX) */}
       {exSubTab === 'compare' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-orange-200/80 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <GitCompare className="w-4 h-4 text-orange-500" />
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                {tr(lang, 'مقارنة مصورة مباشرة بين تمرينين', 'Comparaison Photo Côte à Côte', 'Side-by-Side Exercise Photo Comparison')}
-              </h3>
+          {/* Favorites Selector & Control Header */}
+          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 sm:p-5 space-y-4 shadow-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                  <GitCompare className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                    {tr(
+                      lang,
+                      'المقارنة الثنائية المباشرة لتمارينك المفضلة (عمودان جنباً إلى جنب)',
+                      'Comparaison Côte à Côte de Vos Exercices Favoris (2 Colonnes)',
+                      'Side-by-Side Favorites Exercise Comparison (Two-Column View)'
+                    )}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-300">
+                    {tr(
+                      lang,
+                      'اختر تمرينين من قائمة المفضلة لمقارنة العضلات الأساسية والمساعدة، درجة الدليل العلمي، وتفاصيل النموذج الحركي (Kinematic Rig).',
+                      'Sélectionnez deux exercices favoris pour comparer leurs muscles primaires/secondaires, le grade de preuve et le modèle cinématique.',
+                      'Select two exercises from your favorites to compare primary/secondary muscles, scientific evidence grade, and kinematic rig details.'
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Filter Pool Toggle: Favorites Only vs All 32 Exercises */}
+              <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0B1120] p-1 rounded-xl border border-slate-200 dark:border-[#24324F] text-xs">
+                <button
+                  type="button"
+                  onClick={() => setCompareSourceScope('favorites')}
+                  className={`inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer ${
+                    compareSourceScope === 'favorites'
+                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  <span>
+                    {tr(
+                      lang,
+                      `تماريني المفضلة (${favoriteExerciseObjects.length})`,
+                      `Mes Favoris (${favoriteExerciseObjects.length})`,
+                      `My Favorites (${favoriteExerciseObjects.length})`
+                    )}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompareSourceScope('all')}
+                  className={`h-8 px-3 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer ${
+                    compareSourceScope === 'all'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {tr(lang, 'كل التمارين (32)', 'Tous (32)', 'All Exercises (32)')}
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <select
-                aria-label="Compare Exercise A"
-                value={exA.id}
-                onChange={(e) => onSetCompareIds([e.target.value, exB.id])}
-                className="w-full p-2.5 rounded-xl border border-indigo-200 dark:border-slate-700 bg-indigo-50/40 dark:bg-slate-950 font-bold"
-              >
-                {exercises.map((e) => (
-                  <option key={e.id} value={e.id}>{e.id} — {trText(lang, e.name)}</option>
-                ))}
-              </select>
-              <select
-                aria-label="Compare Exercise B"
-                value={exB.id}
-                onChange={(e) => onSetCompareIds([exA.id, e.target.value])}
-                className="w-full p-2.5 rounded-xl border border-orange-200 dark:border-slate-700 bg-orange-50/40 dark:bg-slate-950 font-bold"
-              >
-                {exercises.map((e) => (
-                  <option key={e.id} value={e.id}>{e.id} — {trText(lang, e.name)}</option>
-                ))}
-              </select>
+
+            {/* Interactive Favorites Bar: One-Tap Assignment to Column 1 or Column 2 */}
+            <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="font-extrabold text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  <span>
+                    {tr(
+                      lang,
+                      'شريط اختيار سريع من المفضلة (اضغط على أي تمرين مفضل لإدراجه في المقارنة):',
+                      'Sélection rapide depuis vos favoris :',
+                      'Quick-Pick from Favorites (click any favorite exercise to compare):'
+                    )}
+                  </span>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSlotToAssign(0)}
+                    className={`h-7 px-2.5 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${
+                      activeSlotToAssign === 0
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-slate-200 dark:bg-[#1A2642] text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {tr(lang, 'تعيين للعمود 1', 'Cibler Colonne 1', 'Assign Slot 1')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSlotToAssign(1)}
+                    className={`h-7 px-2.5 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${
+                      activeSlotToAssign === 1
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-slate-200 dark:bg-[#1A2642] text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {tr(lang, 'تعيين للعمود 2', 'Cibler Colonne 2', 'Assign Slot 2')}
+                  </button>
+                </div>
+              </div>
+
+              {favoriteExerciseObjects.length < 2 ? (
+                <div className="text-xs text-amber-600 dark:text-amber-300 font-semibold">
+                  {tr(
+                    lang,
+                    'أضف تمرينين على الأقل إلى المفضلة (نجمة ★) في المكتبة لتخصيص قائمتك، أو اختر مباشرة من القوائم أدناه.',
+                    'Ajoutez au moins 2 exercices en favoris (★) ou utilisez les menus ci-dessous.',
+                    'Star at least 2 exercises in the Library to populate your custom favorites bar, or pick from the dropdowns below.'
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  {favoriteExerciseObjects.map((favEx) => {
+                    const isSlot1 = exA.id === favEx.id;
+                    const isSlot2 = exB.id === favEx.id;
+                    return (
+                      <button
+                        key={`FAV_CHIP_${favEx.id}`}
+                        type="button"
+                        onClick={() => assignFavoriteToSlot(favEx.id)}
+                        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-extrabold border transition cursor-pointer ${
+                          isSlot1
+                            ? 'bg-teal-600 text-white border-teal-400 shadow-xs'
+                            : isSlot2
+                            ? 'bg-indigo-600 text-white border-indigo-400 shadow-xs'
+                            : 'bg-white dark:bg-[#131C31] text-slate-800 dark:text-slate-100 border-slate-200 dark:border-[#24324F] hover:border-amber-400'
+                        }`}
+                      >
+                        <Star className="w-3 h-3 fill-current text-amber-400 shrink-0" />
+                        <span className="mono-num">{favEx.id}</span>
+                        <span className="truncate max-w-[160px]">{trText(lang, favEx.name)}</span>
+                        {isSlot1 && (
+                          <span className="px-1.5 py-0.2 rounded bg-white/20 text-[10px] mono-num">
+                            #1
+                          </span>
+                        )}
+                        {isSlot2 && (
+                          <span className="px-1.5 py-0.2 rounded bg-white/20 text-[10px] mono-num">
+                            #2
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Two-Column Exercise Selector Dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="space-y-1">
+                <label
+                  htmlFor="compare-select-a"
+                  className="font-extrabold text-teal-600 dark:text-teal-300 flex items-center justify-between"
+                >
+                  <span>
+                    {tr(
+                      lang,
+                      'العمود الأول — التمرين المفضل (1):',
+                      'Colonne 1 — Exercice Favori (1) :',
+                      'Column 1 — Favorite Exercise (A):'
+                    )}
+                  </span>
+                  <span className="mono-num text-[11px]">{exA.id}</span>
+                </label>
+                <select
+                  id="compare-select-a"
+                  aria-label="Compare Exercise A"
+                  value={exA.id}
+                  onChange={(e) => onSetCompareIds([e.target.value, exB.id])}
+                  className="w-full h-10 px-3 rounded-xl border border-teal-500/40 bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-white font-extrabold focus:border-teal-400 focus:outline-none"
+                >
+                  {selectablePool.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {favoriteExercises.includes(e.id) ? '★ ' : ''}
+                      {e.id} — {trText(lang, e.name)} ({e.equipment})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label
+                  htmlFor="compare-select-b"
+                  className="font-extrabold text-indigo-600 dark:text-indigo-300 flex items-center justify-between"
+                >
+                  <span>
+                    {tr(
+                      lang,
+                      'العمود الثاني — التمرين المفضل (2):',
+                      'Colonne 2 — Exercice Favori (2) :',
+                      'Column 2 — Favorite Exercise (B):'
+                    )}
+                  </span>
+                  <span className="mono-num text-[11px]">{exB.id}</span>
+                </label>
+                <select
+                  id="compare-select-b"
+                  aria-label="Compare Exercise B"
+                  value={exB.id}
+                  onChange={(e) => onSetCompareIds([exA.id, e.target.value])}
+                  className="w-full h-10 px-3 rounded-xl border border-indigo-500/40 bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-white font-extrabold focus:border-indigo-400 focus:outline-none"
+                >
+                  {selectablePool.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {favoriteExercises.includes(e.id) ? '★ ' : ''}
+                      {e.id} — {trText(lang, e.name)} ({e.equipment})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
+          {/* TWO-COLUMN SIDE-BY-SIDE COMPARISON GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[exA, exB].map((ex, i) => (
-              <div
-                key={`CMP_${ex.id}`}
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 text-xs shadow-sm"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <span className={`text-[11px] font-extrabold mono-num ${i === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                      {ex.id} · {ex.equipment}
-                    </span>
-                    <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100">{trText(lang, ex.name)}</h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onOpenLightbox(ex.id)}
-                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white transition"
-                    aria-label={tr(lang, 'تكبير الصور', 'Zoomer', 'Zoom photos')}
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                  </button>
-                </div>
+            {([profileA, profileB] as const).map((prof, colIdx) => {
+              const ex = prof.exercise;
+              const isFav = favoriteExercises.includes(ex.id);
+              const isCol1 = colIdx === 0;
+              const accentBadgeCls = isCol1
+                ? 'bg-teal-600 text-white'
+                : 'bg-indigo-600 text-white';
+              const accentTextCls = isCol1
+                ? 'text-teal-600 dark:text-teal-300'
+                : 'text-indigo-600 dark:text-indigo-300';
+              const evidenceBadgeCls =
+                prof.evidenceGrade === 'strong'
+                  ? 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border-teal-500/40'
+                  : prof.evidenceGrade === 'moderate'
+                  ? 'bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-500/40'
+                  : 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/40';
 
-                {/* Start & Peak Reference Photos Side-by-Side */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative h-36 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                    <ExerciseImage exercise={ex} frameIdx={0} alt={`${trText(lang, ex.name)} 1`} className="w-full h-full object-cover" />
-                    <span className="absolute bottom-1.5 start-1.5 px-2 py-0.5 rounded-md bg-indigo-600/90 text-white text-[10px] font-bold">
-                      {tr(lang, '1. البداية', '1. Départ', '1. Start')}
-                    </span>
-                  </div>
-                  <div className="relative h-36 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                    <ExerciseImage exercise={ex} frameIdx={1} alt={`${trText(lang, ex.name)} 2`} className="w-full h-full object-cover" />
-                    <span className="absolute bottom-1.5 start-1.5 px-2 py-0.5 rounded-md bg-orange-500/90 text-white text-[10px] font-bold">
-                      {tr(lang, '2. الذروة', '2. Pic', '2. Peak')}
-                    </span>
-                  </div>
-                </div>
+              return (
+                <article
+                  key={`CMP_COL_${colIdx}_${ex.id}`}
+                  aria-label={`${trText(lang, ex.name)} Comparison Column`}
+                  className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 sm:p-5 space-y-4 text-xs shadow-xs flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    {/* Column Header: ID, Equipment, Title, Favorite Star & Zoom */}
+                    <div className="flex items-start justify-between gap-2 pb-3 border-b border-slate-100 dark:border-[#24324F]">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold mono-num ${accentBadgeCls}`}>
+                            #{colIdx + 1} · {ex.id}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1A2642] text-sky-600 dark:text-sky-300 font-bold mono-num text-[11px]">
+                            {ex.equipment}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#1A2642] text-slate-700 dark:text-slate-200 font-bold mono-num text-[11px]">
+                            {ex.sets}×{ex.repsLabel} ({ex.rirLabel})
+                          </span>
+                        </div>
+                        <h4 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white mt-1.5 leading-snug">
+                          {trText(lang, ex.name)}
+                        </h4>
+                      </div>
 
-                <div className="space-y-1.5 pt-1">
-                  <div><strong>{tr(lang, 'العضلة الرئيسية:', 'Muscle principal :', 'Primary Muscle:')}</strong> {trText(lang, MUSCLE_ZONES[ex.primaryMuscle].name)}</div>
-                  <div><strong>{tr(lang, 'المجموعات والتكرار:', 'Prescription :', 'Sets & Reps:')}</strong> <span className="mono-num font-bold">{ex.sets}×{ex.repsLabel} ({ex.rirLabel})</span></div>
-                  <div><strong>{tr(lang, 'حماية المفصل:', 'Sécurité :', 'Joint Comfort:')}</strong> {trText(lang, ex.jointSafety)}</div>
-                  <div><strong>{tr(lang, 'الخلاصة العلمية:', 'Science :', 'Science Note:')}</strong> {trText(lang, ex.scienceNote)}</div>
-                </div>
-              </div>
-            ))}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => onToggleFavorite(ex.id)}
+                          aria-label={tr(lang, 'تبديل المفضلة', 'Favori', 'Toggle Favorite')}
+                          className={`w-8 h-8 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+                            isFav
+                              ? 'bg-amber-500 text-slate-950 border-amber-400'
+                              : 'bg-slate-100 dark:bg-[#0B1120] text-slate-400 border-slate-200 dark:border-[#24324F]'
+                          }`}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOpenLightbox(ex.id)}
+                          className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#0B1120] hover:bg-teal-600 hover:text-white text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] flex items-center justify-center transition cursor-pointer"
+                          aria-label={tr(lang, 'تكبير الصور', 'Zoomer', 'Zoom photos')}
+                        >
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Reference Photos (1. Start & 2. Peak Side-by-Side) */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="relative h-36 sm:h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F]">
+                        <ExerciseImage
+                          exercise={ex}
+                          frameIdx={0}
+                          alt={`${trText(lang, ex.name)} Start`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-1.5 start-1.5 px-2 py-0.5 rounded-md bg-[#0B1120]/90 text-teal-300 border border-teal-500/30 text-[10px] font-extrabold">
+                          {tr(lang, '1. البداية', '1. Départ', '1. Start')}
+                        </span>
+                      </div>
+                      <div className="relative h-36 sm:h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F]">
+                        <ExerciseImage
+                          exercise={ex}
+                          frameIdx={1}
+                          alt={`${trText(lang, ex.name)} Peak`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-1.5 start-1.5 px-2 py-0.5 rounded-md bg-[#0B1120]/90 text-sky-300 border border-sky-500/30 text-[10px] font-extrabold">
+                          {tr(lang, '2. الذروة', '2. Pic', '2. Peak')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* SECTION 1: PRIMARY & SECONDARY MUSCLES */}
+                    <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`font-extrabold flex items-center gap-1.5 ${accentTextCls}`}>
+                          <Layers className="w-4 h-4 shrink-0" />
+                          <span>
+                            {tr(
+                              lang,
+                              '1. العضلات المستهدفة (الأساسية والمساعدة)',
+                              '1. Muscles Ciblés (Primaires & Secondaires)',
+                              '1. Target Muscles (Primary & Secondary)'
+                            )}
+                          </span>
+                        </span>
+                        <span className="mono-num text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                          ~{prof.primaryMuscle.recoveryHours}h {tr(lang, 'استشفاء', 'récup.', 'recovery')}
+                        </span>
+                      </div>
+
+                      {/* Primary Muscle */}
+                      <div className="p-2.5 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            {tr(lang, 'العضلة الأساسية (Direct 1.0x):', 'Muscle Primaire (1.0x) :', 'Primary Muscle (1.0x):')}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-teal-500/15 text-teal-600 dark:text-teal-300 font-extrabold text-[10px] mono-num">
+                            {prof.primaryMuscle.optimalRange[0]}–{prof.primaryMuscle.optimalRange[1]} {tr(lang, 'مجموعة/أسبوع', 'séries/sem', 'sets/wk')}
+                          </span>
+                        </div>
+                        <div className="text-sm font-extrabold text-slate-900 dark:text-white">
+                          {trText(lang, prof.primaryMuscle.name)}
+                        </div>
+                        <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                          {trText(lang, prof.primaryMuscle.functionLabel)}
+                        </div>
+                      </div>
+
+                      {/* Secondary / Synergist Muscles */}
+                      <div className="space-y-1.5">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">
+                          {tr(
+                            lang,
+                            `العضلات المساعدة / التآزرية (Synergists ${ex.synergistMultiplier}x):`,
+                            `Muscles Secondaires / Synergistes (${ex.synergistMultiplier}x) :`,
+                            `Secondary / Synergist Muscles (${ex.synergistMultiplier}x):`
+                          )}
+                        </span>
+                        {prof.secondaryMuscles.length === 0 ? (
+                          <span className="inline-block px-2.5 py-1 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] text-slate-500 dark:text-slate-300 font-semibold text-[11px]">
+                            {tr(
+                              lang,
+                              'تمرين عزل مباشر — لا توجد عضلات مساعدة رئيسية',
+                              'Isolation directe — aucun synergiste majeur',
+                              'Pure isolation — no major synergist muscles'
+                            )}
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {prof.secondaryMuscles.map((sec) => (
+                              <span
+                                key={sec.key}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] text-sky-700 dark:text-sky-300 font-bold text-[11px]"
+                              >
+                                <span>{trText(lang, sec.name)}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* SECTION 2: EVIDENCE GRADE & SCIENTIFIC STUDIES */}
+                    <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3.5 space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-extrabold text-indigo-600 dark:text-indigo-300 flex items-center gap-1.5">
+                          <Award className="w-4 h-4 shrink-0" />
+                          <span>
+                            {tr(
+                              lang,
+                              '2. درجة الدليل العلمي (Evidence Grade)',
+                              '2. Niveau de Preuve Scientifique',
+                              '2. Scientific Evidence Grade'
+                            )}
+                          </span>
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-lg border font-extrabold text-[11px] ${evidenceBadgeCls}`}>
+                          {trText(lang, prof.evidenceGradeLabel)}
+                        </span>
+                      </div>
+
+                      <p className="text-slate-700 dark:text-slate-200 leading-relaxed">
+                        {trText(lang, ex.scienceNote)}
+                      </p>
+
+                      {prof.linkedStudies.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {prof.linkedStudies.map((st) => (
+                            <a
+                              key={st.id}
+                              href={st.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] text-[11px] font-bold text-indigo-600 dark:text-indigo-300 hover:border-indigo-400 transition"
+                            >
+                              <BookOpen className="w-3 h-3 shrink-0" />
+                              <span>
+                                {st.authors} ({st.year})
+                              </span>
+                              <ExternalLink className="w-3 h-3 shrink-0" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SECTION 3: KINEMATIC RIG & BIOMECHANICAL DETAILS */}
+                    <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3.5 space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-extrabold text-sky-600 dark:text-sky-300 flex items-center gap-1.5">
+                          <Compass className="w-4 h-4 shrink-0" />
+                          <span>
+                            {tr(
+                              lang,
+                              '3. تفاصيل النموذج الحركي (Kinematic Rig)',
+                              '3. Modèle Cinématique & Biomécanique',
+                              '3. Kinematic Rig & Biomechanics'
+                            )}
+                          </span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-300 font-extrabold mono-num text-[10px]">
+                          rig: {prof.kinematicRig.rigType}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F]">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block">
+                            {tr(lang, 'النمط الحركي والمفصلي:', 'Schéma & Action :', 'Pattern & Joint Action:')}
+                          </span>
+                          <strong className="text-slate-900 dark:text-white block mt-0.5">
+                            {trText(lang, prof.kinematicRig.movementPattern)}
+                          </strong>
+                          <span className="text-[11px] text-slate-600 dark:text-slate-300 block">
+                            {trText(lang, prof.kinematicRig.jointAction)}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F]">
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block">
+                            {tr(lang, 'انحياز المدى الحركي (ROM):', 'Profil d’amplitude (ROM) :', 'ROM Tension Profile:')}
+                          </span>
+                          <strong className="text-teal-600 dark:text-teal-300 block mt-0.5">
+                            {trText(lang, prof.kinematicRig.romTypeLabel)}
+                          </strong>
+                          <span className="text-[11px] text-slate-600 dark:text-slate-300 block">
+                            {trText(lang, prof.kinematicRig.archetypeName)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 text-[11px] bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] rounded-lg p-2.5">
+                        <div>
+                          <strong className="text-sky-600 dark:text-sky-300">
+                            {tr(lang, 'متجه القوة (Force Vector): ', 'Vecteur de force : ', 'Force Vector: ')}
+                          </strong>
+                          <span className="text-slate-700 dark:text-slate-200">
+                            {trText(lang, prof.kinematicRig.forceVector)}
+                          </span>
+                        </div>
+                        <div>
+                          <strong className="text-indigo-600 dark:text-indigo-300">
+                            {tr(lang, 'منحنى المقاومة: ', 'Courbe de résistance : ', 'Resistance Profile: ')}
+                          </strong>
+                          <span className="text-slate-700 dark:text-slate-200">
+                            {trText(lang, prof.kinematicRig.resistanceProfile)}
+                          </span>
+                        </div>
+                        <div>
+                          <strong className="text-teal-600 dark:text-teal-300">
+                            {tr(lang, 'زوايا المفاصل (Joint Angles): ', 'Angles articulaires : ', 'Joint Angles: ')}
+                          </strong>
+                          <span className="text-slate-700 dark:text-slate-200">
+                            {trText(lang, prof.kinematicRig.jointAngles)}
+                          </span>
+                        </div>
+                        <div>
+                          <strong className="text-amber-600 dark:text-amber-300">
+                            {tr(lang, 'سلامة المفاصل: ', 'Sécurité articulaire : ', 'Joint Longevity: ')}
+                          </strong>
+                          <span className="text-slate-700 dark:text-slate-200">
+                            {trText(lang, prof.kinematicRig.jointSafety)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer Action */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-[#24324F] flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onOpenExercise(ex.id)}
+                      className={`flex-1 h-9 px-3 rounded-xl font-extrabold text-xs transition cursor-pointer ${accentBadgeCls}`}
+                    >
+                      {tr(lang, 'فتح الدليل الكامل للتمرين', 'Ouvrir la fiche complète', 'Open Full Exercise Guide')}
+                    </button>
+                    <a
+                      href={ex.media.youtubeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-slate-100 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] font-extrabold hover:border-teal-500 transition"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>{tr(lang, 'فيديو', 'Vidéo', 'Video')}</span>
+                    </a>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* 4. MEDIA & DATA QUALITY CENTER */}
       {exSubTab === 'quality' && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 shadow-xs">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-indigo-500" />
-                {tr(lang, 'سجل الصور المرجعية الموثقة (32/32 تمريناً)', 'Registre des Photos Références (32/32)', 'Verified Reference Photo Registry (32/32)')}
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-teal-400" />
+                {tr(
+                  lang,
+                  'سجل الصور المرجعية الموثقة (32/32 تمريناً)',
+                  'Registre des Photos Références (32/32)',
+                  'Verified Reference Photo Registry (32/32)'
+                )}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-300 mt-0.5">
                 {tr(
                   lang,
                   'جميع التمارين مرتبطة بصور البداية والذروة من قاعدة free-exercise-db (رخصة عامة Unlicense) مع روابط فيديو يوتيوب.',
@@ -491,27 +1063,35 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-start border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-slate-200 dark:border-[#24324F] text-slate-500 dark:text-slate-300">
                   <th className="py-2 px-2 text-start">ID</th>
                   <th className="py-2 px-2 text-start">{tr(lang, 'التمرين', 'Exercice', 'Exercise')}</th>
+                  <th className="py-2 px-2 text-start">{tr(lang, 'النموذج الحركي', 'Rig Cinématique', 'Kinematic Rig')}</th>
                   <th className="py-2 px-2 text-start">{tr(lang, 'المجلد الموثق', 'Dossier Image', 'Photo Folder')}</th>
-                  <th className="py-2 px-2 text-start">{tr(lang, 'الرخصة', 'Licence', 'License')}</th>
                   <th className="py-2 px-2 text-start">{tr(lang, 'الحالة', 'Statut', 'Status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {exercises.map((ex) => (
-                  <tr key={`QA_${ex.id}`} className="border-b border-slate-100 dark:border-slate-800/70">
-                    <td className="py-2 px-2 font-mono font-bold text-indigo-600 dark:text-indigo-400">{ex.id}</td>
-                    <td className="py-2 px-2 font-semibold">
-                      <button type="button" onClick={() => onOpenExercise(ex.id)} className="hover:underline text-start">
+                  <tr key={`QA_${ex.id}`} className="border-b border-slate-100 dark:border-[#24324F]/70">
+                    <td className="py-2 px-2 font-mono font-bold text-teal-600 dark:text-teal-300">{ex.id}</td>
+                    <td className="py-2 px-2 font-semibold text-slate-900 dark:text-white">
+                      <button
+                        type="button"
+                        onClick={() => onOpenExercise(ex.id)}
+                        className="hover:underline text-start cursor-pointer"
+                      >
                         {trText(lang, ex.name)}
                       </button>
                     </td>
-                    <td className="py-2 px-2 font-mono text-[11px] text-slate-500 dark:text-slate-400">{ex.media.folderId}</td>
-                    <td className="py-2 px-2 text-[11px]">{ex.media.license}</td>
+                    <td className="py-2 px-2 font-mono text-[11px] text-sky-600 dark:text-sky-300">
+                      {ex.rigType}
+                    </td>
+                    <td className="py-2 px-2 font-mono text-[11px] text-slate-500 dark:text-slate-300">
+                      {ex.media.folderId}
+                    </td>
                     <td className="py-2 px-2">
-                      <span className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold">
+                      <span className="inline-flex items-center gap-1 text-teal-600 dark:text-teal-300 font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         {ex.media.verificationStatus}
                       </span>
@@ -530,10 +1110,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
           {SCIENTIFIC_STUDIES.slice(0, 4).map((st) => (
             <div
               key={st.id}
-              className="rounded-2xl border border-amber-200/70 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-2 text-xs shadow-sm"
+              className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-2 text-xs shadow-xs"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-extrabold text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+                <span className="font-extrabold text-teal-600 dark:text-teal-300 flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4" />
                   {st.id} · {st.year} · {st.journal}
                 </span>
@@ -541,20 +1121,25 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   href={st.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                  className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-300 font-bold hover:underline"
                 >
                   <span>DOI: {st.doi}</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
-              <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{st.title}</h4>
-              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, st.summary)}</p>
-              <p className="text-slate-500 dark:text-slate-400">
-                <strong>{tr(lang, 'القيود والحدود:', 'Limites :', 'Limitations:')}</strong> {trText(lang, st.limitations)}
+              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">{st.title}</h4>
+              <p className="text-slate-700 dark:text-slate-200 leading-relaxed">{trText(lang, st.summary)}</p>
+              <p className="text-slate-500 dark:text-slate-300">
+                <strong>{tr(lang, 'القيود والحدود:', 'Limites :', 'Limitations:')}</strong>{' '}
+                {trText(lang, st.limitations)}
               </p>
               {st.conflictingNote && (
-                <p className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 p-2.5 text-amber-900 dark:text-amber-200">
-                  <strong>{tr(lang, 'تباين الأدلة:', 'Nuance scientifique :', 'Conflicting Evidence:')}</strong> {trText(lang, st.conflictingNote)}
+                <p className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-2.5 text-amber-800 dark:text-amber-200">
+                  <strong className="inline-flex items-center gap-1">
+                    <Activity className="w-3.5 h-3.5 shrink-0" />
+                    {tr(lang, 'تباين الأدلة:', 'Nuance scientifique :', 'Conflicting Evidence:')}
+                  </strong>{' '}
+                  {trText(lang, st.conflictingNote)}
                 </p>
               )}
             </div>

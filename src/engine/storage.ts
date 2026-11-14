@@ -251,7 +251,7 @@ export function createDefaultAppState(): AppState {
     favoriteExercises: ['EX01', 'EX03', 'EX04', 'EX07'],
     searchQuery: '',
     selectedMuscleKey: 'chest',
-    compareIds: ['EX04', 'EX21'],
+    compareIds: ['EX01', 'EX03'],
     profile: {
       age: 42,
       heightCm: 185,

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { EXERCISES_DB } from '../data/exercises';
 import { MOROCCAN_FOOD_DB } from '../data/nutrition';
 import { MUSCLE_ZONE_ORDER } from '../data/muscles';
+import { SCIENTIFIC_STUDIES } from '../data/studies';
 import {
   buildLast30DaysAnalytics,
   computeSessionStreakAndDelay,
@@ -11,7 +12,12 @@ import {
   migrateState,
   validateAndImportBackup,
 } from './storage';
-import { computeWeeklyVolume, estimateE1RM, evaluateDoubleProgression } from './volume';
+import {
+  buildExerciseComparisonProfile,
+  computeWeeklyVolume,
+  estimateE1RM,
+  evaluateDoubleProgression,
+} from './volume';
 import {
   buildMacroPieData,
   buildWeeklyGroceryList,
@@ -248,5 +254,21 @@ test('buildLast30DaysAnalytics and buildMacroPieData compute 30-day Volume/e1RM 
   assert.ok(bulkTargets.targetKcal > cutTargets.targetKcal);
 });
 
+test('buildExerciseComparisonProfile resolves primary/secondary muscles, evidence grade, and kinematic rig details for favorites comparison', () => {
+  const ex01 = EXERCISES_DB.find((e) => e.id === 'EX01')!;
+  const ex03 = EXERCISES_DB.find((e) => e.id === 'EX03')!;
 
+  const profA = buildExerciseComparisonProfile(ex01, SCIENTIFIC_STUDIES);
+  const profB = buildExerciseComparisonProfile(ex03, SCIENTIFIC_STUDIES);
 
+  assert.equal(profA.primaryMuscle.key, 'chest');
+  assert.ok(profA.secondaryMuscles.some((m) => m.key === 'front_delts'));
+  assert.equal(profA.evidenceGrade, ex01.evidenceGrade);
+  assert.ok(profA.evidenceGradeLabel.ar.length > 0 && profA.evidenceGradeLabel.en.length > 0);
+  assert.equal(profA.kinematicRig.rigType, ex01.rigType);
+  assert.ok(profA.kinematicRig.forceVector.ar.length > 0);
+  assert.ok(profA.kinematicRig.jointAngles.en.length > 0);
+
+  assert.equal(profB.primaryMuscle.key, 'quads');
+  assert.equal(profB.kinematicRig.rigType, ex03.rigType);
+});
