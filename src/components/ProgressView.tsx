@@ -152,7 +152,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white dark:bg-[#13182b] p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         {subTabs.map((t) => (
           <button
             key={t.id}
@@ -161,7 +161,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
               progSubTab === t.id
                 ? 'bg-orange-500 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0f1423]'
             }`}
           >
             {t.icon}
@@ -175,7 +175,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
         <div className="space-y-4">
           {/* 30-Day KPI Summary Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-3.5">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-[#13182b] p-3.5">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
                 {tr(lang, 'إجمالي الحجم (آخر 30 يوماً)', 'Volume Total (30 jours)', '30-Day Total Volume')}
               </span>
@@ -187,11 +187,11 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
               </span>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-sky-500 bg-white dark:bg-slate-900 p-3.5">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-sky-500 bg-white dark:bg-[#13182b] p-3.5">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
                 {tr(lang, 'متوسط الحجم لكل حصة', 'Volume Moyen / Séance', 'Avg Session Volume')}
               </span>
-              <div className="text-lg sm:text-xl font-extrabold mono-num text-sky-500 mt-0.5">
+              <div className="text-lg sm:text-xl font-extrabold mono-num text-sky-400 mt-0.5">
                 {analytics30d.avgVolumePerSessionKg.toLocaleString()} kg
               </div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
@@ -199,7 +199,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
               </span>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-3.5">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-[#13182b] p-3.5">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
                 {tr(lang, 'أعلى قوة رفع تقديرية (e1RM)', 'Meilleur e1RM Estimé', 'Peak Estimated 1RM')}
               </span>
@@ -211,11 +211,11 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
               </span>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-emerald-500 bg-white dark:bg-slate-900 p-3.5">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-emerald-500 bg-white dark:bg-[#13182b] p-3.5">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
                 {tr(lang, 'تطور القوة خلال 30 يوماً', 'Gain de Force (30j)', '30-Day e1RM Progression')}
               </span>
-              <div className="text-lg sm:text-xl font-extrabold mono-num text-emerald-500 mt-0.5">
+              <div className="text-lg sm:text-xl font-extrabold mono-num text-emerald-400 mt-0.5">
                 {analytics30d.e1rmGainKg >= 0 ? `+${analytics30d.e1rmGainKg}` : analytics30d.e1rmGainKg} kg
               </div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 mono-num block truncate">
@@ -225,13 +225,13 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Interactive 30-Day Recharts Volume & e1RM Card */}
-            <div className="lg:col-span-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3.5 shadow-xs">
+            {/* Interactive 30-Day Recharts Volume & e1RM Card — Pure Solid Dark Background */}
+            <div className="lg:col-span-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3.5 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-orange-500 shrink-0" />
                   <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                       {tr(
                         lang,
                         'مخطط تطور حجم التمرين (Volume) وقوة الرفع (e1RM) — آخر 30 يوماً',
@@ -255,7 +255,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   aria-label={tr(lang, 'اختر التمرين لمنحنى القوة e1RM', 'Choisir exercice e1RM', 'Select Exercise for e1RM')}
                   value={selectedExId}
                   onChange={(e) => setSelectedExId(e.target.value)}
-                  className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-bold text-slate-900 dark:text-slate-100"
+                  className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-xs font-bold text-slate-900 dark:text-white"
                 >
                   {exercises
                     .filter((ex) => trackedIds.includes(ex.id) || ['EX01', 'EX03', 'EX04', 'EX07'].includes(ex.id))
@@ -269,7 +269,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
               {/* Chart Mode & Scope Toggles */}
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-[#0f1423] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                   {(
                     [
                       { id: 'combined', label: tr(lang, 'مدمج (الحجم + القوة)', 'Combiné', 'Combined') },
@@ -284,7 +284,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                       className={`h-8 px-2.5 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer ${
                         chartMetricMode === m.id
                           ? 'bg-orange-500 text-white shadow-xs'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       {m.label}
@@ -292,14 +292,14 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+                <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0f1423] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setTimelineScope('sessions')}
                     className={`h-8 px-2.5 rounded-lg font-bold whitespace-nowrap transition cursor-pointer ${
                       timelineScope === 'sessions'
-                        ? 'bg-slate-900 dark:bg-slate-800 text-white'
-                        : 'text-slate-600 dark:text-slate-400'
+                        ? 'bg-orange-500 text-white'
+                        : 'text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     {tr(lang, 'أيام الحصص (30د)', 'Séances (30j)', 'Session Dates')}
@@ -309,8 +309,8 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     onClick={() => setTimelineScope('daily')}
                     className={`h-8 px-2.5 rounded-lg font-bold whitespace-nowrap transition cursor-pointer ${
                       timelineScope === 'daily'
-                        ? 'bg-slate-900 dark:bg-slate-800 text-white'
-                        : 'text-slate-600 dark:text-slate-400'
+                        ? 'bg-orange-500 text-white'
+                        : 'text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     {tr(lang, '30 يوماً متصلة', '30 jours continus', 'Full 30 Days')}
@@ -318,27 +318,17 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 </div>
               </div>
 
-              {/* Interactive Recharts Container */}
+              {/* Interactive Recharts Container — Solid Dark #0f1423 Canvas with Zero Gradients */}
               <div
-                className="h-72 w-full rounded-xl bg-slate-50/70 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800 p-2 sm:p-3"
+                className="h-72 w-full rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 p-2 sm:p-3"
                 dir="ltr"
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={chartData} margin={{ top: 10, right: 12, left: 4, bottom: 4 }}>
-                    <defs>
-                      <linearGradient id="volBarGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.85} />
-                        <stop offset="95%" stopColor="#0284c7" stopOpacity={0.25} />
-                      </linearGradient>
-                      <linearGradient id="e1rmAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.35} />
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.35} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.45} />
                     <XAxis
                       dataKey="shortDate"
-                      tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 700 }}
+                      tick={{ fontSize: 11, fill: '#cbd5e1', fontWeight: 700 }}
                       axisLine={{ stroke: '#475569' }}
                     />
                     {(chartMetricMode === 'combined' || chartMetricMode === 'volume') && (
@@ -362,10 +352,10 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     )}
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0f172a',
+                        backgroundColor: '#0f1423',
                         borderColor: '#334155',
                         borderRadius: '12px',
-                        color: '#f8fafc',
+                        color: '#ffffff',
                         fontSize: '12px',
                         fontWeight: 700,
                       }}
@@ -383,7 +373,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                         yAxisId="volume"
                         dataKey="volumeKg"
                         name={volumeLabel}
-                        fill="url(#volBarGrad)"
+                        fill="#38bdf8"
                         radius={[6, 6, 0, 0]}
                         maxBarSize={34}
                       />
@@ -396,7 +386,9 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                         name={e1rmLabel}
                         stroke="#f97316"
                         strokeWidth={3}
-                        fill="url(#e1rmAreaGrad)"
+                        fill="#f97316"
+                        fillOpacity={0.18}
+                        dot={{ r: 4, fill: '#f97316', stroke: '#ffffff', strokeWidth: 1.5 }}
                         connectNulls
                       />
                     )}
@@ -418,40 +410,40 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
               </div>
             </div>
 
-            {/* Body Measurement Logger */}
-            <div className="lg:col-span-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs shadow-xs">
-              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+            {/* Body Measurement Logger — Solid Dark #13182b Card */}
+            <div className="lg:col-span-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 text-xs shadow-xs">
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                 {tr(lang, 'تسجيل القياسات الجسدية', 'Journal des Mensurations', 'Body Measurements Logger')}
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الوزن (كغ)', 'Poids (kg)', 'Weight (kg)')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'الوزن (كغ)', 'Poids (kg)', 'Weight (kg)')}</label>
                   <input
                     type="number"
                     step="0.1"
                     value={weightIn}
                     onChange={(e) => setWeightIn(Number(e.target.value) || 0)}
-                    className="w-full h-9 px-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                    className="w-full h-9 px-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold mono-num"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الخصر (سم)', 'Taille (cm)', 'Waist (cm)')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'الخصر (سم)', 'Taille (cm)', 'Waist (cm)')}</label>
                   <input
                     type="number"
                     step="0.5"
                     value={waistIn}
                     onChange={(e) => setWaistIn(Number(e.target.value) || 0)}
-                    className="w-full h-9 px-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                    className="w-full h-9 px-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold mono-num"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الذراع (سم)', 'Bras (cm)', 'Arm (cm)')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'الذراع (سم)', 'Bras (cm)', 'Arm (cm)')}</label>
                   <input
                     type="number"
                     step="0.1"
                     value={armIn}
                     onChange={(e) => setArmIn(Number(e.target.value) || 0)}
-                    className="w-full h-9 px-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                    className="w-full h-9 px-2 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold mono-num"
                   />
                 </div>
               </div>
@@ -472,14 +464,14 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 <span>{tr(lang, 'حفظ قياس اليوم', 'Ajouter Mesure', 'Log Measurement')}</span>
               </button>
 
-              <div className="space-y-1.5 max-h-44 overflow-y-auto pt-1">
+              <div className="space-y-1.5 max-h-44 overflow-y-auto pt-1 custom-scroll">
                 {[...state.measurements].reverse().map((m, idx) => (
                   <div
                     key={`M_${idx}`}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 mono-num"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 mono-num"
                   >
                     <span className="text-slate-500 dark:text-slate-400">{m.date}</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">{m.weight} kg · {m.waist} cm · {m.arm} cm</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{m.weight} kg · {m.waist} cm · {m.arm} cm</span>
                   </div>
                 ))}
               </div>
@@ -487,15 +479,15 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
           </div>
 
           {/* Completed Sessions History */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2.5 text-xs shadow-xs">
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-2.5 text-xs shadow-xs">
+            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
               {tr(lang, 'سجل الحصص التدريبية المكتملة', 'Historique des Séances', 'Completed Workout Sessions')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               {[...state.sessionHistory].reverse().map((ses) => (
                 <div
                   key={ses.id}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 space-y-1"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 space-y-1"
                 >
                   <div className="flex justify-between font-extrabold">
                     <span className="text-orange-500">
@@ -519,7 +511,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       {/* 2. EXPLAINABLE AI COACH & JOINT RESPONSE TRACKER */}
       {progSubTab === 'coach' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs shadow-xs">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 text-xs shadow-xs">
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-orange-500" />
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
@@ -592,7 +584,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             {coachRecs.map((rec) => (
               <div
                 key={rec.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-4 space-y-2.5 text-xs shadow-xs"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-[#13182b] p-4 space-y-2.5 text-xs shadow-xs"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
@@ -640,7 +632,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
       {/* 3. SCIENTIFIC STUDIES + JSON BACKUP + PWA INSTALL */}
       {progSubTab === 'refs' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 text-xs shadow-xs">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 text-xs shadow-xs">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
               {tr(lang, 'حفظ واستعادة بياناتك وتثبيت التطبيق (PWA)', 'Sauvegarde JSON & Installation PWA', 'Data Backup (Validated JSON) & App Install')}
             </h3>
@@ -706,7 +698,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             {SCIENTIFIC_STUDIES.map((st) => (
               <div
                 key={`REF_${st.id}`}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs shadow-xs"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-2 text-xs shadow-xs"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-extrabold text-orange-500">

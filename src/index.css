@@ -8,6 +8,12 @@
     scroll-behavior: smooth;
   }
 
+  html.dark,
+  html.dark body {
+    background-color: #0f1423;
+    color: #f8fafc;
+  }
+
   body {
     overflow-x: hidden;
   }
@@ -36,6 +42,13 @@
     direction: ltr;
     unicode-bidi: isolate;
   }
+}
+
+/* Ensure Recharts & SVG surfaces never inherit unwanted gradients */
+.recharts-wrapper,
+.recharts-surface {
+  background: transparent !important;
+  background-image: none !important;
 }
 
 .custom-scroll::-webkit-scrollbar {

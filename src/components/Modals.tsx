@@ -68,13 +68,13 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-orange-500">
               <span>{exercise.id}</span>
               <span>·</span>
               <span>{exercise.equipment}</span>
@@ -90,10 +90,10 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               type="button"
               onClick={() => onToggleFavorite(exercise.id)}
               aria-label={tr(lang, 'إضافة للمفضلة', 'Favori', 'Toggle Favorite')}
-              className={`p-2.5 rounded-xl border transition ${
+              className={`p-2.5 rounded-xl border transition cursor-pointer ${
                 isFavorite
-                  ? 'bg-amber-100 text-amber-600 border-amber-300 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-slate-100 dark:bg-[#0f1423] text-slate-500 border-slate-200 dark:border-slate-700'
               }`}
             >
               <Star className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
@@ -102,27 +102,27 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label={tr(lang, 'إغلاق', 'Fermer', 'Close')}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-[#0f1423] hover:bg-rose-600 hover:text-white text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Verified Reference Photos (Start & Peak Side-by-Side + Interactive Controls) */}
-        <div className="rounded-2xl border border-indigo-100 dark:border-slate-800 bg-gradient-to-br from-indigo-50/60 via-white to-orange-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3.5 space-y-3">
+        {/* Verified Reference Photos (Start & Peak Side-by-Side + Interactive Controls) — Solid Dark Canvas */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f1423] p-3.5 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">
+            <span className="text-xs font-extrabold text-slate-900 dark:text-white">
               {tr(lang, 'الصور المرجعية الموثقة للتمرين (البداية والذروة)', 'Photos de référence (Départ & Pic)', 'Verified Reference Photos (Start & Peak)')}
             </span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setAutoFlip((v) => !v)}
-                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                   autoFlip
-                    ? 'bg-orange-500 text-white shadow-sm'
-                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-white dark:bg-[#13182b] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 {autoFlip ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
@@ -131,7 +131,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenLightbox(exercise.id)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 transition shadow-sm"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition shadow-xs cursor-pointer"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
                 <span>{tr(lang, 'تكبير الشاشة', 'Plein écran', 'Full Zoom')}</span>
@@ -140,14 +140,14 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
           </div>
 
           {autoFlip ? (
-            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-indigo-200 dark:border-slate-800">
+            <div className="relative h-64 sm:h-72 rounded-2xl overflow-hidden bg-white dark:bg-[#13182b] border border-slate-200 dark:border-slate-800">
               <ExerciseImage
                 exercise={exercise}
                 frameIdx={activeFrame}
                 alt={trText(lang, exercise.name)}
                 className="w-full h-full object-contain"
               />
-              <div className="absolute bottom-2.5 start-2.5 px-3 py-1 rounded-xl bg-slate-900/80 text-white text-xs font-bold">
+              <div className="absolute bottom-2.5 start-2.5 px-3 py-1 rounded-xl bg-slate-900/90 text-white text-xs font-bold">
                 {activeFrame === 0
                   ? tr(lang, '1. وضعية البداية', '1. Position de départ', '1. Starting Position')
                   : tr(lang, '2. وضعية الذروة والانقباض', '2. Position de pic', '2. Peak Contraction')}
@@ -160,7 +160,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   key={frame}
                   type="button"
                   onClick={() => onOpenLightbox(exercise.id)}
-                  className="group relative h-52 sm:h-60 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 transition text-start"
+                  className="group relative h-52 sm:h-60 rounded-2xl overflow-hidden bg-white dark:bg-[#13182b] border border-slate-200 dark:border-slate-800 hover:border-orange-500 transition text-start cursor-pointer"
                 >
                   <ExerciseImage
                     exercise={exercise}
@@ -170,7 +170,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   />
                   <div
                     className={`absolute bottom-2 start-2 px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-white shadow ${
-                      frame === 0 ? 'bg-indigo-600/90' : 'bg-orange-500/90'
+                      frame === 0 ? 'bg-slate-900/90' : 'bg-orange-500'
                     }`}
                   >
                     {frame === 0
@@ -246,7 +246,7 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
                   href={st.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-violet-200 dark:border-slate-700 text-[11px] font-semibold text-violet-700 dark:text-violet-300 hover:underline"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-[#13182b] border border-violet-200 dark:border-slate-700 text-[11px] font-semibold text-violet-700 dark:text-violet-300 hover:underline"
                 >
                   <BookOpen className="w-3 h-3" />
                   <span>{st.id} ({st.year})</span>
@@ -472,7 +472,7 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-[#13182b] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
@@ -525,7 +525,7 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
                   className="flex items-center justify-between gap-3 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:border-indigo-300 transition"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] shrink-0">
                       <ExerciseImage exercise={cand} frameIdx={0} alt={trText(lang, cand.name)} />
                     </div>
                     <div className="min-w-0">

@@ -354,9 +354,9 @@ export default function App() {
   const detailEx = detailExId ? EXERCISES_DB.find((e) => e.id === detailExId) || null : null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 pb-20 md:pb-8 transition-colors">
+    <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-[#0f1423] dark:text-slate-100 pb-20 md:pb-8 transition-colors">
       {/* Compact Sticky Top Bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md no-print">
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] no-print">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
           {/* Brand */}
           <div className="flex items-center gap-2.5 min-w-0">
@@ -373,7 +373,7 @@ export default function App() {
 
           {/* Desktop 4-Tab Nav (Unified Dark Minimalist + Sporty Orange Active State) */}
           <nav
-            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800"
+            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-[#0f1423] p-1 rounded-xl border border-slate-200 dark:border-slate-800"
             aria-label="Main Navigation"
           >
             {navItems.map((item) => (
@@ -384,7 +384,7 @@ export default function App() {
                 className={`inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
                   state.mainTab === item.id
                     ? 'bg-orange-500 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-[#13182b]'
                 }`}
               >
                 {item.icon}
@@ -401,8 +401,8 @@ export default function App() {
                 restCompleteFlash
                   ? 'bg-orange-500 text-white border-orange-400 animate-pulse'
                   : state.timer.running
-                  ? 'bg-orange-500/10 border-orange-500/50 text-slate-900 dark:text-white'
-                  : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white'
+                  ? 'bg-orange-500/15 border-orange-500/50 text-slate-900 dark:text-white'
+                  : 'bg-slate-100 dark:bg-[#0f1423] border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white'
               }`}
             >
               {restCompleteFlash ? (
@@ -449,7 +449,7 @@ export default function App() {
             </div>
 
             {/* Language Selector */}
-            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-extrabold h-9 items-center">
+            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 p-0.5 text-[11px] font-extrabold h-9 items-center">
               {(['ar', 'fr', 'en'] as Lang[]).map((l) => (
                 <button
                   key={l}
@@ -473,7 +473,7 @@ export default function App() {
                 setState((prev) => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }))
               }
               aria-label={state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-orange-500 transition cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-orange-500 transition cursor-pointer"
             >
               {state.theme === 'dark' ? <Sun className="w-4 h-4 text-orange-400" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -552,14 +552,14 @@ export default function App() {
                 className={`flex items-center gap-3 p-3 rounded-xl border text-start transition active:scale-[0.99] cursor-pointer ${
                   isActive
                     ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
+                    : 'bg-white dark:bg-[#13182b] border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
                 }`}
               >
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-extrabold text-xs ${
                     isActive
                       ? 'bg-white/20 text-white'
-                      : 'bg-slate-100 dark:bg-slate-800 text-orange-500'
+                      : 'bg-slate-100 dark:bg-[#0f1423] text-orange-500'
                   }`}
                 >
                   {item.icon}

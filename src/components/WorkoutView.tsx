@@ -213,7 +213,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
     return (
       <div className="space-y-4">
         {/* Session Header & Sequence Switcher */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3.5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3.5 shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-3">
             {/* Left/Start Controls */}
             <div className="lg:col-span-7 flex flex-wrap items-center gap-2">
@@ -227,7 +227,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
               </button>
 
               {/* Sequence Switcher Grid (A -> B -> C -> D) */}
-              <div className="grid grid-cols-4 gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div className="grid grid-cols-4 gap-1 bg-slate-100 dark:bg-[#0f1423] p-1 rounded-xl border border-slate-200 dark:border-slate-800">
                 {SEQUENCE_ORDER.map((d) => (
                   <button
                     key={d}
@@ -329,7 +329,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
           </div>
 
           {showRirGuide && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-slate-50 dark:bg-[#0f1423] p-3 rounded-xl border border-slate-200 dark:border-slate-800">
               <div><strong className="text-orange-500">3 RIR:</strong> {tr(lang, 'مريح — تبقّت 3 تكرارات في الاحتياط', 'Modéré — 3 reps en réserve', 'Moderate — 3 reps left')}</div>
               <div><strong className="text-orange-500">2 RIR:</strong> {tr(lang, 'مثالي للتمارين المركبة (تبقّى تكراران)', 'Idéal polyarticulaire', 'Sweet spot — 2 reps left')}</div>
               <div><strong className="text-orange-500">1 RIR:</strong> {tr(lang, 'قوي — تبقّى تكرار واحد فقط', 'Très proche de l’échec', '1 hard rep remaining')}</div>
@@ -338,7 +338,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
           )}
 
           {showWarmupGuide && (
-            <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 text-xs flex flex-wrap items-center justify-between gap-2">
+            <div className="rounded-xl bg-slate-50 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 p-3 text-xs flex flex-wrap items-center justify-between gap-2">
               <div>
                 <strong className="text-slate-900 dark:text-white block">
                   {tr(lang, 'ثبات تحمية المفاصل الاختياري (Spanish Squat / Wall Sit)', 'Maintien isométrique optionnel', 'Optional Isometric Warm-Up Hold')}
@@ -374,7 +374,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         </div>
 
         {/* Pre / Post Joint Check */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs shadow-xs">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs shadow-xs">
           <div>
             <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between mb-1">
               <span>{tr(lang, 'انزعاج المفصل قبل الحصة (0–10):', 'Inconfort avant séance (0–10) :', 'Pre-Session Discomfort (0–10):')}</span>
@@ -412,7 +412,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
               value={sessionNotes}
               onChange={(e) => setSessionNotes(e.target.value)}
               placeholder={tr(lang, 'مثال: أداء قوي وتحكم ممتاز', 'Ex: Très bonne séance', 'e.g. Smooth reps & great control')}
-              className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+              className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-slate-100"
             />
           </div>
         </div>
@@ -424,7 +424,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
             return (
               <div
                 key={ex.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs"
               >
                 {/* Exercise Card Header Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
@@ -436,13 +436,13 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                       className="grid grid-cols-2 gap-1.5 shrink-0 cursor-pointer"
                       aria-label={trText(lang, ex.name)}
                     >
-                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950">
+                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0f1423]">
                         <ExerciseImage exercise={ex} frameIdx={0} alt={`${trText(lang, ex.name)} 1`} />
                         <span className="absolute bottom-0.5 start-0.5 px-1 rounded bg-slate-900/85 text-[9px] font-bold text-white mono-num">
                           1
                         </span>
                       </div>
-                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950">
+                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0f1423]">
                         <ExerciseImage exercise={ex} frameIdx={1} alt={`${trText(lang, ex.name)} 2`} />
                         <span className="absolute bottom-0.5 start-0.5 px-1 rounded bg-orange-500/90 text-[9px] font-bold text-white mono-num">
                           2
@@ -497,7 +497,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                   className={`rounded-xl px-3 py-2 text-xs font-semibold border ${
                     prog.readyToIncrease
                       ? 'bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-300'
-                      : 'bg-slate-50 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                      : 'bg-slate-50 dark:bg-[#0f1423]/70 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   {trText(lang, prog.reason)}
@@ -524,8 +524,8 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                     const rowAccentClass = log.done
                       ? 'border-s-4 border-s-orange-500 bg-orange-500/[0.05] dark:bg-orange-500/[0.07] border-slate-200 dark:border-slate-800'
                       : log.isWarmup
-                      ? 'border-s-4 border-s-amber-500/80 bg-slate-50/70 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
-                      : 'border-s-4 border-s-slate-400 dark:border-s-slate-600 bg-slate-50/90 dark:bg-slate-950/90 border-slate-200 dark:border-slate-800/90';
+                      ? 'border-s-4 border-s-amber-500/80 bg-slate-50/70 dark:bg-[#0f1423]/60 border-slate-200 dark:border-slate-800'
+                      : 'border-s-4 border-s-slate-400 dark:border-s-slate-600 bg-slate-50/90 dark:bg-[#0f1423]/90 border-slate-200 dark:border-slate-800/90';
 
                     return (
                       <div
@@ -589,7 +589,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                                     weight: Math.max(0, Number(e.target.value) || 0),
                                   })
                                 }
-                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold mono-num text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none"
+                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#13182b] font-extrabold mono-num text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none"
                               />
                               <button
                                 type="button"
@@ -637,7 +637,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                                     reps: Math.max(1, Number(e.target.value) || 1),
                                   })
                                 }
-                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold mono-num text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none"
+                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#13182b] font-extrabold mono-num text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none"
                               />
                               <button
                                 type="button"
@@ -701,7 +701,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                                   `RIR réel série ${setNum}`,
                                   `Actual RIR achieved set ${setNum}`
                                 )}
-                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold mono-num text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none"
+                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#13182b] font-extrabold mono-num text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none"
                               />
                               <button
                                 type="button"
@@ -828,7 +828,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
       {/* 2. DASHBOARD PROGRESS & SESSION COUNTERS (4-Col Strict CSS Grid) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Counter 1: Total Completed Sessions */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-3.5 flex items-center justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-[#13182b] p-3.5 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
               {tr(lang, 'إجمالي الحصص المكتملة', 'Total Séances Complétées', 'Completed Sessions')}
@@ -846,7 +846,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         </div>
 
         {/* Counter 2: Next Session in Dynamic Sequence */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-3.5 flex items-center justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-[#13182b] p-3.5 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
               {tr(lang, 'الحصة التالية في الدور', 'Prochaine Séance (Séquence)', 'Next in Sequence')}
@@ -864,7 +864,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         </div>
 
         {/* Counter 3: Last Workout & Streak Status */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-slate-500 bg-white dark:bg-slate-900 p-3.5 flex items-center justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-slate-500 bg-white dark:bg-[#13182b] p-3.5 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
               {tr(lang, 'آخر حصة والانتظام', 'Dernière Séance & Série', 'Last Session & Streak')}
@@ -895,7 +895,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         </div>
 
         {/* Counter 4: Daily Readiness Score */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-slate-500 bg-white dark:bg-slate-900 p-3.5 flex items-center justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-slate-500 bg-white dark:bg-[#13182b] p-3.5 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
               {tr(lang, 'مؤشر الجاهزية اليومي', 'Indice de Forme', 'Readiness Score')}
@@ -923,7 +923,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
 
       {/* Collapsible Readiness & Mode Controls */}
       {showReadinessSliders && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
           <div>
             <label className="font-bold text-slate-600 dark:text-slate-300 flex justify-between">
               <span>{tr(lang, 'ساعات النوم', 'Sommeil', 'Sleep')}</span>
@@ -985,7 +985,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
       )}
 
       {/* 3. FLEXIBLE SEQUENCE ROTATION CONTROL BAR (A -> B -> C -> D -> A) */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <Calendar className="w-4 h-4 text-orange-500 shrink-0" />
@@ -1010,7 +1010,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
           </div>
 
           {/* Program Mode Switch (Joint-Safe vs Classic) */}
-          <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+          <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0f1423] p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
             <button
               type="button"
               onClick={() => onSetProgramMode('joint_safe')}
@@ -1049,7 +1049,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                 className={`flex items-center justify-between gap-2 p-3 rounded-xl border text-start transition active:scale-[0.99] cursor-pointer ${
                   isNextUp
                     ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                    : 'bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
+                    : 'bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
                 }`}
               >
                 <div className="min-w-0">
@@ -1095,7 +1095,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                 className={`h-8 px-3 rounded-lg font-bold border whitespace-nowrap transition cursor-pointer ${
                   state.schedulePreset === p.id
                     ? 'bg-slate-900 dark:bg-slate-800 text-white border-orange-500/80'
-                    : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400'
+                    : 'bg-slate-50 dark:bg-[#0f1423] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400'
                 }`}
               >
                 {p.label}
@@ -1127,7 +1127,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
           return (
             <div
               key={day}
-              className={`rounded-2xl border bg-white dark:bg-slate-900 p-4 flex flex-col justify-between space-y-3.5 transition ${
+              className={`rounded-2xl border bg-white dark:bg-[#13182b] p-4 flex flex-col justify-between space-y-3.5 transition ${
                 isNextUp
                   ? 'border-orange-500/80 border-s-4 border-s-orange-500 shadow-sm'
                   : 'border-slate-200 dark:border-slate-800 border-s-4 border-s-slate-400 dark:border-s-slate-700'
@@ -1158,7 +1158,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                         type="text"
                         value={state.trainingDaysLabels[day]}
                         onChange={(e) => onUpdateDayLabel(day, e.target.value)}
-                        className="mt-1.5 block w-full h-8 px-2.5 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                        className="mt-1.5 block w-full h-8 px-2.5 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423]"
                       />
                     ) : (
                       <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white mt-1 truncate">
@@ -1180,14 +1180,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                   {dayExs.map((ex, idx) => (
                     <div
                       key={`${day}_${ex.id}`}
-                      className="grid grid-cols-[1fr_auto] items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/90 border-s-2 border-s-slate-400 dark:border-s-slate-700 text-xs hover:border-orange-500/50 transition"
+                      className="grid grid-cols-[1fr_auto] items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-[#0f1423]/80 border border-slate-200/80 dark:border-slate-800/90 border-s-2 border-s-slate-400 dark:border-s-slate-700 text-xs hover:border-orange-500/50 transition"
                     >
                       <button
                         type="button"
                         onClick={() => onOpenExercise(ex.id)}
                         className="flex items-center gap-2.5 min-w-0 text-start group cursor-pointer"
                       >
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] shrink-0">
                           <ExerciseImage exercise={ex} frameIdx={0} alt={trText(lang, ex.name)} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -1235,7 +1235,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
       </div>
 
       {/* Non-medical Disclaimer Strip */}
-      <div className="rounded-xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+      <div className="rounded-xl bg-slate-100/80 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800 p-3 flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-400">
         <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
         <span>
           {tr(

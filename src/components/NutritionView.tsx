@@ -118,7 +118,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Sub-tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs no-print">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-[#13182b] p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs no-print">
         {subTabs.map((t) => (
           <button
             key={t.id}
@@ -127,7 +127,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
               nutriSubTab === t.id
                 ? 'bg-orange-500 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0f1423]'
             }`}
           >
             {t.icon}
@@ -141,12 +141,12 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
         <div className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left Column (7 cols): Automatic Calculator Controls (Weight + Goal: Bulk / Cut / Recomp) */}
-            <div className="lg:col-span-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4 shadow-xs">
+            <div className="lg:col-span-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 sm:p-5 space-y-4 shadow-xs">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5 text-orange-500 shrink-0" />
                   <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                       {tr(
                         lang,
                         'حاسبة السعرات والماكروز التلقائية (حسب الوزن والهدف)',
@@ -167,14 +167,14 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetNutriSubTab('meals')}
-                  className="h-9 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-orange-500 text-xs font-extrabold whitespace-nowrap hover:bg-orange-500 hover:text-white transition cursor-pointer"
+                  className="h-9 px-3.5 rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 text-orange-500 text-xs font-extrabold whitespace-nowrap hover:bg-orange-500 hover:text-white transition cursor-pointer"
                 >
                   {tr(lang, 'الوجبات اليومية ←', 'Voir les repas →', 'Daily Meals →')}
                 </button>
               </div>
 
               {/* Primary Quick Controls: Weight Stepper + Goal Mode (Bulk / Cut / Recomp) */}
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 p-3.5 space-y-3">
+              <div className="rounded-xl bg-slate-50 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 p-3.5 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3">
                   <div className="sm:col-span-5 space-y-1">
                     <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 block">
@@ -188,7 +188,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                             weightKg: Math.max(35, Number((profile.weightKg - 0.5).toFixed(1))),
                           })
                         }
-                        className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
+                        className="w-9 h-9 rounded-xl bg-white dark:bg-[#13182b] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
                         aria-label="Decrease weight"
                       >
                         <Minus className="w-3.5 h-3.5" />
@@ -204,7 +204,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                             weightKg: Math.max(35, Math.min(220, Number(e.target.value) || 75)),
                           })
                         }
-                        className="h-9 w-full text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-sm mono-num text-orange-500 focus:border-orange-500 focus:outline-none"
+                        className="h-9 w-full text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#13182b] font-extrabold text-sm mono-num text-orange-500 focus:border-orange-500 focus:outline-none"
                       />
                       <button
                         type="button"
@@ -213,7 +213,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                             weightKg: Math.min(220, Number((profile.weightKg + 0.5).toFixed(1))),
                           })
                         }
-                        className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
+                        className="w-9 h-9 rounded-xl bg-white dark:bg-[#13182b] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
                         aria-label="Increase weight"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -222,7 +222,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                   </div>
 
                   <div className="sm:col-span-7 space-y-1">
-                    <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+                    <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
                       <span>{tr(lang, 'شريط ضبط الوزن السريع', 'Curseur de poids rapide', 'Quick Weight Slider')}</span>
                       <span className="mono-num text-orange-500 font-extrabold">{profile.weightKg} kg (BMI {targets.bmi})</span>
                     </div>
@@ -275,7 +275,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                           className={`p-3 rounded-xl border text-start transition cursor-pointer ${
                             active
                               ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
-                              : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
+                              : 'bg-white dark:bg-[#13182b] text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
                           }`}
                         >
                           <div className="font-extrabold truncate">{g.title}</div>
@@ -292,44 +292,44 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               {/* Secondary Biometric Inputs (Age, Height, Sex, Activity) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'العمر', 'Âge', 'Age')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'العمر', 'Âge', 'Age')}</label>
                   <input
                     type="number"
                     min={15}
                     max={90}
                     value={profile.age}
                     onChange={(e) => onUpdateProfile({ age: Math.max(15, Math.min(90, Number(e.target.value) || 25)) })}
-                    className="w-full h-9 px-2.5 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                    className="w-full h-9 px-2.5 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold mono-num"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الطول (سم)', 'Taille (cm)', 'Height (cm)')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'الطول (سم)', 'Taille (cm)', 'Height (cm)')}</label>
                   <input
                     type="number"
                     min={130}
                     max={230}
                     value={profile.heightCm}
                     onChange={(e) => onUpdateProfile({ heightCm: Math.max(130, Math.min(230, Number(e.target.value) || 175)) })}
-                    className="w-full h-9 px-2.5 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                    className="w-full h-9 px-2.5 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold mono-num"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الجنس', 'Sexe', 'Sex')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'الجنس', 'Sexe', 'Sex')}</label>
                   <select
                     value={profile.sex}
                     onChange={(e) => onUpdateProfile({ sex: e.target.value as 'male' | 'female' })}
-                    className="w-full h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
+                    className="w-full h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold"
                   >
                     <option value="male">{tr(lang, 'ذكر', 'Homme', 'Male')}</option>
                     <option value="female">{tr(lang, 'أنثى', 'Femme', 'Female')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'النشاط اليومي', 'Activité', 'Activity')}</label>
+                  <label className="font-bold text-slate-600 dark:text-slate-300 block mb-1">{tr(lang, 'النشاط اليومي', 'Activité', 'Activity')}</label>
                   <select
                     value={profile.activityFactor}
                     onChange={(e) => onUpdateProfile({ activityFactor: Number(e.target.value) })}
-                    className="w-full h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
+                    className="w-full h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1423] text-slate-900 dark:text-white font-bold"
                   >
                     <option value={1.35}>1.35 ({tr(lang, 'مكتبي + 3 حصص', 'Sédentaire + 3j', 'Desk + 3d')})</option>
                     <option value={1.5}>1.50 ({tr(lang, 'نشاط متوسط', 'Modéré', 'Moderate')})</option>
@@ -374,13 +374,13 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               </div>
             </div>
 
-            {/* Right Column (5 cols): Interactive Recharts Macro Distribution Pie Chart + Breakdown */}
-            <div className="lg:col-span-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
+            {/* Right Column (5 cols): Interactive Recharts Macro Distribution Pie Chart + Breakdown — Solid Dark #13182b Card */}
+            <div className="lg:col-span-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <PieChartIcon className="w-5 h-5 text-orange-500 shrink-0" />
                   <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                       {tr(lang, 'توزيع القيم الغذائية اليومية (الماكروز)', 'Répartition des Macronutriments', 'Daily Macro Distribution Pie Chart')}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -388,13 +388,13 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-xl bg-orange-500/10 text-orange-500 text-xs font-extrabold mono-num">
+                <span className="px-2.5 py-1 rounded-xl bg-orange-500/15 text-orange-500 text-xs font-extrabold mono-num">
                   {targets.targetKcal} kcal
                 </span>
               </div>
 
-              {/* Recharts Donut / Pie Chart */}
-              <div className="relative h-56 w-full" dir="ltr">
+              {/* Recharts Donut / Pie Chart inside Solid Dark #0f1423 Box */}
+              <div className="relative h-56 w-full rounded-xl bg-slate-100 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800 p-2" dir="ltr">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -403,8 +403,8 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={56}
-                      outerRadius={84}
+                      innerRadius={54}
+                      outerRadius={80}
                       paddingAngle={4}
                       stroke="none"
                     >
@@ -414,10 +414,10 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0f172a',
+                        backgroundColor: '#0f1423',
                         borderColor: '#334155',
                         borderRadius: '12px',
-                        color: '#f8fafc',
+                        color: '#ffffff',
                         fontSize: '12px',
                         fontWeight: 700,
                       }}
@@ -452,7 +452,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 {pieData.map((slice) => (
                   <div
                     key={slice.key}
-                    className="grid grid-cols-[1fr_auto] items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                    className="grid grid-cols-[1fr_auto] items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#0f1423] border border-slate-200 dark:border-slate-800"
                     style={{ borderInlineStartWidth: '4px', borderInlineStartColor: slice.color }}
                   >
                     <div className="min-w-0">
@@ -490,7 +490,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 className={`rounded-2xl border p-3.5 text-center shadow-xs ${
                   c.highlight
                     ? 'bg-orange-500/10 border-orange-500/50'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                    : 'bg-white dark:bg-[#13182b] border-slate-200 dark:border-slate-800'
                 }`}
               >
                 <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">{c.label}</span>
@@ -502,7 +502,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             ))}
           </div>
 
-          <div className="rounded-xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+          <div className="rounded-xl bg-slate-100/80 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800 p-3 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
             <AlertCircle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
             <span>
               {tr(
@@ -519,7 +519,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 2. DAILY MEALS */}
       {nutriSubTab === 'meals' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Utensils className="w-5 h-5 text-orange-500" />
@@ -595,7 +595,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               return (
                 <div
                   key={`MEAL_${mealIdx}`}
-                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
@@ -683,7 +683,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 3. MOROCCAN FOOD DB + 7-DAY PRINTABLE GROCERY LIST */}
       {nutriSubTab === 'foods' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <ShoppingBasket className="w-5 h-5 text-orange-500" />
@@ -733,7 +733,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs no-print">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#13182b] p-4 space-y-3 shadow-xs no-print">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                 {tr(lang, `جدول الأغذية المغربية والمتوسطية (${MOROCCAN_FOOD_DB.length} عنصراً لكل 100 غرام)`, `Base Alimentaire Marocaine (${MOROCCAN_FOOD_DB.length} aliments)`, `Moroccan & Mediterranean Food Reference (${MOROCCAN_FOOD_DB.length} items / 100g)`)}
@@ -782,7 +782,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 4. NON-COMMERCIAL SUPPLEMENTS GUIDE */}
       {nutriSubTab === 'supps' && (
         <div className="space-y-3">
-          <div className="rounded-xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 text-xs text-slate-700 dark:text-slate-300">
+          <div className="rounded-xl bg-slate-100/80 dark:bg-[#13182b] border border-slate-200 dark:border-slate-800 p-3 text-xs text-slate-700 dark:text-slate-300">
             {tr(
               lang,
               'ملاحظة موضوعية: الغذاء الطبيعي المتكامل، التمرين المنتظم، والنوم الجيد تصنع 95%+ من النتائج. المكملات التالية اختيارية تماماً.',
@@ -794,7 +794,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             {SUPPLEMENTS_DB.map((sup) => (
               <div
                 key={sup.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs shadow-xs"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-[#13182b] p-4 space-y-2 text-xs shadow-xs"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
