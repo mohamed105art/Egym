@@ -1,0 +1,6 @@
+{
+  "name": "Hypertrophy & Joint Longevity OS",
+  "description": "Evidence-based hypertrophy training, 14-zone biomechanical exercise library, joint longevity tracking, and Moroccan sports nutrition platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

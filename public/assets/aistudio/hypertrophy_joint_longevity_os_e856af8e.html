@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <title>Hypertrophy OS v4.2 — المنظومة العلمية المتكاملة للتضخم العضلي والتغذية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-primary: #090d16;
+      --bg-card: #111827;
+      --bg-elevated: #1e293b;
+      --text-primary: #f8fafc;
+      --border-color: rgba(148, 163, 184, 0.18);
+    }
+    html.light {
+      --bg-primary: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-elevated: #f8fafc;
+      --text-primary: #0f172a;
+      --border-color: rgba(15, 23, 42, 0.14);
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .app-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      box-shadow: 0 6px 20px -6px rgba(0, 0, 0, 0.3);
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .app-elevated {
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      direction: ltr;
+      display: inline-block;
+    }
+    .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 9999px; }
+    .top-tab-btn.active {
+      background: linear-gradient(135deg, #10b981, #0ea5e9);
+      color: #090d16;
+      font-weight: 800;
+      border-color: transparent;
+      box-shadow: 0 3px 10px rgba(16, 185, 129, 0.28);
+    }
+    .sub-pill.active {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #090d16;
+      border-color: transparent;
+      font-weight: 800;
+    }
+    .muscle-path {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      stroke: rgba(255,255,255,0.28);
+      stroke-width: 1.2;
+    }
+    .muscle-path:hover { filter: brightness(1.25); stroke: #fff; stroke-width: 2; }
+    .muscle-path.selected { stroke: #f59e0b; stroke-width: 2.8; }
+    .step-btn {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .step-btn:active { transform: scale(0.92); }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff !important; color: #000 !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-12">
+
+  <!-- ===================================================================== -->
+  <!-- STICKY MOBILE-SAFE HEADER (ZERO CLIPPING & ZERO BOTTOM OVERLAP)       -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-slate-950/95 border-b border-slate-800/80 no-print">
+    <div class="max-w-4xl mx-auto px-2.5 sm:px-5 pt-2 pb-2 space-y-2">
+      <!-- Row 1: Brand Title + Timer + Language + Theme (Strictly Contained) -->
+      <div class="flex items-center justify-between gap-1.5">
+        <!-- Brand Logo & Full Unclipped Title -->
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-sky-500 flex items-center justify-center shrink-0 shadow-sm">
+            <span class="text-slate-950 font-black text-xs mono-num">H4</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1">
+              <span class="text-xs sm:text-sm font-extrabold text-white truncate">Hypertrophy OS</span>
+              <span class="px-1.5 py-0.2 text-[9px] font-bold rounded bg-emerald-500/20 text-emerald-400 mono-num shrink-0">v4.2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Controls: Timer + Language + Theme -->
+        <div class="flex items-center gap-1 shrink-0">
+          <!-- Interactive Rest Timer Pill (Tap time to cycle 60s / 90s / 120s / 150s) -->
+          <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl px-1.5 py-1">
+            <button onclick="cycleTimerPreset()" id="hdr-timer-display" class="mono-num text-xs font-extrabold text-emerald-400 px-1" title="Tap to change duration">01:30</button>
+            <button onclick="toggleRestTimerPause()" id="hdr-timer-btn" class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 text-[11px] font-bold flex items-center justify-center">▶</button>
+            <button onclick="resetRestTimer()" class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-[11px] flex items-center justify-center">↺</button>
+          </div>
+
+          <!-- Trilingual Switcher -->
+          <div class="inline-flex rounded-xl bg-slate-900 p-0.5 border border-slate-800">
+            <button onclick="setLanguage('ar')" id="lang-btn-ar" class="px-1.5 py-1 text-[10px] font-extrabold rounded-lg transition">عربي</button>
+            <button onclick="setLanguage('fr')" id="lang-btn-fr" class="px-1.5 py-1 text-[10px] font-extrabold rounded-lg transition">FR</button>
+            <button onclick="setLanguage('en')" id="lang-btn-en" class="px-1.5 py-1 text-[10px] font-extrabold rounded-lg transition">EN</button>
+          </div>
+
+          <!-- Theme -->
+          <button onclick="toggleTheme()" class="w-7 h-7 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-center text-xs">
+            <span id="theme-icon">☀️</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2: 4 Primary Navigation Tabs (Top-Mounted so Gemini's Bottom Floating Icon NEVER Blocks Them!) -->
+      <nav class="grid grid-cols-4 gap-1.5" id="top-nav-bar"></nav>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN CONTENT CONTAINER (STRICTLY BOUNDED WIDTH, ZERO OVERFLOW)        -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-2.5 sm:px-5 py-3.5 space-y-3.5 overflow-x-hidden">
+    <div id="app-main-view" class="space-y-3.5 w-full max-w-full overflow-x-hidden"></div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: FULLSCREEN PHOTO LIGHTBOX & MOTION PLAYER (🔍 / DOUBLE-TAP)  -->
+  <!-- ===================================================================== -->
+  <div id="photo-lightbox-modal" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-3 sm:p-6 no-print">
+    <!-- Top Bar -->
+    <div class="max-w-3xl w-full mx-auto flex items-center justify-between gap-2 bg-slate-900/90 border border-slate-800 rounded-2xl px-3.5 py-2.5">
+      <div class="min-w-0">
+        <div id="lb-ex-badge" class="text-[10px] font-bold text-emerald-400 mono-num">EX01</div>
+        <h3 id="lb-ex-title" class="text-xs sm:text-base font-extrabold text-white truncate">Exercise Name</h3>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button onclick="toggleLightboxZoomLevel()" id="lb-zoom-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-800 text-sky-300 text-xs font-extrabold mono-num">1.0x 🔍</button>
+        <button onclick="closePhotoLightbox()" class="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-extrabold">✕</button>
+      </div>
+    </div>
+
+    <!-- Center Zoomable Image Stage -->
+    <div class="flex-1 flex items-center justify-center overflow-auto my-2 relative" onclick="toggleLightboxFrame()">
+      <div id="lb-img-wrapper" class="transition-transform duration-200 flex items-center justify-center max-w-full max-h-full">
+        <img id="lb-main-img" src="" alt="Exercise Zoom" class="max-h-[62vh] w-auto max-w-full rounded-2xl object-contain border border-slate-800 shadow-2xl select-none" />
+      </div>
+    </div>
+
+    <!-- Bottom Interactive Controls: Frame 1/2, Auto-Play Motion, Next/Prev Exercise -->
+    <div class="max-w-3xl w-full mx-auto bg-slate-900/95 border border-slate-800 rounded-2xl p-3 space-y-2.5">
+      <div class="flex items-center justify-between gap-2">
+        <button onclick="stepLightboxExercise(-1)" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">⏮ ${'السابق / Prev'}</button>
+        <span id="lb-frame-pill" class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-extrabold">1/2 وضعية البداية</span>
+        <button onclick="stepLightboxExercise(1)" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">${'التالي / Next'} ⏭</button>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="setLightboxFrame(0)" id="lb-btn-f0" class="py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950">1. البداية (Start)</button>
+        <button onclick="setLightboxFrame(1)" id="lb-btn-f1" class="py-2 rounded-xl text-xs font-extrabold bg-slate-800 text-slate-300">2. الذروة (Peak)</button>
+        <button onclick="toggleLightboxAutoPlay()" id="lb-btn-play" class="py-2 rounded-xl text-xs font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/40">▶ حركة تلقائية</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: EXERCISE GUIDE, PHOTOS & YOUTUBE VIDEO                       -->
+  <!-- ===================================================================== -->
+  <div id="exercise-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 no-print">
+    <div class="app-card w-full max-w-2xl p-4 sm:p-5 space-y-3 border border-emerald-500/40 max-h-[88vh] overflow-y-auto custom-scroll" id="exercise-modal-body"></div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: SMART EXERCISE SWAPPER                                       -->
+  <!-- ===================================================================== -->
+  <div id="swap-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 no-print">
+    <div class="app-card w-full max-w-xl p-4 sm:p-5 space-y-3 border border-emerald-500/40 max-h-[85vh] overflow-y-auto custom-scroll" id="swap-modal-body"></div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="app-toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 rounded-2xl bg-slate-900/95 border border-emerald-500 text-white text-xs font-bold shadow-2xl no-print max-w-[90vw] text-center">
+    <span id="app-toast-msg"></span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'HYPERTROPHY_OS_STATE_V1';
+    const IMG_CDN = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+
+    // =========================================================================
+    // 1. STATE & TRILINGUAL ENGINE
+    // =========================================================================
+    let appState = {
+      lang: 'ar',
+      mainTab: 'home',         // 'home' | 'exercises' | 'nutrition' | 'progress'
+      exSubTab: 'library',     // 'library' | 'science_pick' | 'map'
+      nutriSubTab: 'calc',     // 'calc' | 'meals' | 'foods' | 'supps'
+      progSubTab: 'metrics',   // 'metrics' | 'coach' | 'refs'
+      programMode: 'joint_safe',
+      activeWorkoutDay: null,  // null | 'A' | 'B' | 'C' | 'D'
+      warmupOpen: false,
+      selectedExerciseId: 'EX01',
+      selectedMuscleKey: 'chest',
+      activeMealPreset: 'training',
+      activeModalTab: 'howto',
+      muscleFilter: 'ALL',
+      searchQuery: '',
+      photoFrames: {},
+      customDayExercises: {
+        joint_safe: {
+          A: ['EX01', 'EX02', 'EX03', 'EX04', 'EX05', 'EX06'],
+          B: ['EX07', 'EX08', 'EX09', 'EX10', 'EX11', 'EX12'],
+          C: ['EX13', 'EX14', 'EX15', 'EX16', 'EX17', 'EX18'],
+          D: ['EX27', 'EX28', 'EX29', 'EX30', 'EX31', 'EX32']
+        },
+        benchmark: {
+          A: ['EX19', 'EX20', 'EX03', 'EX21', 'EX22', 'EX17'],
+          B: ['EX01', 'EX08', 'EX07', 'EX10', 'EX23', 'EX11', 'EX12'],
+          C: ['EX25', 'EX26', 'EX15', 'EX04', 'EX06', 'EX18', 'EX16'],
+          D: ['EX27', 'EX28', 'EX29', 'EX30', 'EX31', 'EX32']
+        }
+      },
+      profile: { age: 42, heightCm: 185, weightKg: 85.0, activityFactor: 1.5, goalMode: 'recomp_train', sleepHrs: 7.5, kneePain: 1 },
+      workoutLogs: {},
+      sessionHistory: [
+        { date: '2026-11-08', day: 'C', totalSets: 18 },
+        { date: '2026-11-11', day: 'A', totalSets: 18 }
+      ],
+      measurements: [
+        { date: '2026-10-15', weight: 85.6, waist: 91.0, arm: 38.1 },
+        { date: '2026-11-12', weight: 85.0, waist: 90.0, arm: 38.5 }
+      ],
+      e1rmHistory: {
+        EX01: [30.5, 32.0, 33.5, 34.7],
+        EX02: [76.0, 80.0, 84.5, 88.8],
+        EX03: [165.0, 175.0, 184.0, 191.3],
+        EX07: [36.0, 38.5, 40.0, 42.0],
+        EX27: [95.0, 105.0, 112.5, 120.0]
+      },
+      customMeals: null
+    };
+
+    function tr(ar, fr, en) {
+      if (appState.lang === 'fr') return fr;
+      if (appState.lang === 'en') return en;
+      return ar;
+    }
+
+    function trObj(obj, key) {
+      if (!obj) return '';
+      if (appState.lang === 'fr' && obj[key + 'Fr']) return obj[key + 'Fr'];
+      if (appState.lang === 'en' && obj[key + 'En']) return obj[key + 'En'];
+      return obj[key + 'Ar'] || obj[key] || '';
+    }
+
+    // =========================================================================
+    // 2. COMPLETE 32-EXERCISE DATABASE (REAL PHOTOS + YOUTUBE LINKS)
+    // =========================================================================
+    const EXERCISES_DB = [
+      {
+        id: 'EX01', day: 'A', imgFolder: 'Incline_Dumbbell_Press', altFolder: 'Dumbbell_Bench_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=B_2meD6SSNA', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'chest', secondaryMuscles: ['shoulders', 'triceps'], equipment: 'Dumbbell',
+        sets: 3, reps: '8-10', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 26, tier: 'S-Tier',
+        nameAr: 'ضغط الصدر المائل بالدمبل (30°)', nameFr: 'Développé Incliné Haltères (30°)', nameEn: 'Incline Dumbbell Press (30°)',
+        muscleAr: 'الصدر العلوي والأوسط', muscleFr: 'Pectoral Supérieur & Moyen', muscleEn: 'Upper & Mid Chest',
+        startAr: 'اضبط المقعد على زاوية 30°، ضم لوحي الكتف للخلف، واجعل المرفقين بزاوية 45° عن الجذع.',
+        startFr: 'Réglez le banc à 30°, rétractez les omoplates et gardez les coudes à 45° du buste.',
+        startEn: 'Set bench to 30°, retract shoulder blades, and angle elbows at 45° from torso.',
+        stepsAr: 'انزل ببطء (3 ثوانٍ) حتى إطالة ألياف الصدر العلوية مع توقف ثانية، ثم ادفع للأعلى دون صدم الدمبلز.',
+        stepsFr: 'Descendez en 3s jusqu\'à l\'étirement complet avec 1s de pause, puis poussez sans heurter les haltères.',
+        stepsEn: 'Lower slowly (3s) to a deep stretch with a 1s pause, then press up without clanking the dumbbells.',
+        safetyAr: '🛡️ آمن للمعصم والكتف: حرية دوران الدمبل تمنع الإجهاد المفصلي للبار المستقيم.',
+        safetyFr: '🛡️ Sécuritaire pour poignets et épaules grâce à la liberté de rotation des haltères.',
+        safetyEn: '🛡️ Wrist & shoulder safe: free handle rotation eliminates straight-bar torque.',
+        scienceAr: 'وفق دراسة Wolf et al. (2025) ونصائح Jeff Nippard: زاوية 30° مع الإطالة السفلية تحفز الصدر العلوي والأوسط بكفاءة قصوى.',
+        scienceFr: 'Selon Wolf et al. (2025) et Jeff Nippard : l\'inclinaison à 30° maximise l\'étirement mécanique du grand pectoral.',
+        scienceEn: 'Per Wolf et al. (2025) & Jeff Nippard: 30° incline with a bottom stretch maximizes upper and mid-pec hypertrophy.',
+        alternatives: ['EX09', 'EX19', 'EX14']
+      },
+      {
+        id: 'EX02', day: 'A', imgFolder: 'Leverage_Iso_Row', altFolder: 'Seated_Cable_Rows',
+        ytUrl: 'http://www.youtube.com/watch?v=jLvqKgW-_G8', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'back', secondaryMuscles: ['biceps', 'shoulders'], equipment: 'Machine',
+        sets: 3, reps: '10-12', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 65, tier: 'S-Tier',
+        nameAr: 'سحب الصدر المدعوم على الجهاز', nameFr: 'Tirage Assis Appui Thoracique', nameEn: 'Chest-Supported Machine Row',
+        muscleAr: 'الظهر الأوسط واللاتس', muscleFr: 'Milieu du Dos & Dorsaux', muscleEn: 'Mid-Back, Rhomboids & Lats',
+        startAr: 'ثبت صدرك على الوسادة الأمامية وامسك المقابض بقبضة محايدة متوازية.',
+        startFr: 'Appuyez fermement le torse contre le coussin et saisissez les poignées en prise neutre.',
+        startEn: 'Brace your chest firmly against the pad and grip handles with a neutral parallel grip.',
+        stepsAr: 'اسحب المرفقين للخلف مع ضم لوحي الكتف ثانية، ثم عد ببطء (3 ثوانٍ) حتى تتمدد الكتفان للأمام.',
+        stepsFr: 'Tirez les coudes vers l\'arrière en serrant les omoplates 1s, puis relâchez sur 3s en étirant le dos.',
+        stepsEn: 'Drive elbows back squeezing shoulder blades for 1s, then lower for 3s into a full scapular stretch.',
+        safetyAr: '🛡️ يعزل إجهاد الفقرات القطنية تماماً ويحمي المعصم.',
+        safetyFr: '🛡️ Élimine toute contrainte lombaire et protège les poignets.',
+        safetyEn: '🛡️ Zero lower-back shear load and completely wrist-friendly.',
+        scienceAr: 'مصنف S-Tier لدى Jeff Nippard لأن دعم الصدر يوجه 100% من الجهد لعضلات الظهر.',
+        scienceFr: 'Classé S-Tier par Jeff Nippard car l\'appui thoracique élimine la triche lombaire.',
+        scienceEn: 'Ranked S-Tier by Jeff Nippard as chest support maximizes motor unit recruitment in the back.',
+        alternatives: ['EX20', 'EX08', 'EX28']
+      },
+      {
+        id: 'EX03', day: 'A', imgFolder: 'Leg_Press', altFolder: 'Narrow_Stance_Leg_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=nDh_BlnLCGc', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'quads', secondaryMuscles: ['hamstrings'], equipment: 'Machine',
+        sets: 3, reps: '10-12', restSec: 150, rir: '1-2 RIR', defaultWeightKg: 140, tier: 'S-Tier',
+        nameAr: 'دفع الأرجل المائل (وضع قدم مرتفع)', nameFr: 'Presse à Cuisses (Pieds Hauts)', nameEn: '45° Leg Press (High Foot Knee-Safe)',
+        muscleAr: 'الرباعية الأمامية والأرداف', muscleFr: 'Quadriceps & Fessiers', muscleEn: 'Quadriceps & Glutes',
+        startAr: 'ضع قدميك في الثلث العلوي من المنصة بعرض الكتفين، وألصق أسفل ظهرك بالمقعد.',
+        startFr: 'Placez les pieds dans le tiers supérieur de la plateforme, bas du dos plaqué au siège.',
+        startEn: 'Place feet in the upper third of the platform shoulder-width apart, keeping lower back flat.',
+        stepsAr: 'انزل بتحكم حتى زاوية ركبة 85°–90° دون التفاف الحوض، ثم ادفع بالكعبين دون قفل الركبة بعنف.',
+        stepsFr: 'Descendez jusqu\'à un angle de genou de 85°–90°, puis poussez par les talons sans verrouiller.',
+        stepsEn: 'Lower under control to an 85°–90° knee angle, then drive through heels without hard knee lockout.',
+        safetyAr: '🛡️ بروتوكول PFPS: وضع القدم المرتفع يقلل إجهاد القص على وتر الرضفة بنسبة 35%.',
+        safetyFr: '🛡️ Protocole PFPS : pieds hauts réduisant la contrainte rotulienne de 35%.',
+        safetyEn: '🛡️ PFPS Protocol: high foot placement reduces patellofemoral stress by ~35%.',
+        scienceAr: 'يمنح تحميلاً ميكانيكياً عالياً للرباعية والأرداف مع ثبات خارجي كامل للحوض.',
+        scienceFr: 'Offre une surcharge mécanique élevée des quadriceps avec une stabilité pelvienne optimale.',
+        scienceEn: 'Provides high mechanical tension on the quads and glutes with external spinal stability.',
+        alternatives: ['EX15', 'EX25', 'EX10']
+      },
+      {
+        id: 'EX04', day: 'A', imgFolder: 'Seated_Leg_Curl', altFolder: 'Lying_Leg_Curls',
+        ytUrl: 'http://www.youtube.com/watch?v=Lh3iMIcbkBQ', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'hamstrings', secondaryMuscles: ['calves'], equipment: 'Machine',
+        sets: 3, reps: '10-15', restSec: 90, rir: '0-1 RIR', defaultWeightKg: 55, tier: 'S-Tier',
+        nameAr: 'ثني الركبة جالساً للخلفية (Seated Leg Curl)', nameFr: 'Leg Curl Assis (Ischios)', nameEn: 'Seated Leg Curl (Lengthened Bias)',
+        muscleAr: 'الأوتار الخلفية للفخذ', muscleFr: 'Ischio-jambiers', muscleEn: 'Hamstrings',
+        startAr: 'اضبط مسند الظهر لمحاذاة الركبة لمحور الجهاز، وثبت وسادة الفخذ بإحكام فوق الركبتين.',
+        startFr: 'Alignez le genou avec l\'axe de la machine et verrouillez le boudin sur les cuisses.',
+        startEn: 'Align knee joint with machine pivot and lock the thigh pad snugly above knees.',
+        stepsAr: 'اسحب الأسطوانة للخلف والأسفل بأقصى مدى واثبت ثانية، ثم عد ببطء خلال 3 ثوانٍ.',
+        stepsFr: 'Fléchissez à fond avec 1s de contraction, puis contrôlez le retour sur 3 secondes.',
+        stepsEn: 'Curl all the way down, hold 1s, and return slowly over 3s into the stretched position.',
+        safetyAr: '🛡️ يقوي الأوتار الخلفية الداعمة لثبات مفصل الركبة.',
+        safetyFr: '🛡️ Renforce les stabilisateurs dynamiques postérieurs du genou.',
+        safetyEn: '🛡️ Strengthens posterior knee stabilizers and protects the patella.',
+        scienceAr: 'إحصائية Maeo et al. (2021): حقق Seated Leg Curl نمواً عضلياً +14.1% مقابل +9.3% للاستلقاء!',
+        scienceFr: 'Étude Maeo et al. (2021) : +14,1% d\'hypertrophie assis contre +9,3% allongé.',
+        scienceEn: 'Maeo et al. (2021) RCT: Seated leg curls produced +14.1% hamstring growth vs +9.3% lying.',
+        alternatives: ['EX21', 'EX07']
+      },
+      {
+        id: 'EX05', day: 'A', imgFolder: 'Cable_Seated_Lateral_Raise', altFolder: 'Side_Lateral_Raise',
+        ytUrl: 'http://www.youtube.com/watch?v=f_OGBg2KxgY', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'shoulders', secondaryMuscles: [], equipment: 'Cable',
+        sets: 3, reps: '12-15', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 10, tier: 'S-Tier',
+        nameAr: 'رفرفة جانبية بالكيبل', nameFr: 'Élévations Latérales Poulie', nameEn: 'Cable Lateral Raise',
+        muscleAr: 'الدالية الجانبية (عرض الكتف)', muscleFr: 'Deltoïde Latéral', muscleEn: 'Lateral Deltoid',
+        startAr: 'اضبط البكرة في مستوى الرسغ/الركبة، وقف جانبياً وامسك المقبض باليد البعيدة.',
+        startFr: 'Placez la poulie à hauteur du poignet/genou et saisissez la poignée avec la main opposée.',
+        startEn: 'Set pulley at wrist/knee height to load the lateral delt in its stretched bottom position.',
+        stepsAr: 'ارفع ذراعك في المستوى الكتفي (20° للأمام) حتى مستوى الكتف، ثم انزل ببطء (3 ثوانٍ).',
+        stepsFr: 'Montez le bras dans le plan scapulaire (20° vers l\'avant) jusqu\'à l\'horizontale, descendez en 3s.',
+        stepsEn: 'Raise arm in the scapular plane (20° forward) to shoulder height, then lower slowly over 3s.',
+        safetyAr: '🛡️ الرفع في المستوى الكتفي يمنع انحشار أوتار الكتف.',
+        safetyFr: '🛡️ Le plan scapulaire prévient le conflit sous-acromial.',
+        safetyEn: '🛡️ Scapular-plane elevation prevents subacromial shoulder impingement.',
+        scienceAr: 'الكيبل يولّد أقصى عزم مقاومة في الثلث السفلي حيث تكون الدالية الجانبية في وضع الإطالة.',
+        scienceFr: 'La poulie maintient une tension maximale en position basse étirée.',
+        scienceEn: 'Cables maximize torque in the lengthened bottom range where dumbbells have zero resistance.',
+        alternatives: ['EX22', 'EX23']
+      },
+      {
+        id: 'EX06', day: 'A', imgFolder: 'Cable_Rope_Overhead_Triceps_Extension', altFolder: 'Triceps_Pushdown_-_Rope_Attachment',
+        ytUrl: 'http://www.youtube.com/watch?v=5YaWrGPtIIE', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'triceps', secondaryMuscles: [], equipment: 'Cable',
+        sets: 3, reps: '10-15', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 22.5, tier: 'S-Tier',
+        nameAr: 'تمديد الترايسبس فوق الرأس بالحبل', nameFr: 'Extension Triceps Corde Overhead', nameEn: 'Overhead Cable Rope Triceps Extension',
+        muscleAr: 'الترايسبس (الرأس الطويل)', muscleFr: 'Triceps (Longue Portion)', muscleEn: 'Triceps (Long Head)',
+        startAr: 'أدر ظهرك للبكرة، امسك الحبل خلف الرأس بميلان جذع 30° وثبت المرفقين.',
+        startFr: 'Dos à la poulie, buste incliné à 30°, coudes fixes près des oreilles.',
+        startEn: 'Face away from pulley, lean torso 30°, and lock elbows overhead.',
+        stepsAr: 'امدد الساعدين للأعلى والأمام بالكامل، ثم عد ببطء خلف الرأس لأقصى إطالة.',
+        stepsFr: 'Tendez les avant-bras vers le haut, puis redescendez lentement derrière la tête.',
+        stepsEn: 'Extend forearms fully overhead, then lower slowly behind the head for a deep stretch.',
+        safetyAr: '🛡️ الحبل يوفر قبضة محايدة مرنة تحمي المعصم والمرفق.',
+        safetyFr: '🛡️ La corde offre une prise neutre protégeant poignets et coudes.',
+        safetyEn: '🛡️ Rope attachment allows natural wrist alignment and reduces elbow strain.',
+        scienceAr: 'دراسة Maeo et al. (2023): التمديد فوق الرأس حقق نمواً يفوق الدفع لأسفل بـ 1.4 مرة (+19.9% مقابل +14.0%)!',
+        scienceFr: 'Étude Maeo et al. (2023) : l\'extension overhead produit 1,4x plus d\'hypertrophie.',
+        scienceEn: 'Maeo et al. (2023) study: Overhead triceps extensions produced 1.4x more muscle growth than pushdowns.',
+        alternatives: ['EX17']
+      },
+
+      // --- DAY B ---
+      {
+        id: 'EX07', day: 'B', imgFolder: 'Stiff-Legged_Dumbbell_Deadlift', altFolder: 'Romanian_Deadlift_from_Deficit',
+        ytUrl: 'http://www.youtube.com/watch?v=_oyxCn2iSjU', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'hamstrings', secondaryMuscles: ['back'], equipment: 'Dumbbell',
+        sets: 3, reps: '8-10', restSec: 150, rir: '1-2 RIR', defaultWeightKg: 30, tier: 'S-Tier',
+        nameAr: 'الديدليفت الروماني بالدمبل (RDL)', nameFr: 'Soulevé de Terre Roumain Haltères', nameEn: 'Dumbbell Romanian Deadlift (RDL)',
+        muscleAr: 'الأوتار الخلفية والأرداف', muscleFr: 'Ischio-jambiers & Fessiers', muscleEn: 'Hamstrings & Glutes',
+        startAr: 'قف بعرض الوركين وامسك الدمبلز أمام الفخذين مع ثنية خفيفة وثابتة في الركبتين (15°).',
+        startFr: 'Pieds largeur de hanches, haltères contre les cuisses, genoux fléchis à 15° fixes.',
+        startEn: 'Stand hip-width apart holding dumbbells against thighs with a soft, fixed 15° knee bend.',
+        stepsAr: 'ادفع الوركين للخلف أفقياً مع إبقاء الظهر مستقيماً والدمبلز ملاصقة للساقين حتى منتصف القصبة، ثم اصعد.',
+        stepsFr: 'Poussez les hanches vers l\'arrière jusqu\'à mi-tibia dos plat, puis remontez.',
+        stepsEn: 'Push hips straight back keeping spine neutral until mid-shin, then drive hips forward.',
+        safetyAr: '🛡️ الدمبلز تبقي مركز الثقل قريباً من الجسم مما يقلل إجهاد الفقرات القطنية.',
+        safetyFr: '🛡️ Les haltères gardent la charge près du centre de gravité, protégeant les lombaires.',
+        safetyEn: '🛡️ Dumbbells keep load aligned with your center of mass, reducing lumbar shear.',
+        scienceAr: 'يكمّل Seated Leg Curl باستهداف الأوتار الخلفية والأرداف عبر مفصل الورك تحت إطالة عالية.',
+        scienceFr: 'Complète le Leg Curl en ciblant les ischios et fessiers via l\'extension de hanche.',
+        scienceEn: 'Complements leg curls by loading the hamstrings and glutes through hip extension.',
+        alternatives: ['EX27', 'EX04']
+      },
+      {
+        id: 'EX08', day: 'B', imgFolder: 'V-Bar_Pulldown', altFolder: 'Rope_Straight-Arm_Pulldown',
+        ytUrl: 'http://www.youtube.com/watch?v=hnSqbBk15tw', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'back', secondaryMuscles: ['biceps'], equipment: 'Cable',
+        sets: 3, reps: '10-12', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 60, tier: 'S-Tier',
+        nameAr: 'السحب العمودي بقبضة متوازية', nameFr: 'Tirage Vertical Prise Neutre', nameEn: 'Neutral-Grip Lat Pulldown',
+        muscleAr: 'العضلة العريضة الظهرية (اللاتس)', muscleFr: 'Grands Dorsaux', muscleEn: 'Latissimus Dorsi',
+        startAr: 'ثبت الفخذين تحت الوسادة وامسك المقبض المتوازي بقبضة محايدة مع ميلان جذع 15° فقط.',
+        startFr: 'Calez les cuisses, prenez la poignée neutre et inclinez légèrement le buste de 15°.',
+        startEn: 'Lock thighs under pad, use a neutral parallel grip, and lean torso back slightly (15°).',
+        stepsAr: 'اسحب المرفقين للأسفل والداخل نحو أعلى الصدر، ثم تحكم في الصعود (3 ثوانٍ) حتى التمدد الكامل.',
+        stepsFr: 'Tirez les coudes vers le bas jusqu\'au haut des pectoraux, puis contrôlez la montée sur 3s.',
+        stepsEn: 'Drive elbows down toward your hips until handle touches upper chest, then stretch fully for 3s.',
+        safetyAr: '🛡️ القبضة المحايدة تحمي المعصم والكتف من الدوران القسري.',
+        safetyFr: '🛡️ La prise neutre protège l\'articulation de l\'épaule et les poignets.',
+        safetyEn: '🛡️ Neutral grip protects wrists and shoulders while aligning with lat fibers.',
+        scienceAr: 'يوفر مسار سحب سهمي مثالي لألياف اللاتس السفلية مع إطالة علوية كاملة.',
+        scienceFr: 'Aligne parfaitement le bras de levier avec les fibres des grands dorsaux.',
+        scienceEn: 'Provides optimal sagittal-plane leverage for the iliac and thoracic lat fibers.',
+        alternatives: ['EX02', 'EX20']
+      },
+      {
+        id: 'EX09', day: 'B', imgFolder: 'Dumbbell_Bench_Press_with_Neutral_Grip', altFolder: 'Leverage_Chest_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=f7XwzvAhR8Y', ytAuthor: 'Renaissance Periodization',
+        primaryMuscle: 'chest', secondaryMuscles: ['triceps', 'shoulders'], equipment: 'Dumbbell',
+        sets: 3, reps: '8-12', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 28, tier: 'A-Tier',
+        nameAr: 'ضغط الصدر المسطح بالدمبل / الجهاز', nameFr: 'Développé Couché Haltères / Machine', nameEn: 'Flat Dumbbell / Machine Chest Press',
+        muscleAr: 'الصدر الأوسط والسفلي', muscleFr: 'Pectoral Moyen & Inférieur', muscleEn: 'Mid & Lower Chest',
+        startAr: 'استلقِ على مقعد مسطح مع ضم لوحي الكتف للخلف وقبضة شبه محايدة مريحة للمعصم.',
+        startFr: 'Allongé sur banc plat, omoplates serrées, poignets en prise semi-neutre confortable.',
+        startEn: 'Lie on flat bench with retracted scapulae and a wrist-friendly semi-neutral grip.',
+        stepsAr: 'انزل ببطء حتى محاذاة الصدر مع توقف لحظي، ثم ادفع في قوس متقارب للأعلى.',
+        stepsFr: 'Descendez lentement au niveau de la poitrine avec une pause, puis poussez en arc convergent.',
+        stepsEn: 'Lower slowly to chest level with a brief pause, then press up in a converging arc.',
+        safetyAr: '🛡️ بديل آمن للبار المسطح يمنح مدى إطالة أكبر ويحمي المعصم.',
+        safetyFr: '🛡️ Alternative sécuritaire à la barre offrant une meilleure amplitude d\'étirement.',
+        safetyEn: '🛡️ Joint-safe alternative to straight barbell bench press with deeper stretch ROM.',
+        scienceAr: 'نصيحة Dr. Mike Israetel (RP): التوقف ثانية في قاع مدى الإطالة يضاعف التحفيز العضلي.',
+        scienceFr: 'Conseil Dr. Mike Israetel (RP) : une pause de 1s en bas maximise l\'hypertrophie.',
+        scienceEn: 'Dr. Mike Israetel (RP) cue: a 1-second pause in the deep stretch maximizes stimulus safely.',
+        alternatives: ['EX19', 'EX01', 'EX14']
+      },
+      {
+        id: 'EX10', day: 'B', imgFolder: 'Leg_Extensions', altFolder: 'Leg_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=ljO4jkwv8wQ', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'quads', secondaryMuscles: [], equipment: 'Machine',
+        sets: 3, reps: '12-15', restSec: 90, rir: '1-2 RIR', defaultWeightKg: 45, tier: 'A-Tier',
+        nameAr: 'مد الركبة المحكوم (90° إلى 40°)', nameFr: 'Leg Extension Contrôlé (90°–40°)', nameEn: 'Controlled Leg Extension (90°–40° Safe Arc)',
+        muscleAr: 'العضلة الرباعية (Rectus Femoris)', muscleFr: 'Quadriceps (Droit Fémoral)', muscleEn: 'Quadriceps (Rectus Femoris)',
+        startAr: 'اضبط المسند لمحاذاة الركبة لمحور الجهاز وضع الوسادة فوق الكاحل.',
+        startFr: 'Alignez le genou avec le pivot de la machine, boudin juste au-dessus des chevilles.',
+        startEn: 'Align knee joint with machine pivot and set roller pad just above ankles.',
+        stepsAr: 'ابدأ من زاوية 90° وارفع بتحكم حتى 40° مع تثبيت ثانيتين في الأعلى، ثم انزل في 3 ثوانٍ.',
+        stepsFr: 'Montez de 90° à 40° avec 2s de maintien isométrique, puis redescendez sur 3 secondes.',
+        stepsEn: 'Extend from 90° to 40° with a 2-second hold, then lower over 3 seconds.',
+        safetyAr: '🛡️ يتفادى منطقة الاحتكاك الرضفي القصوى (30°–0°) مع تحفيز الرباعية بالكامل.',
+        safetyFr: '🛡️ Évite la zone de compression rotulienne maximale (30°–0°).',
+        safetyEn: '🛡️ Avoids peak patellofemoral compression (30°–0°) while isolating the rectus femoris.',
+        scienceAr: 'التمرين الوحيد الذي يعزل الرأس المستقيم الفخذي (Rectus Femoris) بالكامل.',
+        scienceFr: 'Seul mouvement isolant pleinement le droit fémoral.',
+        scienceEn: 'Uniquely isolates the bi-articular rectus femoris head that squats and leg presses miss.',
+        alternatives: ['EX03', 'EX15']
+      },
+      {
+        id: 'EX11', day: 'B', imgFolder: 'Alternate_Incline_Dumbbell_Curl', altFolder: 'Dumbbell_Bicep_Curl',
+        ytUrl: 'http://www.youtube.com/watch?v=S6rqpxVGKZ4', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'biceps', secondaryMuscles: [], equipment: 'Dumbbell',
+        sets: 3, reps: '10-12', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 14, tier: 'S-Tier',
+        nameAr: 'مرجحة البايسبس على مقعد مائل (60°)', nameFr: 'Curl Biceps Incliné Haltères (60°)', nameEn: 'Incline Dumbbell Biceps Curl (60°)',
+        muscleAr: 'البايسبس (الرأس الطويل)', muscleFr: 'Biceps Brachial (Longue Portion)', muscleEn: 'Biceps Brachii (Long Head)',
+        startAr: 'اجلس على مقعد مائل بزاوية 60° واترك ذراعيك تتدليان عمودياً خلف خط الجذع.',
+        startFr: 'Assis sur un banc à 60°, laissez les bras pendre verticalement derrière le buste.',
+        startEn: 'Sit on a 60° incline bench letting arms hang straight down behind your torso.',
+        stepsAr: 'اثنِ المرفقين مع لف راحة اليد للأعلى دون تقديم المرفق للأمام، ثم انزل ببطء (3 ثوانٍ).',
+        stepsFr: 'Fléchissez les coudes en supination sans avancer les bras, puis descendez en 3s.',
+        stepsEn: 'Curl dumbbells up with supination while keeping elbows pinned back, then lower for 3s.',
+        safetyAr: '🛡️ الدمبلز تمنح حرية كاملة للمعصم وتمنع آلام الساعد.',
+        safetyFr: '🛡️ Les haltères respectent l\'alignement naturel des poignets.',
+        safetyEn: '🛡️ Dumbbells allow natural wrist supination without forearm splint strain.',
+        scienceAr: 'إرجاع الكتف للخلف يضع الرأس الطويل للبايسبس في أقصى إطالة ميكانيكية.',
+        scienceFr: 'L\'extension de l\'épaule place la longue portion du biceps en étirement maximal.',
+        scienceEn: 'Shoulder extension places the long head of the biceps under peak stretch tension.',
+        alternatives: ['EX29', 'EX24', 'EX18']
+      },
+      {
+        id: 'EX12', day: 'B', imgFolder: 'Standing_Calf_Raises', altFolder: 'Calf_Press_On_The_Leg_Press_Machine',
+        ytUrl: 'http://www.youtube.com/watch?v=jf9PBwwNAMs', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'calves', secondaryMuscles: [], equipment: 'Machine',
+        sets: 4, reps: '10-15', restSec: 60, rir: '0-1 RIR', defaultWeightKg: 80, tier: 'S-Tier',
+        nameAr: 'رفع السمانة واقفاً (توقف ثانيتين)', nameFr: 'Mollets Debout (Pause 2s)', nameEn: 'Standing Calf Raise (2s Stretch Pause)',
+        muscleAr: 'عضلة السمانة (Gastrocnemius)', muscleFr: 'Mollets (Gastrocnémien)', muscleEn: 'Calves (Gastrocnemius)',
+        startAr: 'ضع أمشاط القدمين على حافة المنصة مع إبقاء الركبتين مفرودتين.',
+        startFr: 'Pointes de pieds sur le bord de la cale, genoux tendus.',
+        startEn: 'Place balls of feet on platform edge with knees straight.',
+        stepsAr: 'انزل بالكعبين لأقصى مدى وتوقف ثانيتين كاملتين في القاع، ثم اصعد للقمة واثبت ثانية.',
+        stepsFr: 'Descendez les talons au maximum avec 2s de pause en bas, puis montez à fond.',
+        stepsEn: 'Lower heels into a deep stretch, pause 2 full seconds at the bottom, and drive up.',
+        safetyAr: '🛡️ يقوي وتر أخيل ومفصل الكاحل ويدعم امتصاص الصدمات للركبة.',
+        safetyFr: '🛡️ Renforce le tendon d\'Achille et stabilise la cheville.',
+        safetyEn: '🛡️ Strengthens the Achilles tendon and ankle joint stability.',
+        scienceAr: 'التوقف ثانيتين في وضع الإطالة السفلي مع ركبة مفرودة هو المحفز الأول لنمو السمانة.',
+        scienceFr: 'La phase basse étirée jambes tendues maximise le gain des mollets.',
+        scienceEn: 'Deep stretched reps with straight knees maximize gastrocnemius hypertrophy.',
+        alternatives: ['EX31']
+      },
+
+      // --- DAY C ---
+      {
+        id: 'EX13', day: 'C', imgFolder: 'Cable_Rope_Rear-Delt_Rows', altFolder: 'Reverse_Machine_Flyes',
+        ytUrl: 'http://www.youtube.com/watch?v=8686PLZB_1Q', ytAuthor: 'ATHLEAN-X',
+        primaryMuscle: 'shoulders', secondaryMuscles: ['back'], equipment: 'Cable',
+        sets: 3, reps: '12-15', restSec: 75, rir: '1-2 RIR', defaultWeightKg: 25, tier: 'S-Tier',
+        nameAr: 'سحب الوجه والكتف الخلفي بالحبل (Face Pull)', nameFr: 'Tirage Visage Corde (Face Pull)', nameEn: 'High-Pulley Rope Face Pull',
+        muscleAr: 'الدالية الخلفية والكفة المدورة', muscleFr: 'Deltoïde Postérieur & Coiffe', muscleEn: 'Rear Delts & Rotator Cuff',
+        startAr: 'اضبط البكرة بمستوى أعلى الرأس وامسك الحبل بحيث يشير الإبهامان للخلف.',
+        startFr: 'Poulie à hauteur du front, saisissez la corde pouces vers l\'arrière.',
+        startEn: 'Set pulley at forehead height and grasp rope with thumbs pointing backward.',
+        stepsAr: 'اسحب الحبل نحو الجبهة مع فتح الذراعين وتدوير الكتفين للخارج واثبت ثانية.',
+        stepsFr: 'Tirez vers le front en écartant la corde en rotation externe, maintenez 1s.',
+        stepsEn: 'Pull rope toward forehead while externally rotating shoulders; hold 1s.',
+        safetyAr: '🛡️ الدرع الواقي الأول لمفصل الكتف ضد الإصابات وتحدب القوام.',
+        safetyFr: '🛡️ Exercice roi pour la santé articulaire de l\'épaule.',
+        safetyEn: '🛡️ Essential shoulder-health movement to balance pressing volume.',
+        scienceAr: 'يجمع بين الإبعاد الأفقي للكتف الخلفي والدوران الخارجي للكفة المدورة.',
+        scienceFr: 'Combine l\'abduction horizontale et la rotation externe de la coiffe.',
+        scienceEn: 'Combines horizontal abduction with external rotation.',
+        alternatives: ['EX26']
+      },
+      {
+        id: 'EX14', day: 'C', imgFolder: 'Butterfly', altFolder: 'Cable_Chest_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=S6rqpxVGKZ4', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'chest', secondaryMuscles: ['shoulders'], equipment: 'Machine',
+        sets: 3, reps: '10-15', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 50, tier: 'S-Tier',
+        nameAr: 'تفتيح الصدر على الجهاز (Pec Deck)', nameFr: 'Écarté Pectoraux Machine (Pec Deck)', nameEn: 'Seated Pec Deck Chest Fly',
+        muscleAr: 'عضلة الصدر الكبرى بالكامل', muscleFr: 'Grand Pectoral', muscleEn: 'Pectoralis Major',
+        startAr: 'اضبط المقعد لتكون المقابض في مستوى منتصف الصدر وألصق لوحي الكتف بالمسند.',
+        startFr: 'Réglez le siège à hauteur de mi-poitrine, omoplates plaquées au dossier.',
+        startEn: 'Adjust seat so handles align with mid-chest and pin shoulder blades to the pad.',
+        stepsAr: 'اجمع الذراعين في قوس واسع أمام الصدر واعصر ثانية، ثم افتح ببطء (3 ثوانٍ).',
+        stepsFr: 'Ramenez les bras en arc devant la poitrine en contractant 1s, puis ouvrez sur 3s.',
+        stepsEn: 'Bring arms together in a wide arc squeezing for 1s, then open slowly over 3s.',
+        safetyAr: '🛡️ بديل آمن للغطس يعزل الصدر دون إجهاد المرفق أو المعصم.',
+        safetyFr: '🛡️ Alternative sûre aux dips isolant les pectoraux.',
+        safetyEn: '🛡️ Joint-safe isolation alternative to dips.',
+        scienceAr: 'يوفر مقاومة متساوية على طول القوس الحركي بالكامل.',
+        scienceFr: 'Fournit un profil de résistance constant sur toute l\'amplitude.',
+        scienceEn: 'Provides a flat resistance profile matching the pec torque curve.',
+        alternatives: ['EX01', 'EX09']
+      },
+      {
+        id: 'EX15', day: 'C', imgFolder: 'Dumbbell_Lunges', altFolder: 'Dumbbell_Step_Ups',
+        ytUrl: 'http://www.youtube.com/watch?v=lG3MsPmEQQk', ytAuthor: 'Squat University',
+        primaryMuscle: 'quads', secondaryMuscles: ['hamstrings'], equipment: 'Dumbbell',
+        sets: 3, reps: '8-10 / leg', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 18, tier: 'S-Tier',
+        nameAr: 'القرفصاء البلغارية بساق عمودية وميلان 30°', nameFr: 'Squat Bulgare Haltères (Tibia Vertical)', nameEn: 'Bulgarian Split Squat (Vertical Shin)',
+        muscleAr: 'الرباعية الأمامية والأرداف', muscleFr: 'Quadriceps & Fessiers', muscleEn: 'Quads & Glutes',
+        startAr: 'ضع مشط القدم الخلفية على المقعد وقدم الرجل الأمامية للأمام لتبقى القصبة عمودية.',
+        startFr: 'Pied arrière sur le banc, pied avant avancé pour garder le tibia vertical.',
+        startEn: 'Place back foot on bench and step front foot out so your front shin stays vertical.',
+        stepsAr: 'أمل الجذع 30° للأمام وانزل قطرياً للأسفل والخلف بتحكم، ثم ادفع بكعب القدم الأمامية.',
+        stepsFr: 'Inclinez le buste de 30°, descendez vers l\'arrière, puis poussez par le talon avant.',
+        stepsEn: 'Lean torso 30° forward, descend diagonally back, and drive up through your front heel.',
+        safetyAr: '🛡️ تعديل Squat University: القصبة العمودية مع ميلان الجذع تلغي ألم الرضفة تماماً.',
+        safetyFr: '🛡️ Modification Squat University : le tibia vertical élimine la douleur rotulienne.',
+        safetyEn: '🛡️ Squat University modification: vertical shin + 30° torso lean eliminates knee pain.',
+        scienceAr: 'يعالج عدم التوازن بين الساقين ويحفز الأرداف والرباعية دون ضغط على العمود الفقري.',
+        scienceFr: 'Corrige les asymétries sans compression axiale sur la colonne.',
+        scienceEn: 'Eliminates bilateral asymmetries and axial spinal loading.',
+        alternatives: ['EX03', 'EX27']
+      },
+      {
+        id: 'EX16', day: 'C', imgFolder: 'Kneeling_Cable_Crunch_With_Alternating_Oblique_Twists', altFolder: 'Barbell_Ab_Rollout',
+        ytUrl: 'http://www.youtube.com/watch?v=_6rSz20GLxo', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'core', secondaryMuscles: [], equipment: 'Cable',
+        sets: 3, reps: '12-15', restSec: 60, rir: '0-1 RIR', defaultWeightKg: 35, tier: 'S-Tier',
+        nameAr: 'انقباض البطن بالكيبل راكعاً (Cable Crunch)', nameFr: 'Crunch Abdominal Poulie Haute', nameEn: 'Kneeling Weighted Cable Crunch',
+        muscleAr: 'عضلات البطن والخواصر (Abs & Obliques)', muscleFr: 'Grand Droit & Obliques', muscleEn: 'Rectus Abdominis & Obliques',
+        startAr: 'اركع على وسادة أمام البكرة العلوية، امسك الحبل بجانب الرأس وثبت الوركين.',
+        startFr: 'À genoux devant la poulie haute, corde près des tempes, hanches fixes.',
+        startEn: 'Kneel in front of high pulley holding rope by your temples with hips locked.',
+        stepsAr: 'اثنِ العمود الفقري بتقريب الأضلاع نحو الحوض مع زفير كامل، ثم عد ببطء للإطالة.',
+        stepsFr: 'Enroulez la colonne en rapprochant les côtes du bassin, puis étirez lentement.',
+        stepsEn: 'Flex your spine curling ribs toward pelvis on a full exhale, then control the stretch up.',
+        safetyAr: '🛡️ ثبات الورك يمنع إجهاد أسفل الظهر.',
+        safetyFr: '🛡️ Le verrouillage des hanches protège les lombaires.',
+        safetyEn: '🛡️ Keeping hips stationary isolates spinal flexion safely.',
+        scienceAr: 'يتيح تطبيق الحمل التدريجي بالأوزان لعضلات البطن لإبرازها.',
+        scienceFr: 'Permet d\'appliquer une surcharge progressive directe sur les abdos.',
+        scienceEn: 'Allows weighted progressive overload on the abdominal wall.',
+        alternatives: ['EX32']
+      },
+      {
+        id: 'EX17', day: 'C', imgFolder: 'Triceps_Pushdown_-_Rope_Attachment', altFolder: 'Cable_Rope_Overhead_Triceps_Extension',
+        ytUrl: 'http://www.youtube.com/watch?v=OpRMRhr0Ycc', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'triceps', secondaryMuscles: [], equipment: 'Cable',
+        sets: 3, reps: '12-15', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 25, tier: 'S-Tier',
+        nameAr: 'دفع الترايسبس للأسفل بالحبل (Rope Pushdown)', nameFr: 'Extension Triceps Poulie Haute Corde', nameEn: 'Cable Rope Triceps Pushdown',
+        muscleAr: 'الترايسبس (الرأس الجانبي والإنسي)', muscleFr: 'Triceps (Chefs Latéral & Médial)', muscleEn: 'Triceps (Lateral & Medial Heads)',
+        startAr: 'قف أمام البكرة العلوية بميلان طفيف، ثبت المرفقين بجانب الجذع وامسك الحبل.',
+        startFr: 'Debout face à la poulie, coudes collés aux côtes, prise neutre.',
+        startEn: 'Stand facing high pulley with slight torso lean and elbows pinned to your sides.',
+        stepsAr: 'ادفع للأسفل حتى استقامة الذراعين مع فتح الحبل في النهاية واثبت ثانية، ثم عد ببطء.',
+        stepsFr: 'Poussez vers le bas en écartant la corde en fin de course, contractez 1s.',
+        stepsEn: 'Push rope down to full lockout spreading handles apart, squeeze 1s, and return slowly.',
+        safetyAr: '🛡️ الحبل يمنح حرية كاملة للمعصم مقارنة بالبار المستقيم.',
+        safetyFr: '🛡️ La corde élimine la torsion des poignets.',
+        safetyEn: '🛡️ Rope handle prevents wrist and medial elbow pain.',
+        scienceAr: 'يتكامل مع التمديد فوق الرأس (EX06) لتغطية الرؤوس الثلاثة للترايسبس.',
+        scienceFr: 'Complète l\'extension overhead (EX06) pour développer les 3 chefs.',
+        scienceEn: 'Pairs with overhead extensions (EX06) for complete 3-head triceps development.',
+        alternatives: ['EX06']
+      },
+      {
+        id: 'EX18', day: 'C', imgFolder: 'Alternate_Hammer_Curl', altFolder: 'Cable_Hammer_Curls_-_Rope_Attachment',
+        ytUrl: 'http://www.youtube.com/watch?v=S6rqpxVGKZ4', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'biceps', secondaryMuscles: [], equipment: 'Dumbbell',
+        sets: 3, reps: '10-12', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 16, tier: 'S-Tier',
+        nameAr: 'مرجحة المطرقة بالدمبل (Hammer Curl)', nameFr: 'Curl Marteau aux Haltères', nameEn: 'Neutral-Grip Dumbbell Hammer Curl',
+        muscleAr: 'العضلة العضدية والساعد والبايسبس', muscleFr: 'Brachial, Avant-bras & Biceps', muscleEn: 'Brachialis, Forearms & Biceps',
+        startAr: 'قف باستقامة وامسك الدمبلز بجانب الجسم بقبضة محايدة (الإبهام للأعلى).',
+        startFr: 'Debout buste droit, haltères en prise neutre (pouces vers le haut).',
+        startEn: 'Stand tall holding dumbbells at your sides with a neutral palms-in grip.',
+        stepsAr: 'ارفع الدمبل نحو الكتف مع ثبات المرفق، اثبت ثانية، وانزل في 3 ثوانٍ.',
+        stepsFr: 'Montez les haltères sans bouger les coudes, serrez 1s et descendez sur 3s.',
+        stepsEn: 'Curl weights up keeping elbows stationary, squeeze 1s at top, and lower over 3s.',
+        safetyAr: '🛡️ التمرين الأكثر أماناً لمفصل الرسغ وأوتار الساعد.',
+        safetyFr: '🛡️ Le mouvement le plus doux pour les poignets.',
+        safetyEn: '🛡️ Most wrist-friendly arm exercise available.',
+        scienceAr: 'يستهدف العضلة العضدية (Brachialis) والعضدية الكعبرية مما يزيد سماكة وعرض الذراع.',
+        scienceFr: 'Cible le brachial et le brachio-radial pour épaissir le bras.',
+        scienceEn: 'Heavily recruits the brachialis and brachioradialis to widen the upper arm.',
+        alternatives: ['EX11', 'EX29', 'EX24']
+      },
+
+      // --- BENCHMARK ALTERNATIVES (EX19 - EX26) ---
+      {
+        id: 'EX19', day: 'BENCHMARK', imgFolder: 'Barbell_Bench_Press_-_Medium_Grip', altFolder: 'Dumbbell_Bench_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=hWbUlkb5Ms4', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'chest', secondaryMuscles: ['triceps', 'shoulders'], equipment: 'Barbell',
+        sets: 3, reps: '6-10', restSec: 180, rir: '1-2 RIR', defaultWeightKg: 75, tier: 'A-Tier',
+        nameAr: 'ضغط الصدر المسطح بالبار', nameFr: 'Développé Couché Barre', nameEn: 'Flat Barbell Bench Press',
+        muscleAr: 'الصدر الكبرى', muscleFr: 'Grand Pectoral', muscleEn: 'Pectoralis Major',
+        startAr: 'استلقِ والعينان تحت البار مع ضم لوحي الكتف وتثبيت القدمين.',
+        startFr: 'Allongé yeux sous la barre, omoplates serrées et pieds ancrés.',
+        startEn: 'Lie on bench with eyes under bar, retracted scapulae, and planted feet.',
+        stepsAr: 'انزل بالبار لأسفل الصدر بزاوية مرفق 45°، ثم ادفع للأعلى بتحكم.',
+        stepsFr: 'Descendez la barre sur le bas des pectoraux (coudes à 45°), puis poussez.',
+        stepsEn: 'Lower bar to lower chest with 45° elbow tuck, then drive up.',
+        safetyAr: '⚠️ في حال حساسية المعصم يُفضل استبداله بـ EX09.',
+        safetyFr: '⚠️ En cas de gêne aux poignets, remplacez par EX09.',
+        safetyEn: '⚠️ Swap for EX09 if you experience wrist discomfort.',
+        scienceAr: 'تمرين ممتاز لبناء القوة القصوى للجزء العلوي.',
+        scienceFr: 'Excellent mouvement polyarticulaire pour la force horizontale.',
+        scienceEn: 'Classic compound lift for horizontal pressing strength.',
+        alternatives: ['EX09', 'EX01']
+      },
+      {
+        id: 'EX20', day: 'BENCHMARK', imgFolder: 'Seated_Cable_Rows', altFolder: 'Leverage_Iso_Row',
+        ytUrl: 'http://www.youtube.com/watch?v=jLvqKgW-_G8', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'back', secondaryMuscles: ['biceps'], equipment: 'Cable',
+        sets: 3, reps: '8-12', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 60, tier: 'A-Tier',
+        nameAr: 'السحب الأرضي الجالس بالكيبل', nameFr: 'Tirage Horizontal Poulie', nameEn: 'Seated Neutral-Grip Cable Row',
+        muscleAr: 'الظهر الأوسط واللاتس', muscleFr: 'Milieu du Dos & Dorsaux', muscleEn: 'Mid-Back & Lats',
+        startAr: 'اجلس مع ثنية خفيفة بالركبتين واستقامة الظهر وامسك مقبض V.',
+        startFr: 'Assis genoux légèrement fléchis, dos droit, prise V-Bar.',
+        startEn: 'Sit tall with slightly bent knees and neutral V-handle.',
+        stepsAr: 'اسحب المقبض لأعلى البطن وعصر لوحي الكتف، ثم عد ببطء.',
+        stepsFr: 'Tirez vers le haut de l\'abdomen en serrant les omoplates, relâchez.',
+        stepsEn: 'Row handle to upper abdomen squeezing scapulae, then protract forward.',
+        safetyAr: '🛡️ آمن للمعصم؛ تجنب التأرجح بأسفل الظهر.',
+        safetyFr: '🛡️ Prise neutre confortable ; gardez le bas du dos stable.',
+        safetyEn: '🛡️ Wrist-safe; avoid excessive lower-back swinging.',
+        scienceAr: 'تمدد لوحي الكتف للأمام في نهاية العودة يزيد تحفيز الظهر الأوسط.',
+        scienceFr: 'La protraction contrôlée augmente le recrutement dorsal.',
+        scienceEn: 'Controlled scapular protraction on the eccentric boosts mid-back growth.',
+        alternatives: ['EX02', 'EX28']
+      },
+      {
+        id: 'EX21', day: 'BENCHMARK', imgFolder: 'Lying_Leg_Curls', altFolder: 'Seated_Leg_Curl',
+        ytUrl: 'http://www.youtube.com/watch?v=Lh3iMIcbkBQ', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'hamstrings', secondaryMuscles: [], equipment: 'Machine',
+        sets: 3, reps: '10-15', restSec: 90, rir: '0-1 RIR', defaultWeightKg: 45, tier: 'A-Tier',
+        nameAr: 'ثني الركبة مستلقياً للخلفية', nameFr: 'Leg Curl Allongé', nameEn: 'Lying Prone Leg Curl',
+        muscleAr: 'الأوتار الخلفية للفخذ', muscleFr: 'Ischio-jambiers', muscleEn: 'Hamstrings',
+        startAr: 'استلقِ على بطنك واضغط عظمة الحوض للأسفل على الوسادة.',
+        startFr: 'Allongé sur le ventre, maintenez le bassin plaqué contre le banc.',
+        startEn: 'Lie prone and press your pelvis firmly into the pad.',
+        stepsAr: 'اثنِ الساقين للأعلى نحو الأرداف واثبت ثانية، ثم انزل في 3 ثوانٍ.',
+        stepsFr: 'Fléchissez les jambes vers les fessiers, maintenez 1s et descendez sur 3s.',
+        stepsEn: 'Curl pad toward glutes, hold 1s, and lower over 3s.',
+        safetyAr: '🛡️ آمن للركبة والظهر عند تثبيت الحوض.',
+        safetyFr: '🛡️ Sécuritaire pour les genoux et lombaires.',
+        safetyEn: '🛡️ Knee and spine safe when hips stay pinned.',
+        scienceAr: 'بديل ممتاز عند عدم توفر جهاز الجلوس.',
+        scienceFr: 'Excellente alternative lorsque le leg curl assis est occupé.',
+        scienceEn: 'Great alternative when a seated leg curl machine is occupied.',
+        alternatives: ['EX04', 'EX07']
+      },
+      {
+        id: 'EX22', day: 'BENCHMARK', imgFolder: 'Side_Lateral_Raise', altFolder: 'Seated_Side_Lateral_Raise',
+        ytUrl: 'http://www.youtube.com/watch?v=f_OGBg2KxgY', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'shoulders', secondaryMuscles: [], equipment: 'Dumbbell',
+        sets: 3, reps: '12-15', restSec: 60, rir: '0-1 RIR', defaultWeightKg: 12, tier: 'A-Tier',
+        nameAr: 'رفرفة جانبية بالدمبل', nameFr: 'Élévations Latérales Haltères', nameEn: 'Dumbbell Lateral Raise',
+        muscleAr: 'الدالية الجانبية', muscleFr: 'Deltoïde Latéral', muscleEn: 'Lateral Deltoid',
+        startAr: 'قف باستقامة والدمبلز بجانبك مع ميلان طفيف للأمام.',
+        startFr: 'Debout buste légèrement incliné, haltères sur les côtés.',
+        startEn: 'Stand tall with slight forward lean holding dumbbells.',
+        stepsAr: 'ارفع الذراعين للجانبين (20° للأمام) حتى مستوى الكتف ثم انزل ببطء.',
+        stepsFr: 'Élevez les bras dans le plan scapulaire jusqu\'à l\'horizontale.',
+        stepsEn: 'Raise arms in scapular plane to shoulder level, then lower under control.',
+        safetyAr: '🛡️ لا تفرط في تدوير الإبهام للأسفل لحماية الكتف.',
+        safetyFr: '🛡️ Gardez les pouces neutres pour protéger la coiffe.',
+        safetyEn: '🛡️ Keep thumbs neutral rather than internally rotated.',
+        scienceAr: 'تمرين كلاسيكي فعال لبناء عرض الأكتاف.',
+        scienceFr: 'Classique incontournable pour élargir la carrure.',
+        scienceEn: 'Classic free-weight movement for lateral deltoid width.',
+        alternatives: ['EX05']
+      },
+      {
+        id: 'EX23', day: 'BENCHMARK', imgFolder: 'Dumbbell_Shoulder_Press', altFolder: 'Arnold_Dumbbell_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=ozpcrgmwyto', ytAuthor: 'Jeremy Ethier',
+        primaryMuscle: 'shoulders', secondaryMuscles: ['triceps'], equipment: 'Dumbbell',
+        sets: 3, reps: '8-12', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 20, tier: 'A-Tier',
+        nameAr: 'ضغط الأكتاف بالدمبل جالساً (75°)', nameFr: 'Développé Épaules Assis Haltères', nameEn: 'Seated Dumbbell Shoulder Press',
+        muscleAr: 'الدالية الأمامية والجانبية', muscleFr: 'Deltoïdes Antérieur & Latéral', muscleEn: 'Front & Side Deltoids',
+        startAr: 'مقعد بزاوية 75° والدمبلز في مستوى الأذنين مع تقديم المرفقين 30° للأمام.',
+        startFr: 'Banc à 75°, haltères au niveau des oreilles, coudes avancés de 30°.',
+        startEn: 'Set bench to 75°, hold dumbbells at ear level with elbows 30° forward.',
+        stepsAr: 'ادفع الدمبلز للأعلى دون قفل عنيف، ثم انزل بتحكم لمستوى الذقن.',
+        stepsFr: 'Poussez vers le haut en arc convergent, puis redescendez sous le menton.',
+        stepsEn: 'Press overhead in a converging arc, then lower to chin level.',
+        safetyAr: '🛡️ مسند 75° مع المستوى الكتفي يحمي الكتف وأسفل الظهر.',
+        safetyFr: '🛡️ L\'angle de 75° et le plan scapulaire protègent l\'épaule.',
+        safetyEn: '🛡️ 75° backrest and scapular plane protect shoulder capsule.',
+        scienceAr: 'يبني قوة وحجم الحزام الكتفي العلوي.',
+        scienceFr: 'Développe la force verticale et le volume global des épaules.',
+        scienceEn: 'Builds overhead pressing strength and anterior/lateral deltoid mass.',
+        alternatives: ['EX01', 'EX05']
+      },
+      {
+        id: 'EX24', day: 'BENCHMARK', imgFolder: 'Dumbbell_Bicep_Curl', altFolder: 'Alternate_Hammer_Curl',
+        ytUrl: 'http://www.youtube.com/watch?v=S6rqpxVGKZ4', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'biceps', secondaryMuscles: [], equipment: 'Dumbbell',
+        sets: 3, reps: '8-12', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 15, tier: 'A-Tier',
+        nameAr: 'مرجحة البايسبس بالدمبل واقفاً', nameFr: 'Curl Biceps Alterné Haltères', nameEn: 'Standing Supinating Dumbbell Curl',
+        muscleAr: 'البايسبس', muscleFr: 'Biceps Brachial', muscleEn: 'Biceps Brachii',
+        startAr: 'قف باستقامة والدمبلز بجانبك مع شد الجذع.',
+        startFr: 'Debout abdos gainés, haltères le long des cuisses.',
+        startEn: 'Stand tall with braced core and dumbbells at sides.',
+        stepsAr: 'ارفع الدمبل مع لف الخنصر للأعلى والداخل لعصر البايسبس، ثم انزل ببطء.',
+        stepsFr: 'Montez en tournant la paume vers le haut, contractez 1s et descendez.',
+        stepsEn: 'Curl up while supinating wrist, squeeze 1s, and lower slowly.',
+        safetyAr: '🛡️ مريح للمعصم مقارنة بالبار المستقيم.',
+        safetyFr: '🛡️ Respecte la biomécanique du poignet.',
+        safetyEn: '🛡️ Wrist-safe free rotation.',
+        scienceAr: 'يفعل وظيفة البايسبس المزدوجة في ثني المرفق ولف الساعد.',
+        scienceFr: 'Active les deux fonctions du biceps : flexion et supination.',
+        scienceEn: 'Engages both elbow flexion and forearm supination functions.',
+        alternatives: ['EX11', 'EX29', 'EX18']
+      },
+      {
+        id: 'EX25', day: 'BENCHMARK', imgFolder: 'Barbell_Hack_Squat', altFolder: 'Leg_Press',
+        ytUrl: 'http://www.youtube.com/watch?v=jf9PBwwNAMs', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'quads', secondaryMuscles: ['hamstrings'], equipment: 'Machine',
+        sets: 3, reps: '8-10', restSec: 180, rir: '1-2 RIR', defaultWeightKg: 100, tier: 'A-Tier',
+        nameAr: 'الهاك سكوات (Hack Squat)', nameFr: 'Hack Squat', nameEn: 'Hack Squat',
+        muscleAr: 'الرباعية الأمامية', muscleFr: 'Quadriceps', muscleEn: 'Quadriceps',
+        startAr: 'ثبت الظهر على المسند وضع القدمين في الثلث العلوي للمنصة.',
+        startFr: 'Dos plaqué au dossier, pieds dans la partie haute du plateau.',
+        startEn: 'Brace back against pad with feet in upper half of platform.',
+        stepsAr: 'انزل بتحكم حتى زاوية 90° ثم ادفع بالكعبين.',
+        stepsFr: 'Descendez jusqu\'à 90° de flexion de genou, puis poussez par les talons.',
+        stepsEn: 'Descend under control to 90° knee flexion and drive through heels.',
+        safetyAr: '⚠️ إذا شعرت بأي ضغط على صابونة الركبة استبدله بـ EX03.',
+        safetyFr: '⚠️ En cas de sensibilité rotulienne, privilégiez EX03.',
+        safetyEn: '⚠️ Swap for High-Foot Leg Press (EX03) if you feel patellar knee pressure.',
+        scienceAr: 'يوفر ثباتاً عالياً للظهر لاستهداف الرباعية.',
+        scienceFr: 'Excellente stabilité externe pour cibler les quadriceps.',
+        scienceEn: 'High external stability for quad recruitment.',
+        alternatives: ['EX03', 'EX15']
+      },
+      {
+        id: 'EX26', day: 'BENCHMARK', imgFolder: 'Reverse_Machine_Flyes', altFolder: 'Cable_Rope_Rear-Delt_Rows',
+        ytUrl: 'http://www.youtube.com/watch?v=ozpcrgmwyto', ytAuthor: 'Jeremy Ethier',
+        primaryMuscle: 'shoulders', secondaryMuscles: ['back'], equipment: 'Machine',
+        sets: 3, reps: '12-15', restSec: 75, rir: '0-1 RIR', defaultWeightKg: 40, tier: 'S-Tier',
+        nameAr: 'رفرفة الكتف الخلفي على الجهاز (Reverse Pec Deck)', nameFr: 'Oiseau Machine (Reverse Pec Deck)', nameEn: 'Reverse Machine Rear-Delt Fly',
+        muscleAr: 'الدالية الخلفية وأعلى الظهر', muscleFr: 'Deltoïde Postérieur', muscleEn: 'Posterior Deltoid',
+        startAr: 'اجلس مواجهاً للمسند والمقابض بمستوى الكتف تماماً.',
+        startFr: 'Assis face au coussin, poignées à hauteur d\'épaules.',
+        startEn: 'Sit facing pad with handles at shoulder height.',
+        stepsAr: 'ادفع الذراعين للخلف في قوس واسع واثبت ثانية، ثم عد ببطء.',
+        stepsFr: 'Écartez les bras vers l\'arrière en arc large, maintenez 1s et revenez.',
+        stepsEn: 'Sweep arms back in a wide arc, pause 1s, and return slowly.',
+        safetyAr: '🛡️ آمن تماماً للكتف والمعصم والظهر.',
+        safetyFr: '🛡️ Totalement sécuritaire pour les épaules et le dos.',
+        safetyEn: '🛡️ Completely joint-safe for shoulders and spine.',
+        scienceAr: 'أثبتت دراسات EMG أنه من أقوى تمارين عزل الدالية الخلفية.',
+        scienceFr: 'Les analyses EMG montrent une activation maximale du deltoïde postérieur.',
+        scienceEn: 'EMG studies confirm superior posterior deltoid isolation.',
+        alternatives: ['EX13']
+      },
+
+      // --- DAY D: COMPLETE PHYSIQUE & NEGLECTED MUSCLES ---
+      {
+        id: 'EX27', day: 'D', imgFolder: 'Barbell_Hip_Thrust', altFolder: 'Barbell_Glute_Bridge',
+        ytUrl: 'http://www.youtube.com/watch?v=_i6qpcI1Nw4', ytAuthor: 'Glute Lab',
+        primaryMuscle: 'hamstrings', secondaryMuscles: ['quads', 'core'], equipment: 'Barbell',
+        sets: 3, reps: '8-12', restSec: 120, rir: '1-2 RIR', defaultWeightKg: 90, tier: 'S-Tier',
+        nameAr: 'دفع الورك للأرداف (Hip Thrust)', nameFr: 'Hip Thrust (Fessiers)', nameEn: 'Barbell / Machine Hip Thrust',
+        muscleAr: 'عضلة الأرداف الكبرى مباشرة', muscleFr: 'Grand Fessier (Direct)', muscleEn: 'Gluteus Maximus (Direct)',
+        startAr: 'أسند أسفل لوحي الكتف على مقعد، ضع وسادة مبطنة تحت البار فوق الورك.',
+        startFr: 'Haut du dos sur le banc, barre protégée sur les hanches.',
+        startEn: 'Rest upper back on bench, pad bar across hips, shins vertical at top.',
+        stepsAr: 'ادفع الورك للأعلى حتى يصبح الجذع موازياً للأرض مع عصر الأرداف ثانيتين.',
+        stepsFr: 'Montez le bassin jusqu\'à l\'horizontale en serrant les fessiers 2s.',
+        stepsEn: 'Drive hips up to full extension squeezing glutes for 2s, then lower.',
+        safetyAr: '🛡️ يقوي الأرداف التي تمنع دوران الفخذ للداخل وتحمي مفصل الركبة.',
+        safetyFr: '🛡️ Renforce les fessiers qui stabilisent le fémur et protègent le genou.',
+        safetyEn: '🛡️ Strong glutes control femoral tracking and relieve knee stress.',
+        scienceAr: 'يغطي الانقباض القصير للأرداف بنسبة تفعيل تتجاوز 85% MVC.',
+        scienceFr: 'Cible la contraction maximale du grand fessier.',
+        scienceEn: 'Maximizes shortened-position glute tension without lower-back strain.',
+        alternatives: ['EX07', 'EX15']
+      },
+      {
+        id: 'EX28', day: 'D', imgFolder: 'One-Arm_Dumbbell_Row', altFolder: 'Leverage_Iso_Row',
+        ytUrl: 'http://www.youtube.com/watch?v=O94yEoGXtBY', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'back', secondaryMuscles: ['biceps'], equipment: 'Dumbbell',
+        sets: 3, reps: '10-12 / arm', restSec: 90, rir: '1-2 RIR', defaultWeightKg: 32, tier: 'S-Tier',
+        nameAr: 'سحب الدمبل بذراع واحدة مدعوماً', nameFr: 'Rowing Haltère Unilatéral sur Banc', nameEn: 'One-Arm Supported Dumbbell Row',
+        muscleAr: 'اللاتس السفلي والظهر الأوسط', muscleFr: 'Grand Dorsal & Milieu du Dos', muscleEn: 'Lower Lats & Mid-Back',
+        startAr: 'ضع يدك وركبتك غير العاملة على المقعد لحماية الظهر، وامسك الدمبل باليد الحرة.',
+        startFr: 'Main et genou en appui sur le banc, dos plat parallèle au sol.',
+        startEn: 'Support non-working hand and knee on bench with a flat neutral spine.',
+        stepsAr: 'اسحب الدمبل في قوس نحو الورك لعزل اللاتس، ثم انزل لأقصى إطالة.',
+        stepsFr: 'Tirez l\'haltère en arc vers la hanche, puis étirez complètement en bas.',
+        stepsEn: 'Sweep dumbbell back toward your hip in an arc, then lower into a deep lat stretch.',
+        safetyAr: '🛡️ الدعم الثلاثي على المقعد يحمي العمود الفقري القطني.',
+        safetyFr: '🛡️ L\'appui tripode sur le banc décharge totalement les lombaires.',
+        safetyEn: '🛡️ 3-point bench support unloads the lower spine.',
+        scienceAr: 'السحب القوسي نحو الورك يستهدف ألياف اللاتس السفلية بكفاءة عالية.',
+        scienceFr: 'La trajectoire en arc vers la hanche cible idéalement le bas du dorsal.',
+        scienceEn: 'Arcing the weight toward the hip maximizes lower-lat fiber alignment.',
+        alternatives: ['EX02', 'EX08']
+      },
+      {
+        id: 'EX29', day: 'D', imgFolder: 'Two-Arm_Dumbbell_Preacher_Curl', altFolder: 'Alternate_Incline_Dumbbell_Curl',
+        ytUrl: 'http://www.youtube.com/watch?v=S6rqpxVGKZ4', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'biceps', secondaryMuscles: [], equipment: 'Dumbbell',
+        sets: 3, reps: '10-12', restSec: 75, rir: '1-2 RIR', defaultWeightKg: 12, tier: 'S-Tier',
+        nameAr: 'مرجحة البايسبس على مسند البريتشر', nameFr: 'Curl Pupitre aux Haltères', nameEn: 'Dumbbell Preacher Curl',
+        muscleAr: 'البايسبس السفلي والرأس القصير', muscleFr: 'Biceps Distal & Courte Portion', muscleEn: 'Short Head & Distal Biceps',
+        startAr: 'ضع العضدين بالكامل على وسادة البريتشر وامسك الدمبلز.',
+        startFr: 'Bras bien calés sur le pupitre, épaules basses.',
+        startEn: 'Rest upper arms flush against the preacher pad.',
+        stepsAr: 'انزل ببطء شديد (3 ثوانٍ) حتى تمدد المرفق، ثم ارفع بتحكم.',
+        stepsFr: 'Descendez sur 3s jusqu\'à l\'extension contrôlée, puis remontez.',
+        stepsEn: 'Lower slowly over 3s into bottom tension, then curl up.',
+        safetyAr: '🛡️ استخدام الدمبل بدلاً من البار يمنع التواء المعصم.',
+        safetyFr: '🛡️ Les haltères protègent les poignets.',
+        safetyEn: '🛡️ Dumbbells eliminate wrist strain.',
+        scienceAr: 'يولّد أعلى عزم مقاومة في الثلث السفلي من الحركة.',
+        scienceFr: 'Génère un pic de tension mécanique dans le premier tiers étiré.',
+        scienceEn: 'Peak mechanical torque occurs in the stretched bottom third.',
+        alternatives: ['EX11', 'EX18']
+      },
+      {
+        id: 'EX30', day: 'D', imgFolder: 'Dumbbell_Shrug', altFolder: 'Standing_Palms-Up_Barbell_Behind_The_Back_Wrist_Curl',
+        ytUrl: 'http://www.youtube.com/watch?v=jLvqKgW-_G8', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'back', secondaryMuscles: ['shoulders'], equipment: 'Dumbbell',
+        sets: 3, reps: '12-15', restSec: 60, rir: '0-1 RIR', defaultWeightKg: 30, tier: 'A-Tier',
+        nameAr: 'رفع الكتفين بالدمبل للترابيس والقبضة (Shrugs)', nameFr: 'Shrugs aux Haltères (Trapèzes & Poigne)', nameEn: 'Dumbbell Shrugs (Upper Traps & Grip)',
+        muscleAr: 'الترابيس العلوي وعضلات الساعد والقبضة', muscleFr: 'Trapèzes Supérieurs & Avant-bras', muscleEn: 'Upper Traps & Forearm Grip',
+        startAr: 'قف باستقامة مع ميلان طفيف جداً للأمام (10°) والدمبلز بجانبك.',
+        startFr: 'Debout buste légèrement penché (10°), haltères en prise neutre.',
+        startEn: 'Stand with a slight 10° forward lean holding heavy dumbbells.',
+        stepsAr: 'ارفع الكتفين للأعلى والخلف قليلاً نحو الأذنين واثبت ثانيتين، ثم انزل ببطء.',
+        stepsFr: 'Montez les épaules vers le haut et l\'arrière, maintenez 2s et relâchez.',
+        stepsEn: 'Shrug shoulders up and slightly back, hold 2s at peak, and stretch down.',
+        safetyAr: '🛡️ حركة خطية للأعلى والأسفل دون تدوير الكتفين.',
+        safetyFr: '🛡️ Mouvement linéaire uniquement sans rouler les épaules.',
+        safetyEn: '🛡️ Move strictly up and back without rolling shoulders.',
+        scienceAr: 'يغطي عضلة الترابيس العلوية ويقوي قبضة اليد والساعد معاً.',
+        scienceFr: 'Développe simultanément les trapèzes supérieurs et la poigne.',
+        scienceEn: 'Directly hypertrophies the upper trapezius while building forearm grip.',
+        alternatives: ['EX13', 'EX02']
+      },
+      {
+        id: 'EX31', day: 'D', imgFolder: 'Barbell_Seated_Calf_Raise', altFolder: 'Standing_Calf_Raises',
+        ytUrl: 'http://www.youtube.com/watch?v=jf9PBwwNAMs', ytAuthor: 'Jeff Nippard',
+        primaryMuscle: 'calves', secondaryMuscles: [], equipment: 'Machine',
+        sets: 3, reps: '12-15', restSec: 60, rir: '0-1 RIR', defaultWeightKg: 50, tier: 'A-Tier',
+        nameAr: 'رفع السمانة جالساً لعضلة النعلية (Seated Calf)', nameFr: 'Mollets Assis (Soléaire)', nameEn: 'Seated Calf Raise (Soleus)',
+        muscleAr: 'العضلة النعلية العميقة للسمانة (Soleus)', muscleFr: 'Muscle Soléaire', muscleEn: 'Soleus Muscle',
+        startAr: 'اجلس مع وضع أمشاط القدمين على الحافة والوسادة فوق الركبتين بزاوية 90°.',
+        startFr: 'Assis genoux à 90°, boudin sur le bas des cuisses.',
+        startEn: 'Sit with knees bent at 90° and pad resting above knees.',
+        stepsAr: 'انزل بالكعبين لأقصى مدى وتوقف ثانيتين، ثم اصعد لأقصى انقباض.',
+        stepsFr: 'Descendez à fond avec pause de 2s, puis montez sur les pointes.',
+        stepsEn: 'Lower heels into a full 2s stretch, then drive up to peak contraction.',
+        safetyAr: '🛡️ يقوي العضلة النعلية المسؤولة عن ثبات الكاحل والركبة.',
+        safetyFr: '🛡️ Renforce le soléaire qui stabilise le tibia et le genou.',
+        safetyEn: '🛡️ Strengthens the soleus which controls tibial stability.',
+        scienceAr: 'ثني الركبة 90° يعزل العضلة النعلية (Soleus) التي تشكل 60% من حجم السمانة.',
+        scienceFr: 'La flexion du genou à 90° isole le muscle soléaire.',
+        scienceEn: 'Bending the knee to 90° isolates the soleus.',
+        alternatives: ['EX12']
+      },
+      {
+        id: 'EX32', day: 'D', imgFolder: 'Hyperextensions_With_No_Hyperextension_Bench', altFolder: 'Barbell_Ab_Rollout',
+        ytUrl: 'http://www.youtube.com/watch?v=IHImpzGBqdM', ytAuthor: 'Jeremy Ethier',
+        primaryMuscle: 'core', secondaryMuscles: ['hamstrings', 'back'], equipment: 'Bodyweight',
+        sets: 3, reps: '12-15', restSec: 75, rir: '1-2 RIR', defaultWeightKg: 10, tier: 'A-Tier',
+        nameAr: 'التمديد الظهري 45° لتقوية الجذع وأسفل الظهر', nameFr: 'Extension Lombaire 45° (Gainage)', nameEn: '45° Back Extension (Core & Erectors)',
+        muscleAr: 'ناصبات العمود الفقري، الأرداف، والجذع', muscleFr: 'Érecteurs du Rachis & Gainage', muscleEn: 'Spinal Erectors & Deep Core',
+        startAr: 'ثبت القدمين على جهاز التمديد الظهري بحيث يكون خط الورك فوق حافة الوسادة.',
+        startFr: 'Calez les pieds sur le banc à lombaires, pli de la hanche au bord.',
+        startEn: 'Position hips at the edge of the 45° hyperextension pad.',
+        stepsAr: 'انزل من مفصل الورك بظهر محايد، ثم اصعد بعصر الأرداف حتى خط الاستقامة فقط.',
+        stepsFr: 'Descendez en pliant les hanches dos neutre, puis remontez jusqu\'à l\'alignement.',
+        stepsEn: 'Hinge down with a neutral spine, then extend up to a straight body line.',
+        safetyAr: '🛡️ توقف عند خط الاستقامة الطبيعي دون فرط تقويس للظهر.',
+        safetyFr: '🛡️ Arrêtez-vous à l\'alignement neutre sans hyperextension.',
+        safetyEn: '🛡️ Stop at neutral alignment without hyperextending the lumbar spine.',
+        scienceAr: 'يحصن الحزام القطني والبطني (360° Core Armor) عند دمجه مع Cable Crunch.',
+        scienceFr: 'Crée une ceinture abdo-lombaire complète à 360°.',
+        scienceEn: 'Builds 360-degree core and lower-back resilience.',
+        alternatives: ['EX16', 'EX07']
+      }
+    ];
+
+    const MUSCLE_GROUPS = {
+      chest: { nameAr: 'الصدر (علوي/أوسط/سفلي)', nameFr: 'Pectoraux (Haut/Milieu/Bas)', nameEn: 'Chest (Upper/Mid/Lower)', optimalMin: 10, optimalMax: 20, recoveryHours: 48 },
+      back: { nameAr: 'الظهر، اللاتس، والترابيس', nameFr: 'Dos, Dorsaux & Trapèzes', nameEn: 'Back, Lats & Traps', optimalMin: 10, optimalMax: 20, recoveryHours: 48 },
+      quads: { nameAr: 'الأرجل الأمامية (الرباعية)', nameFr: 'Quadriceps', nameEn: 'Quadriceps', optimalMin: 10, optimalMax: 18, recoveryHours: 60 },
+      hamstrings: { nameAr: 'الأوتار الخلفية والأرداف', nameFr: 'Ischios & Fessiers', nameEn: 'Hamstrings & Glutes', optimalMin: 10, optimalMax: 18, recoveryHours: 60 },
+      shoulders: { nameAr: 'الأكتاف (أمامي/جانبي/خلفي)', nameFr: 'Épaules (3 Faisceaux)', nameEn: 'Shoulders (Front/Side/Rear)', optimalMin: 10, optimalMax: 20, recoveryHours: 36 },
+      biceps: { nameAr: 'البايسبس، العضدية، والساعد', nameFr: 'Biceps, Brachial & Avant-bras', nameEn: 'Biceps, Brachialis & Forearms', optimalMin: 8, optimalMax: 16, recoveryHours: 36 },
+      triceps: { nameAr: 'الترايسبس (الرؤوس الثلاثة)', nameFr: 'Triceps (3 Chefs)', nameEn: 'Triceps (All 3 Heads)', optimalMin: 8, optimalMax: 16, recoveryHours: 36 },
+      calves: { nameAr: 'السمانة (التوأمية والنعلية)', nameFr: 'Mollets (Jumeaux & Soléaire)', nameEn: 'Calves (Gastroc & Soleus)', optimalMin: 8, optimalMax: 16, recoveryHours: 36 },
+      core: { nameAr: 'البطن، الخواصر، وأسفل الظهر', nameFr: 'Abdos & Lombaires', nameEn: 'Abs & Lower Back', optimalMin: 6, optimalMax: 14, recoveryHours: 24 }
+    };
+
+    const SCIENTIFIC_REFERENCES = [
+      {
+        id: 'REF_PELLAND_2025',
+        title: 'The Resistance Training Dose Response: Meta-Regressions Exploring Weekly Volume and Frequency',
+        authors: 'Pelland JC, Robinson ZP, Zourdos MC et al. (Sports Medicine, 2025/2026)',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/41343037/',
+        descAr: 'أحدث تحليل تلوي (2025/2026) يثبت أن توزيع 10–18 مجموعة أسبوعياً على 3–4 حصص يمنح أقصى تضخم عضلي دون تراكم إجهاد الحصة الواحدة.',
+        descFr: 'Méta-régression 2025/2026 prouvant que répartir 10–18 séries/semaine sur 3–4 séances optimise l\'hypertrophie.',
+        descEn: '2025/2026 meta-regression showing 10–18 weekly sets spread across 3–4 sessions maximizes hypertrophy.'
+      },
+      {
+        id: 'REF_WOLF_2025',
+        title: 'Lengthened Partial Repetitions & Stretch-Mediated Hypertrophy',
+        authors: 'Wolf M, Androulakis-Korakakis P, Schoenfeld BJ et al. (PeerJ / PMC, 2025)',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/39959841/',
+        descAr: 'اختيار تمارين تحمّل العضلة في وضع الإطالة (Seated Leg Curl, Incline Curl, Overhead Triceps) هو العامل الأهم للنمو العضلي.',
+        descFr: 'Privilégier les exercices à fort étirement mécanique maximise la croissance musculaire.',
+        descEn: 'Prioritizing exercises that load muscles at long lengths drives superior hypertrophy.'
+      },
+      {
+        id: 'REF_RIR_2024',
+        title: 'Proximity to Failure (RIR) Meta-Regression & RCT',
+        authors: 'Robinson ZP et al. (2024) & Refalo MC et al. (2024)',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/38970765/',
+        descAr: 'التوقف عند 1–2 RIR في التمارين المركبة يعطي نفس النمو العضلي للفشل التام مع نصف الإجهاد العصبي والمفصلي.',
+        descFr: 'S\'arrêter à 1–2 RIR sur les mouvements polyarticulaires produit la même hypertrophie que l\'échec.',
+        descEn: 'Stopping at 1–2 RIR on compound lifts yields identical hypertrophy to failure while cutting fatigue.'
+      },
+      {
+        id: 'REF_REST_2024',
+        title: 'Inter-Set Rest Interval Duration Bayesian Meta-Analysis',
+        authors: 'Singer A, Wolf M, Schoenfeld BJ et al. (2024)',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11349676/',
+        descAr: 'الراحة 120–150 ثانية في التمارين المركبة و60–90 ثانية في العزل تحافظ على الأداء والحجم التدريبي الكلي.',
+        descFr: '90 à 150s de repos sur les mouvements composés préservent le volume de travail.',
+        descEn: 'Resting 90–150s on compounds and 60–90s on isolation preserves volume load.'
+      }
+    ];
+
+    const MOROCCAN_FOOD_DB = [
+      { id: 'F01', nameAr: 'صدر دجاج مشوي/مسلوق', nameFr: 'Blanc de Poulet Cuit', nameEn: 'Cooked Chicken Breast', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Cooked', kcal: 165, p: 31.0, c: 0.0, f: 3.6, rawFactor: 1.33 },
+      { id: 'F02', nameAr: 'صدر ديك رومي (لاداند)', nameFr: 'Filet de Dinde Cuit', nameEn: 'Cooked Turkey Breast', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Cooked', kcal: 147, p: 30.1, c: 0.0, f: 2.1, rawFactor: 1.30 },
+      { id: 'F03', nameAr: 'سردين مغربي مشوي', nameFr: 'Sardines Marocaines Grillées', nameEn: 'Grilled Moroccan Sardines', stateAr: 'مطبوخ', stateFr: 'Grillé', stateEn: 'Grilled', kcal: 208, p: 24.6, c: 0.0, f: 11.5, rawFactor: 1.25 },
+      { id: 'F04', nameAr: 'سمك أبيض مشوي (ميرلان)', nameFr: 'Poisson Blanc Grillé', nameEn: 'Grilled White Fish', stateAr: 'مطبوخ', stateFr: 'Grillé', stateEn: 'Grilled', kcal: 115, p: 23.5, c: 0.0, f: 1.8, rawFactor: 1.25 },
+      { id: 'F05', nameAr: 'تونة في الماء (مصفاة)', nameFr: 'Thon au Naturel Égoutté', nameEn: 'Canned Tuna in Water', stateAr: 'جاهز', stateFr: 'Égoutté', stateEn: 'Drained', kcal: 116, p: 25.5, c: 0.0, f: 0.8, rawFactor: 1.0 },
+      { id: 'F06', nameAr: 'لحم بقري أحمر صافي', nameFr: 'Bœuf Maigre Cuit', nameEn: 'Lean Beef (Cooked)', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Cooked', kcal: 201, p: 28.6, c: 0.0, f: 9.0, rawFactor: 1.32 },
+      { id: 'F07', nameAr: 'بيض كامل مسلوق', nameFr: 'Œufs Entiers Durs', nameEn: 'Whole Boiled Eggs', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Boiled', kcal: 155, p: 12.6, c: 1.1, f: 10.6, rawFactor: 1.0 },
+      { id: 'F09', nameAr: 'جبن طري بلدي قليل الدسم', nameFr: 'Jben Frais / Fromage Blanc', nameEn: 'Fresh Jben / Cottage Cheese', stateAr: 'طازج', stateFr: 'Frais', stateEn: 'Fresh', kcal: 98, p: 11.5, c: 3.4, f: 4.3, rawFactor: 1.0 },
+      { id: 'F10', nameAr: 'ياغورت طبيعي بدون سكر', nameFr: 'Yaourt Nature sans Sucre', nameEn: 'Plain Natural Yogurt', stateAr: 'طازج', stateFr: 'Frais', stateEn: 'Fresh', kcal: 63, p: 5.3, c: 4.7, f: 2.5, rawFactor: 1.0 },
+      { id: 'F12', nameAr: 'شوفان كامل (خرطال)', nameFr: 'Flocons d\'Avoine', nameEn: 'Rolled Oats (Dry)', stateAr: 'جاف', stateFr: 'Sec', stateEn: 'Dry', kcal: 389, p: 16.9, c: 66.3, f: 6.9, rawFactor: 1.0 },
+      { id: 'F13', nameAr: 'أرز بسمتي مطبوخ', nameFr: 'Riz Basmati Cuit', nameEn: 'Cooked Basmati Rice', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Cooked', kcal: 130, p: 2.7, c: 28.2, f: 0.3, rawFactor: 0.35 },
+      { id: 'F14', nameAr: 'بطاطس مسلوقة/في الفرن', nameFr: 'Pommes de Terre Cuites', nameEn: 'Boiled / Baked Potatoes', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Cooked', kcal: 87, p: 1.9, c: 20.1, f: 0.1, rawFactor: 1.05 },
+      { id: 'F16', nameAr: 'خبز القمح الكامل', nameFr: 'Pain Complet Marocain', nameEn: 'Whole Wheat Bread', stateAr: 'مخبوز', stateFr: 'Cuit', stateEn: 'Baked', kcal: 247, p: 9.5, c: 43.3, f: 3.4, rawFactor: 1.0 },
+      { id: 'F17', nameAr: 'عدس مغربي مطبوخ', nameFr: 'Lentilles Cuites', nameEn: 'Cooked Lentils', stateAr: 'مطبوخ', stateFr: 'Cuit', stateEn: 'Cooked', kcal: 116, p: 9.0, c: 20.1, f: 0.4, rawFactor: 0.38 },
+      { id: 'F22', nameAr: 'زيت زيتون بكر ممتاز', nameFr: 'Huile d\'Olive Vierge Extra', nameEn: 'Extra Virgin Olive Oil', stateAr: 'صافي', stateFr: 'Pur', stateEn: 'Pure', kcal: 884, p: 0.0, c: 0.0, f: 100.0, rawFactor: 1.0 },
+      { id: 'F23', nameAr: 'لوز بلدي خام', nameFr: 'Amandes Brutes', nameEn: 'Raw Almonds', stateAr: 'خام', stateFr: 'Cru', stateEn: 'Raw', kcal: 579, p: 21.2, c: 21.6, f: 49.9, rawFactor: 1.0 },
+      { id: 'F26', nameAr: 'موز طازج', nameFr: 'Banane Fraîche', nameEn: 'Fresh Banana', stateAr: 'طازج', stateFr: 'Frais', stateEn: 'Fresh', kcal: 89, p: 1.1, c: 22.8, f: 0.3, rawFactor: 1.0 },
+      { id: 'F27', nameAr: 'تمر مجهول مغربي', nameFr: 'Dattes Medjool', nameEn: 'Medjool Dates', stateAr: 'مجفف', stateFr: 'Séché', stateEn: 'Dried', kcal: 277, p: 1.8, c: 75.0, f: 0.2, rawFactor: 1.0 }
+    ];
+
+    const PRESET_MEAL_PLANS = {
+      training: [
+        { titleAr: '1. الفطور الصباحي (08:00)', titleFr: '1. Petit-déjeuner (08:00)', titleEn: '1. Morning Breakfast (08:00)', items: [{ foodId: 'F07', grams: 165 }, { foodId: 'F12', grams: 75 }, { foodId: 'F09', grams: 100 }, { foodId: 'F22', grams: 10 }] },
+        { titleAr: '2. الغداء قبل التمرين (13:30)', titleFr: '2. Déjeuner Pré-Séance (13:30)', titleEn: '2. Pre-Workout Lunch (13:30)', items: [{ foodId: 'F01', grams: 160 }, { foodId: 'F13', grams: 220 }, { foodId: 'F17', grams: 150 }, { foodId: 'F22', grams: 10 }] },
+        { titleAr: '3. وجبة حول التمرين (17:00)', titleFr: '3. Collation Péri-Séance (17:00)', titleEn: '3. Peri-Workout Fuel (17:00)', items: [{ foodId: 'F26', grams: 120 }, { foodId: 'F27', grams: 45 }, { foodId: 'F10', grams: 220 }, { foodId: 'F23', grams: 20 }] },
+        { titleAr: '4. عشاء الاستشفاء (20:30)', titleFr: '4. Dîner Récupération (20:30)', titleEn: '4. Recovery Dinner (20:30)', items: [{ foodId: 'F03', grams: 160 }, { foodId: 'F14', grams: 250 }, { foodId: 'F16', grams: 60 }] }
+      ],
+      rest: [
+        { titleAr: '1. فطور يوم الراحة (08:30)', titleFr: '1. Petit-déjeuner Repos (08:30)', titleEn: '1. Rest-Day Breakfast (08:30)', items: [{ foodId: 'F07', grams: 165 }, { foodId: 'F09', grams: 120 }, { foodId: 'F16', grams: 80 }, { foodId: 'F22', grams: 10 }] },
+        { titleAr: '2. غداء متوازن (13:30)', titleFr: '2. Déjeuner Équilibré (13:30)', titleEn: '2. Balanced Lunch (13:30)', items: [{ foodId: 'F02', grams: 170 }, { foodId: 'F17', grams: 200 }, { foodId: 'F14', grams: 180 }, { foodId: 'F22', grams: 10 }] },
+        { titleAr: '3. سناك مسائي (17:30)', titleFr: '3. Collation Légère (17:30)', titleEn: '3. Afternoon Snack (17:30)', items: [{ foodId: 'F10', grams: 220 }, { foodId: 'F23', grams: 25 }] },
+        { titleAr: '4. عشاء خفيف (20:30)', titleFr: '4. Dîner Léger (20:30)', titleEn: '4. Lean Dinner (20:30)', items: [{ foodId: 'F04', grams: 180 }, { foodId: 'F14', grams: 180 }] }
+      ]
+    };
+
+    const SUPPLEMENTS_DB = [
+      {
+        nameAr: 'كرياتين مونوهيدرات (Creatine Monohydrate)', nameFr: 'Créatine Monohydrate', nameEn: 'Creatine Monohydrate',
+        tier: 'Tier A — ISSN Gold Standard',
+        doseAr: (w) => `5 غرام يومياً باستمرار (≈ ${(w*0.05).toFixed(1)}g)`,
+        doseFr: (w) => `5 g/jour en continu (≈ ${(w*0.05).toFixed(1)}g)`,
+        doseEn: (w) => `5 g daily continuously (≈ ${(w*0.05).toFixed(1)}g)`,
+        noteAr: 'يزيد القوة والكتلة الصافية؛ اشرب 3+ لتر ماء يومياً.',
+        noteFr: 'Augmente la force et la masse maigre ; boire 3L+ d\'eau par jour.',
+        noteEn: 'Boosts strength and lean mass; drink 3L+ water daily.',
+        refUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5469049/'
+      },
+      {
+        nameAr: 'واي بروتين (Whey Protein Isolate)', nameFr: 'Protéine Whey Isolate', nameEn: 'Whey Protein Isolate',
+        tier: 'Tier A — ISSN Protein Stand',
+        doseAr: (w) => `1 سكوب (25–30g بروتين) عند الحاجة لإكمال ${Math.round(w*2)}g يومياً`,
+        doseFr: (w) => `1 dose (25–30g) au besoin pour atteindre ${Math.round(w*2)}g/jour`,
+        doseEn: (w) => `1 scoop (25–30g) as needed to hit ${Math.round(w*2)}g/day`,
+        noteAr: 'سريع الامتصاص وغني بالليوسين؛ الطعام الطبيعي أولاً.',
+        noteFr: 'Source rapide riche en leucine ; aliments solides en priorité.',
+        noteEn: 'Fast-digesting leucine-rich source when whole food isn\'t convenient.',
+        refUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5477153/'
+      },
+      {
+        nameAr: 'فيتامين D3 + K2 و أوميغا-3 (EPA/DHA)', nameFr: 'Vitamine D3+K2 & Oméga-3', nameEn: 'Vitamin D3+K2 & Omega-3',
+        tier: 'Tier A — Joint & Recovery Support',
+        doseAr: () => '2000–4000 IU فيتامين D3 + 1000–2000mg أوميغا-3 مع الغداء',
+        doseFr: () => '2000–4000 UI D3 + 1000–2000mg EPA/DHA au déjeuner',
+        doseEn: () => '2000–4000 IU D3 + 1000–2000mg EPA/DHA with lunch',
+        noteAr: 'يدعم صحة المفاصل، العظام، وتقليل التهاب العضلات.',
+        noteFr: 'Soutient les articulations, les os et la récupération.',
+        noteEn: 'Supports joint comfort, bone health, and recovery.',
+        refUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11737053/'
+      },
+      {
+        nameAr: 'الكافيين قبل التمرين + المغنيسيوم مساءً', nameFr: 'Caféine Pré-Séance & Magnésium', nameEn: 'Pre-Workout Caffeine & Magnesium',
+        tier: 'Tier A — Performance & Sleep',
+        doseAr: (w) => `${Math.round(w*3)}mg كافيين قبل الحصة + 300mg مغنيسيوم قبل النوم`,
+        doseFr: (w) => `${Math.round(w*3)}mg caféine avant séance + 300mg magnésium le soir`,
+        doseEn: (w) => `${Math.round(w*3)}mg caffeine pre-workout + 300mg magnesium before bed`,
+        noteAr: 'الكافيين يرفع القوة اللحظية، والمغنيسيوم يعمق النوم.',
+        noteFr: 'La caféine réduit la fatigue ; le magnésium optimise le sommeil.',
+        noteEn: 'Caffeine lowers RPE; magnesium improves sleep quality.',
+        refUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7777221/'
+      }
+    ];
+
+    // =========================================================================
+    // 3. PERSISTENCE & FULLSCREEN PHOTO LIGHTBOX ENGINE (🔍 + DOUBLE-TAP)
+    // =========================================================================
+    function loadSavedState() {
+      appState.customMeals = JSON.parse(JSON.stringify(PRESET_MEAL_PLANS));
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        if (p && typeof p === 'object') {
+          if (p.lang && ['ar', 'fr', 'en'].includes(p.lang)) appState.lang = p.lang;
+          if (p.programMode) appState.programMode = p.programMode;
+          if (p.profile) Object.assign(appState.profile, p.profile);
+          if (p.workoutLogs) appState.workoutLogs = p.workoutLogs;
+          if (p.measurements && p.measurements.length) appState.measurements = p.measurements;
+          if (p.customDayExercises && p.customDayExercises.joint_safe) {
+            Object.assign(appState.customDayExercises.joint_safe, p.customDayExercises.joint_safe);
+            if (!appState.customDayExercises.joint_safe.D) appState.customDayExercises.joint_safe.D = ['EX27', 'EX28', 'EX29', 'EX30', 'EX31', 'EX32'];
+          }
+        }
+      } catch (e) {}
+    }
+
+    function saveAppState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('app-toast');
+      const m = document.getElementById('app-toast-msg');
+      if (!t || !m) return;
+      m.textContent = msg;
+      t.classList.remove('hidden');
+      clearTimeout(window.__toastTm);
+      window.__toastTm = setTimeout(() => t.classList.add('hidden'), 2400);
+    }
+
+    function getExPhotoUrl(ex, frameIdx) {
+      return `${IMG_CDN}${ex.imgFolder}/${frameIdx}.jpg`;
+    }
+
+    function handleImgError(imgEl, altFolder, frameIdx) {
+      if (!imgEl.dataset.retried && altFolder) {
+        imgEl.dataset.retried = '1';
+        imgEl.src = `${IMG_CDN}${altFolder}/${frameIdx}.jpg`;
+      }
+    }
+
+    // Double-Tap / Click vs Single-Tap Handler on Images
+    let lastTapTime = 0;
+    function handleImageTap(exId, ev) {
+      if (ev) ev.stopPropagation();
+      const now = Date.now();
+      if (now - lastTapTime < 320) {
+        // Double tap detected -> Open Fullscreen Lightbox!
+        openPhotoLightbox(exId, ev);
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+        togglePhotoFrame(exId, ev);
+      }
+    }
+
+    function togglePhotoFrame(exId, ev) {
+      if (ev) ev.stopPropagation();
+      appState.photoFrames[exId] = appState.photoFrames[exId] === 1 ? 0 : 1;
+      const ex = EXERCISES_DB.find(e => e.id === exId);
+      const img = document.getElementById(`ex-img-${exId}`);
+      const badge = document.getElementById(`ex-img-badge-${exId}`);
+      if (ex && img) {
+        const f = appState.photoFrames[exId];
+        img.removeAttribute('data-retried');
+        img.src = getExPhotoUrl(ex, f);
+        if (badge) {
+          badge.textContent = f === 0 ? '1/2' : '2/2';
+        }
+      }
+    }
+
+    // Lightbox State & Functions
+    let lbState = { exId: 'EX01', frame: 0, zoom: 1.0, autoPlay: false, timerId: null };
+
+    function openPhotoLightbox(exId, ev) {
+      if (ev) ev.stopPropagation();
+      lbState.exId = exId;
+      lbState.frame = appState.photoFrames[exId] || 0;
+      lbState.zoom = 1.0;
+      updateLightboxUI();
+      document.getElementById('photo-lightbox-modal')?.classList.remove('hidden');
+    }
+
+    function closePhotoLightbox() {
+      stopLightboxAutoPlay();
+      document.getElementById('photo-lightbox-modal')?.classList.add('hidden');
+    }
+
+    function updateLightboxUI() {
+      const ex = EXERCISES_DB.find(e => e.id === lbState.exId) || EXERCISES_DB[0];
+      const img = document.getElementById('lb-main-img');
+      const wrap = document.getElementById('lb-img-wrapper');
+      const title = document.getElementById('lb-ex-title');
+      const badge = document.getElementById('lb-ex-badge');
+      const pill = document.getElementById('lb-frame-pill');
+      const zBtn = document.getElementById('lb-zoom-btn');
+      const b0 = document.getElementById('lb-btn-f0');
+      const b1 = document.getElementById('lb-btn-f1');
+      const bPlay = document.getElementById('lb-btn-play');
+
+      if (img) {
+        img.removeAttribute('data-retried');
+        img.onerror = function() { handleImgError(this, ex.altFolder, lbState.frame); };
+        img.src = getExPhotoUrl(ex, lbState.frame);
+      }
+      if (wrap) wrap.style.transform = `scale(${lbState.zoom})`;
+      if (zBtn) zBtn.textContent = `${lbState.zoom.toFixed(1)}x 🔍`;
+      if (title) title.textContent = trObj(ex, 'name');
+      if (badge) badge.textContent = `${ex.id} • ${trObj(ex, 'muscle')} • ${ex.sets}×${ex.reps}`;
+      if (pill) {
+        pill.textContent = lbState.frame === 0
+          ? tr('1/2 وضعية البداية (اضغط للتبديل)', '1/2 Position de Départ', '1/2 Start Position')
+          : tr('2/2 وضعية الذروة (اضغط للتبديل)', '2/2 Contraction Maximale', '2/2 Peak Contraction');
+      }
+      if (b0) b0.className = lbState.frame === 0 ? 'py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950' : 'py-2 rounded-xl text-xs font-extrabold bg-slate-800 text-slate-300';
+      if (b1) b1.className = lbState.frame === 1 ? 'py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950' : 'py-2 rounded-xl text-xs font-extrabold bg-slate-800 text-slate-300';
+      if (bPlay) {
+        bPlay.className = lbState.autoPlay
+          ? 'py-2 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950'
+          : 'py-2 rounded-xl text-xs font-extrabold bg-sky-500/20 text-sky-300 border border-sky-500/40';
+        bPlay.textContent = lbState.autoPlay
+          ? tr('⏸ إيقاف الحركة', '⏸ Pause', '⏸ Pause Motion')
+          : tr('▶ حركة تلقائية', '▶ Auto-Play', '▶ Auto-Play');
+      }
+    }
+
+    function setLightboxFrame(f) {
+      lbState.frame = f;
+      updateLightboxUI();
+    }
+
+    function toggleLightboxFrame() {
+      lbState.frame = lbState.frame === 0 ? 1 : 0;
+      updateLightboxUI();
+    }
+
+    function toggleLightboxZoomLevel() {
+      lbState.zoom = lbState.zoom === 1.0 ? 1.5 : (lbState.zoom === 1.5 ? 2.0 : 1.0);
+      updateLightboxUI();
+    }
+
+    function toggleLightboxAutoPlay() {
+      if (lbState.autoPlay) {
+        stopLightboxAutoPlay();
+      } else {
+        lbState.autoPlay = true;
+        clearInterval(lbState.timerId);
+        lbState.timerId = setInterval(() => {
+          lbState.frame = lbState.frame === 0 ? 1 : 0;
+          updateLightboxUI();
+        }, 1150);
+      }
+      updateLightboxUI();
+    }
+
+    function stopLightboxAutoPlay() {
+      lbState.autoPlay = false;
+      clearInterval(lbState.timerId);
+    }
+
+    function stepLightboxExercise(dir) {
+      const idx = EXERCISES_DB.findIndex(e => e.id === lbState.exId);
+      const nextIdx = (idx + dir + EXERCISES_DB.length) % EXERCISES_DB.length;
+      lbState.exId = EXERCISES_DB[nextIdx].id;
+      lbState.frame = 0;
+      lbState.zoom = 1.0;
+      updateLightboxUI();
+    }
+
+    // =========================================================================
+    // 4. REST TIMER ENGINE (WITH PRESET CYCLING)
+    // =========================================================================
+    let timerState = { durationSec: 90, remainingSec: 90, endMs: null, running: false, id: null };
+    function updateTimerUI() {
+      const d = document.getElementById('hdr-timer-display');
+      const b = document.getElementById('hdr-timer-btn');
+      const m = Math.floor(timerState.remainingSec / 60);
+      const s = timerState.remainingSec % 60;
+      if (d) d.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      if (b) b.textContent = timerState.running ? '⏸' : '▶';
+    }
+    function cycleTimerPreset() {
+      const presets = [60, 90, 120, 150];
+      const next = presets[(presets.indexOf(timerState.durationSec) + 1) % presets.length] || 90;
+      startRestTimer(next);
+      showToast(tr(`⏱️ تم ضبط مؤقت الراحة على ${next} ثانية`, `⏱️ Minuteur réglé sur ${next}s`, `⏱️ Rest timer set to ${next}s`));
+    }
+    function startRestTimer(sec) {
+      timerState.durationSec = sec;
+      timerState.remainingSec = sec;
+      timerState.endMs = Date.now() + sec * 1000;
+      timerState.running = true;
+      clearInterval(timerState.id);
+      timerState.id = setInterval(() => {
+        const left = Math.ceil((timerState.endMs - Date.now()) / 1000);
+        if (left <= 0) {
+          timerState.remainingSec = 0; timerState.running = false; clearInterval(timerState.id);
+          updateTimerUI();
+          showToast(tr('🔔 انتهت الراحة! ابدأ المجموعة التالية.', '🔔 Repos terminé !', '🔔 Rest complete!'));
+        } else {
+          timerState.remainingSec = left; updateTimerUI();
+        }
+      }, 250);
+      updateTimerUI();
+    }
+    function toggleRestTimerPause() {
+      if (timerState.running) { timerState.running = false; clearInterval(timerState.id); updateTimerUI(); }
+      else { startRestTimer(timerState.remainingSec > 0 ? timerState.remainingSec : timerState.durationSec); }
+    }
+    function resetRestTimer() {
+      timerState.running = false; clearInterval(timerState.id); timerState.remainingSec = timerState.durationSec; updateTimerUI();
+    }
+
+    // =========================================================================
+    // 5. LANGUAGE, THEME & TOP NAVIGATION
+    // =========================================================================
+    function setLanguage(lang) {
+      appState.lang = lang;
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      ['ar', 'fr', 'en'].forEach(l => {
+        const b = document.getElementById(`lang-btn-${l}`);
+        if (b) {
+          b.className = l === lang
+            ? 'px-1.5 py-1 text-[10px] font-extrabold rounded-lg bg-emerald-500 text-slate-950 transition'
+            : 'px-1.5 py-1 text-[10px] font-extrabold rounded-lg text-slate-300 hover:text-white transition';
+        }
+      });
+      saveAppState();
+      renderAll();
+    }
+
+    function toggleTheme() {
+      const h = document.documentElement;
+      const ic = document.getElementById('theme-icon');
+      if (h.classList.contains('light')) { h.classList.replace('light', 'dark'); if (ic) ic.textContent = '☀️'; }
+      else { h.classList.replace('dark', 'light'); if (ic) ic.textContent = '🌙'; }
+    }
+
+    function switchMainTab(tabId) {
+      appState.mainTab = tabId;
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderTopNav() {
+      const nav = document.getElementById('top-nav-bar');
+      if (!nav) return;
+      const tabs = [
+        { id: 'home', icon: '⚡', label: tr('حصتي', 'Séance', 'Workout') },
+        { id: 'exercises', icon: '🏋️', label: tr('التمارين', 'Exercices', 'Exercises') },
+        { id: 'nutrition', icon: '🥗', label: tr('التغذية', 'Nutrition', 'Nutrition') },
+        { id: 'progress', icon: '📊', label: tr('تقدمي', 'Progrès', 'Progress') }
+      ];
+      nav.innerHTML = tabs.map(t => {
+        const active = appState.mainTab === t.id;
+        return `
+          <button onclick="switchMainTab('${t.id}')" class="top-tab-btn ${active ? 'active' : 'bg-slate-900/90 text-slate-300 border-slate-800'} py-2 px-1.5 rounded-xl border text-[11px] sm:text-xs font-bold transition flex items-center justify-center gap-1 truncate">
+            <span>${t.icon}</span> <span class="truncate">${t.label}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 6. PILLAR 1: HOME & ZERO-OVERFLOW MOBILE WORKOUT PLAYER
+    // =========================================================================
+    function calculateBiometrics() {
+      const p = appState.profile;
+      const bmr = (10 * p.weightKg) + (6.25 * p.heightCm) - (5 * p.age) + 5;
+      const tdee = bmr * p.activityFactor;
+      const delta = p.goalMode === 'recomp_train' ? 100 : p.goalMode === 'recomp_rest' ? -200 : p.goalMode === 'lean_bulk' ? 250 : -400;
+      const targetKcal = Math.round(tdee + delta);
+      const proteinG = Math.round(p.weightKg * 2.05);
+      const fatG = Math.round(p.weightKg * 0.85);
+      const carbsG = Math.round(Math.max(400, targetKcal - proteinG * 4 - fatG * 9) / 4);
+      const bmi = (p.weightKg / ((p.heightCm / 100) ** 2)).toFixed(1);
+      return { bmr: Math.round(bmr), tdee: Math.round(tdee), targetKcal, proteinG, fatG, carbsG, bmi };
+    }
+
+    function computeVolume() {
+      const dm = appState.customDayExercises[appState.programMode] || appState.customDayExercises.joint_safe;
+      const t = {};
+      Object.keys(MUSCLE_GROUPS).forEach(k => t[k] = { direct: 0, indirect: 0, effective: 0, list: [] });
+      ['A', 'B', 'C', 'D'].forEach(d => {
+        (dm[d] || []).forEach(id => {
+          const ex = EXERCISES_DB.find(e => e.id === id);
+          if (!ex) return;
+          if (t[ex.primaryMuscle]) {
+            t[ex.primaryMuscle].direct += ex.sets;
+            t[ex.primaryMuscle].effective += ex.sets;
+            t[ex.primaryMuscle].list.push({ id: ex.id, name: trObj(ex, 'name'), day: d, sets: ex.sets });
+          }
+          (ex.secondaryMuscles || []).forEach(s => {
+            if (t[s]) {
+              t[s].indirect += ex.sets * 0.5;
+              t[s].effective += ex.sets * 0.5;
+            }
+          });
+        });
+      });
+      return t;
+    }
+
+    function getSetLog(exId, s, defW) {
+      const k = `${exId}_S${s}`;
+      if (!appState.workoutLogs[k]) appState.workoutLogs[k] = { weight: defW, reps: 10, done: false };
+      return appState.workoutLogs[k];
+    }
+
+    function stepSetValue(exId, s, field, delta, defW) {
+      const entry = getSetLog(exId, s, defW);
+      entry[field] = Math.max(0, Number((entry[field] + delta).toFixed(1)));
+      saveAppState();
+      renderMainView();
+    }
+
+    function toggleSetDone(exId, s, defW, restSec) {
+      const entry = getSetLog(exId, s, defW);
+      entry.done = !entry.done;
+      if (entry.done) startRestTimer(restSec);
+      saveAppState();
+      renderMainView();
+    }
+
+    function completeAllSetsForExercise(exId, totalSets, defW, restSec) {
+      for (let s = 1; s <= totalSets; s++) {
+        const entry = getSetLog(exId, s, defW);
+        entry.done = true;
+      }
+      startRestTimer(restSec);
+      saveAppState();
+      renderMainView();
+      showToast(tr('✓ تم إتمام جميع مجموعات التمرين!', '✓ Toutes les séries validées !', '✓ All sets marked complete!'));
+    }
+
+    function renderHomePillar() {
+      const bio = calculateBiometrics();
+      const dm = appState.customDayExercises[appState.programMode] || appState.customDayExercises.joint_safe;
+
+      if (!appState.activeWorkoutDay) {
+        const daysMeta = [
+          {
+            k: 'A',
+            badge: tr('اليوم 1 (الإثنين)', 'Jour 1 (Lundi)', 'Day 1 (Monday)'),
+            title: 'Full Body A — ' + tr('إطالة ميكانيكية', 'Étirement Mécanique', 'Lengthened Bias'),
+            desc: tr('الصدر المائل، السحب المدعوم، دفع الأرجل الآمن، الخلفية جالساً، الدالية الجانبية، والترايسبس فوق الرأس.', 'Pectoraux inclinés, dos avec appui, presse pieds hauts, leg curl assis, épaules et triceps overhead.', 'Incline chest, chest-supported row, knee-safe leg press, seated leg curl, cable lateral raise & overhead triceps.')
+          },
+          {
+            k: 'B',
+            badge: tr('اليوم 2 (الأربعاء)', 'Jour 2 (Mercredi)', 'Day 2 (Wednesday)'),
+            title: 'Full Body B — ' + tr('سلسلة خلفية وسحب', 'Chaîne Postérieure', 'Hinge & Pull'),
+            desc: tr('الديدليفت الروماني، السحب العمودي، الصدر المسطح، مد الركبة المحكوم، بايسبس مائل، والسمانة واقفاً.', 'Soulevé roumain, tirage vertical neutre, développé plat, leg extension sécurisé, curl incliné et mollets.', 'Romanian deadlift, neutral lat pulldown, flat press, safe leg extension, incline curl & standing calves.')
+          },
+          {
+            k: 'C',
+            badge: tr('اليوم 3 (الجمعة)', 'Jour 3 (Vendredi)', 'Day 3 (Friday)'),
+            title: 'Full Body C — ' + tr('توازن وأكتاف وذراعين', 'Unilatéral & Bras', 'Unilateral & Arms'),
+            desc: tr('الكتف الخلفي بالحبل، تفتيح الصدر، القرفصاء البلغارية بساق عمودية، البطن بالكيبل، الترايسبس والمطرقة.', 'Face pull corde, pec deck, squat bulgare tibia vertical, crunch poulie, triceps corde et curl marteau.', 'Rope face pull, pec deck fly, vertical-shin split squat, cable crunch, rope pushdown & hammer curl.')
+          },
+          {
+            k: 'D',
+            badge: tr('يوم تكميلي 4 (اختياري)', 'Jour 4 (Optionnel)', 'Bonus Day 4 (Optional)'),
+            title: 'Full Body D — ' + tr('شمول العضلات التكميلية', 'Fessiers, Trapèzes & Gainage', 'Glutes, Traps & Core'),
+            desc: tr('دفع الورك للأرداف، سحب دمبل أحادي، بايسبس بريتشر، ترابيس وقبضة، سمانة جالساً (النعلية)، وأسفل الظهر.', 'Hip thrust fessiers, rowing unilatéral, curl pupitre, shrugs trapèzes, mollets assis (soléaire) et lombaires.', 'Hip thrust, 1-arm row, preacher curl, shrugs/grip, seated soleus calf raise & lower-back extension.')
+          }
+        ];
+
+        return `
+          <!-- Personal Summary Card -->
+          <div class="app-card p-3.5 sm:p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border-emerald-500/30 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold">
+                🛡️ ${tr('حماية الركبة والمعصم مفعّلة', 'Protection Genoux & Poignets', 'Knee & Wrist Safe Mode')}
+              </span>
+              <select onchange="changeProgramMode(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1 text-[11px] font-bold text-emerald-400 max-w-full">
+                <option value="joint_safe" ${appState.programMode==='joint_safe'?'selected':''}>🛡️ ${tr('الوضع الصديق للمفاصل', 'Mode Articulations Protégées', 'Joint-Safe Mode')}</option>
+                <option value="benchmark" ${appState.programMode==='benchmark'?'selected':''}>🏋️ ${tr('الوضع القياسي الحر', 'Mode Standard Classique', 'Standard Benchmark Mode')}</option>
+              </select>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-xl font-extrabold text-white">${tr('مرحباً محمد — اختر حصة اليوم للبدء', 'Bonjour Mohamed — Choisissez votre séance', 'Welcome Mohamed — Select Today\'s Session')}</h2>
+              <p class="text-xs text-slate-300 mt-0.5">${tr('اضغط على أي صورة تمرين مرتين أو اضغط على زر 🔍 لتكبيرها ومشاهدة الحركة بوضوح.', 'Touchez deux fois une image ou cliquez sur 🔍 pour zoomer en plein écran.', 'Double-tap any exercise image or tap 🔍 to zoom in fullscreen.')}</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="p-2 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                <div class="text-[10px] text-slate-400">${tr('الوزن', 'Poids', 'Weight')}</div>
+                <div class="text-xs sm:text-sm font-extrabold text-white mono-num">${appState.profile.weightKg} kg</div>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                <div class="text-[10px] text-slate-400">${tr('السعرات', 'Kcal', 'Kcal')}</div>
+                <div class="text-xs sm:text-sm font-extrabold text-emerald-400 mono-num">${bio.targetKcal}</div>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-950/80 border border-slate-800/80">
+                <div class="text-[10px] text-slate-400">${tr('البروتين', 'Protéines', 'Protein')}</div>
+                <div class="text-xs sm:text-sm font-extrabold text-sky-400 mono-num">${bio.proteinG}g</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Day Selector Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${daysMeta.map(d => {
+              const exIds = dm[d.k] || [];
+              const exObjs = exIds.map(id => EXERCISES_DB.find(e => e.id === id)).filter(Boolean);
+              const firstEx = exObjs[0] || EXERCISES_DB[0];
+              return `
+                <div class="app-card p-3.5 flex flex-col justify-between gap-3 hover:border-emerald-500/50 transition">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 text-[11px] font-extrabold">${d.badge}</span>
+                      <span class="text-[11px] text-slate-400 mono-num">${exObjs.length} ${tr('تمارين', 'exercices', 'exercises')}</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                      <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 cursor-pointer" onclick="openPhotoLightbox('${firstEx.id}', event)">
+                        <img src="${getExPhotoUrl(firstEx, 0)}" onerror="handleImgError(this,'${firstEx.altFolder}',0)" alt="${firstEx.nameEn}" class="w-full h-full object-cover" />
+                        <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded bg-slate-950/80 text-[10px] flex items-center justify-center">🔍</span>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-extrabold text-white truncate">${d.title}</h3>
+                        <p class="text-[11px] text-slate-400 mt-0.5 leading-relaxed line-clamp-2">${d.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button onclick="openWorkoutDay('${d.k}')" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition">
+                    ▶ ${tr('فتح حصة اليوم', 'Ouvrir la Séance', 'Open Session')} ${d.k}
+                  </button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+
+      // =======================================================================
+      // ACTIVE WORKOUT VIEW (ZERO-OVERFLOW SET CARDS + PROGRESS BAR)
+      // =======================================================================
+      const d = appState.activeWorkoutDay;
+      const exIds = dm[d] || [];
+      let totalSessionSets = 0;
+      let doneSessionSets = 0;
+      exIds.forEach(id => {
+        const ex = EXERCISES_DB.find(e => e.id === id);
+        if (!ex) return;
+        totalSessionSets += ex.sets;
+        for (let s = 1; s <= ex.sets; s++) {
+          if (getSetLog(ex.id, s, ex.defaultWeightKg).done) doneSessionSets++;
+        }
+      });
+      const progPct = totalSessionSets > 0 ? Math.round((doneSessionSets / totalSessionSets) * 100) : 0;
+
+      return `
+        <!-- Compact Workout Top Bar + Live Progress Bar -->
+        <div class="app-card p-3 space-y-2.5 border-emerald-500/40">
+          <div class="flex items-center justify-between gap-1.5">
+            <button onclick="closeWorkoutDay()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-extrabold text-slate-200 shrink-0">
+              ${appState.lang==='ar'?'→':'←'} ${tr('رجوع', 'Retour', 'Back')}
+            </button>
+            <div class="text-center min-w-0 flex-1 px-1">
+              <div class="text-xs sm:text-sm font-extrabold text-white truncate">Full Body ${d} (${doneSessionSets}/${totalSessionSets})</div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="toggleWarmup()" class="px-2.5 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[11px] font-bold">🔥 ${tr('إحماء', 'Chauffe', 'Warmup')}</button>
+              <button onclick="finishWorkoutSession()" class="px-2.5 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-[11px]">✓ ${tr('إنهاء', 'Finir', 'Finish')}</button>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-emerald-500 to-sky-400 transition-all duration-300" style="width:${progPct}%"></div>
+          </div>
+        </div>
+
+        ${appState.warmupOpen ? `
+          <div class="app-card p-3.5 bg-amber-500/10 border-amber-500/30 space-y-2 text-xs">
+            <div class="font-extrabold text-amber-300">🔥 ${tr('خطوات الإحماء السريع:', 'Échauffement rapide :', 'Quick Warm-Up:')}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/90"><input type="checkbox" class="w-4 h-4 accent-emerald-500" checked> ${tr('5 دقائق مشي أو دراجة', '5 min vélo/marche', '5 min light cardio')}</label>
+              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/90"><input type="checkbox" class="w-4 h-4 accent-emerald-500" checked> ${tr('Spanish Squat (45s × 3) للركبة', 'Spanish Squat (45s × 3)', 'Spanish Squat (45s × 3)')}</label>
+              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/90"><input type="checkbox" class="w-4 h-4 accent-emerald-500"> ${tr('مجموعة تدرج 50% وزن × 8', '50% charge × 8 reps', '50% load × 8 reps')}</label>
+              <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/90"><input type="checkbox" class="w-4 h-4 accent-emerald-500"> ${tr('مجموعة تدرج 75% وزن × 4', '75% charge × 4 reps', '75% load × 4 reps')}</label>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Exercise Cards (Strictly Contained Inside Viewport) -->
+        <div class="space-y-3">
+          ${exIds.map((id, idx) => {
+            const ex = EXERCISES_DB.find(e => e.id === id);
+            if (!ex) return '';
+            const frame = appState.photoFrames[ex.id] || 0;
+
+            let setsHtml = '';
+            for (let s = 1; s <= ex.sets; s++) {
+              const log = getSetLog(ex.id, s, ex.defaultWeightKg);
+              setsHtml += `
+                <div class="p-2 rounded-xl ${log.done ? 'bg-emerald-500/15 border border-emerald-500/40' : 'bg-slate-900/95 border border-slate-800'} grid grid-cols-12 items-center gap-1 w-full">
+                  <!-- Set Number (2 cols) -->
+                  <div class="col-span-2 flex items-center gap-1">
+                    <span class="text-xs font-extrabold text-slate-400 mono-num">#${s}</span>
+                  </div>
+
+                  <!-- Weight Stepper (4 cols) -->
+                  <div class="col-span-4 flex items-center justify-center gap-1 bg-slate-950/70 rounded-lg py-1 px-1">
+                    <button onclick="stepSetValue('${ex.id}',${s},'weight',-1.25,${ex.defaultWeightKg})" class="step-btn rounded-md bg-slate-800 text-slate-200 font-bold text-xs">−</button>
+                    <div class="text-center min-w-[36px]">
+                      <div class="text-xs font-extrabold text-white mono-num leading-none">${log.weight}</div>
+                      <div class="text-[9px] text-slate-400 leading-none mt-0.5">kg</div>
+                    </div>
+                    <button onclick="stepSetValue('${ex.id}',${s},'weight',1.25,${ex.defaultWeightKg})" class="step-btn rounded-md bg-slate-800 text-slate-200 font-bold text-xs">+</button>
+                  </div>
+
+                  <!-- Reps Stepper (4 cols) -->
+                  <div class="col-span-4 flex items-center justify-center gap-1 bg-slate-950/70 rounded-lg py-1 px-1">
+                    <button onclick="stepSetValue('${ex.id}',${s},'reps',-1,${ex.defaultWeightKg})" class="step-btn rounded-md bg-slate-800 text-slate-200 font-bold text-xs">−</button>
+                    <div class="text-center min-w-[28px]">
+                      <div class="text-xs font-extrabold text-sky-400 mono-num leading-none">${log.reps}</div>
+                      <div class="text-[9px] text-slate-400 leading-none mt-0.5">reps</div>
+                    </div>
+                    <button onclick="stepSetValue('${ex.id}',${s},'reps',1,${ex.defaultWeightKg})" class="step-btn rounded-md bg-slate-800 text-slate-200 font-bold text-xs">+</button>
+                  </div>
+
+                  <!-- Done Check Button (2 cols) -->
+                  <div class="col-span-2 flex justify-end">
+                    <button onclick="toggleSetDone('${ex.id}',${s},${ex.defaultWeightKg},${ex.restSec})" class="w-full h-8 rounded-lg font-extrabold text-xs flex items-center justify-center transition ${log.done ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'bg-slate-800 text-slate-300'}">
+                      ✓
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+
+            return `
+              <div class="app-card p-3 sm:p-4 space-y-2.5">
+                <!-- Card Header with Image + Zoom Button + Info -->
+                <div class="flex items-start gap-2.5">
+                  <!-- Image Container with Top-Left 🔍 Zoom Button & Bottom Flip Pill -->
+                  <div onclick="handleImageTap('${ex.id}', event)" class="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 cursor-pointer select-none">
+                    <img id="ex-img-${ex.id}" src="${getExPhotoUrl(ex, frame)}" onerror="handleImgError(this,'${ex.altFolder}',${frame})" alt="${ex.nameEn}" class="w-full h-full object-cover" />
+                    <!-- Dedicated Zoom Button in Top Corner -->
+                    <button onclick="openPhotoLightbox('${ex.id}', event)" class="absolute top-1 left-1 w-6 h-6 rounded-lg bg-slate-950/85 border border-slate-700 text-white text-xs flex items-center justify-center shadow" title="Zoom">🔍</button>
+                    <span id="ex-img-badge-${ex.id}" class="absolute top-1 right-1 px-1.5 py-0.2 rounded bg-emerald-500 text-slate-950 text-[9px] font-extrabold mono-num">${frame===0?'1/2':'2/2'}</span>
+                    <span class="absolute bottom-1 inset-x-1 text-center py-0.5 rounded bg-slate-950/85 text-[9px] font-bold text-emerald-300">🔄 ${tr('تبديل', '1/2', 'Flip')}</span>
+                  </div>
+
+                  <!-- Exercise Info & Action Pills -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1 flex-wrap">
+                      <span class="text-[11px] font-extrabold text-emerald-400 mono-num">${idx+1}/${exIds.length} • ${ex.sets}×${ex.reps} • ${ex.restSec}s</span>
+                      <span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[10px] font-bold mono-num">${ex.rir}</span>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-extrabold text-white mt-0.5 leading-snug break-words">${trObj(ex, 'name')}</h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5 truncate">${trObj(ex, 'muscle')}</p>
+
+                    <!-- Compact Action Buttons Row -->
+                    <div class="flex flex-wrap items-center gap-1.5 mt-2">
+                      <button onclick="openExerciseModal('${ex.id}')" class="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">📖 ${tr('الشرح', 'Guide', 'Guide')}</button>
+                      <a href="${ex.ytUrl}" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-[11px] font-bold">▶️ ${tr('فيديو', 'Vidéo', 'Video')}</a>
+                      <button onclick="openSwapModal('${ex.id}')" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold">🔄 ${tr('بديل', 'Swap', 'Swap')}</button>
+                      <button onclick="completeAllSetsForExercise('${ex.id}',${ex.sets},${ex.defaultWeightKg},${ex.restSec})" class="px-2 py-1 rounded-lg bg-sky-500/15 text-sky-300 text-[11px] font-bold">✓ ${tr('إتمام الكل', 'Tout valider', 'All Done')}</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Contained 12-Col Grid Set Rows -->
+                <div class="space-y-1.5">${setsHtml}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function openWorkoutDay(d) { appState.activeWorkoutDay = d; renderMainView(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function closeWorkoutDay() { appState.activeWorkoutDay = null; renderMainView(); }
+    function toggleWarmup() { appState.warmupOpen = !appState.warmupOpen; renderMainView(); }
+    function finishWorkoutSession() {
+      appState.sessionHistory.push({ date: new Date().toISOString().slice(0, 10), day: appState.activeWorkoutDay, totalSets: 18 });
+      appState.activeWorkoutDay = null;
+      saveAppState();
+      renderMainView();
+      showToast(tr('🏆 أحسنت! تم حفظ الحصة في سجلك.', '🏆 Bravo ! Séance enregistrée.', '🏆 Great job! Workout saved.'));
+    }
+
+    // =========================================================================
+    // 7. PILLAR 2: 32-EXERCISE ATLAS, ZOOMABLE PHOTOS, SCIENCE & MUSCLE MAP
+    // =========================================================================
+    function renderExercisesPillar() {
+      const subNav = `
+        <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
+          <button onclick="setExSubTab('library')" class="sub-pill ${appState.exSubTab==='library'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition truncate">📸 ${tr('التمارين (32)', 'Exercices (32)', 'Exercises (32)')}</button>
+          <button onclick="setExSubTab('science_pick')" class="sub-pill ${appState.exSubTab==='science_pick'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition truncate">🧬 ${tr('الدراسات والخبراء', 'Science & Experts', 'Science & Experts')}</button>
+          <button onclick="setExSubTab('map')" class="sub-pill ${appState.exSubTab==='map'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition truncate">🧍 ${tr('خريطة العضلات', 'Carte Musculaire', 'Muscle Map')}</button>
+        </div>
+      `;
+
+      if (appState.exSubTab === 'science_pick') {
+        return subNav + `
+          <div class="app-card p-4 space-y-3.5">
+            <div>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">2024–2026 HYPERTROPHY META-ANALYSES</span>
+              <h2 class="text-sm sm:text-lg font-extrabold text-white mt-1">${tr('دراسة التمارين الـ 32 وأحدث إحصائيات التضخم العضلي', 'Analyse Scientifique des 32 Exercices (2024–2026)', 'Scientific Breakdown of the 32 Exercises (2024–2026)')}</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-slate-900 border border-emerald-500/30 space-y-1">
+                <div class="font-extrabold text-emerald-400">1. ${tr('التضخم في وضع الإطالة (+40% نمو أسرع)', 'Hypertrophie en Étirement (+40%)', 'Stretch-Mediated Hypertrophy (+40%)')}</div>
+                <p class="text-slate-300 leading-relaxed">${tr('أثبتت دراسات Wolf et al. (2025) وMaeo et al. أن تحفيز العضلة في وضع الإطالة (Seated Leg Curl +14.1% مقابل +9.3% للاستلقاء، وOverhead Triceps بزيادة 1.4x) هو العامل الأهم للبناء العضلي.', 'Les essais cliniques confirment que le Leg Curl Assis (+14,1% vs +9,3%) et l\'Extension Triceps Overhead (1,4x plus de gains) surpassent les variantes raccourcies.', 'Clinical trials confirm Seated Leg Curls (+14.1% vs +9.3%) and Overhead Triceps Extensions (1.4x more growth) outperform shortened movements.')}</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900 border border-sky-500/30 space-y-1">
+                <div class="font-extrabold text-sky-400">2. ${tr('توزيع التردد العالي (Pelland et al., 2025/2026)', 'Fréquence Optimale (Pelland et al., 2025/2026)', 'Optimal Per-Session Volume (Pelland et al., 2025/2026)')}</div>
+                <p class="text-slate-300 leading-relaxed">${tr('توزيع 10–18 مجموعة أسبوعياً على 3 إلى 4 حصص Full Body يمنح كل عضلة 3–4 مجموعات عالية الجودة في الحصة الواحدة دون إجهاد ضائع.', 'Répartir 10–18 séries/semaine sur 3–4 séances garantit une qualité maximale par série sans fatigue inutile.', 'Spreading 10–18 weekly sets across 3–4 sessions maximizes per-set motor unit recruitment.')}</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900 border border-amber-500/30 space-y-1">
+                <div class="font-extrabold text-amber-300">3. ${tr('شمول جميع مناطق الجسم الـ 14 (اليوم التكميلي D)', 'Couverture des 14 Zones Musculaires (Jour D)', 'Complete 14-Zone Coverage (Bonus Day D)')}</div>
+                <p class="text-slate-300 leading-relaxed">${tr('يغطي اليوم الرابع الاختياري العضلات التكميلية: Hip Thrust للأرداف المباشرة، Shrugs للترابيس والقبضة، Seated Calf للعضلة النعلية (60% من السمانة)، البريتشر بايسبس، وأسفل الظهر.', 'Le Jour D couvre les zones souvent oubliées : Hip Thrust (fessiers), Shrugs (trapèzes), Mollets assis (soléaire), Curl pupitre et Lombaires.', 'Day D covers neglected areas: Hip Thrust (direct glutes), Shrugs (upper traps/grip), Seated Calf (soleus), Preacher Curl & Back Extensions.')}</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900 border border-indigo-500/30 space-y-1">
+                <div class="font-extrabold text-indigo-300">4. ${tr('حماية الركبة (PFPS) والمعصم', 'Sécurité Articulaire Genoux & Poignets', 'Knee (PFPS) & Wrist Longevity')}</div>
+                <p class="text-slate-300 leading-relaxed">${tr('اعتماد القبضات المحايدة والدمبل، والقصبة العمودية في القرفصاء البلغارية، ووضع القدم المرتفع في دفع الأرجل يلغي آلام المفاصل.', 'Prises neutres, haltères, tibia vertical au squat bulgare et pieds hauts à la presse protègent vos articulations.', 'Neutral grips, dumbbells, vertical-shin split squats, and high-foot leg presses protect your joints.')}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (appState.exSubTab === 'map') {
+        const vols = computeVolume();
+        const sel = appState.selectedMuscleKey || 'chest';
+        const col = (k) => (vols[k]?.effective >= 10 ? '#10b981' : '#0ea5e9');
+        const m = MUSCLE_GROUPS[sel];
+        const v = vols[sel];
+
+        return subNav + `
+          <div class="app-card p-3.5 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            <div class="lg:col-span-6 grid grid-cols-2 gap-2 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+              <svg viewBox="0 0 240 370" class="w-full max-w-[165px] mx-auto">
+                <circle cx="120" cy="34" r="18" fill="#1e293b" stroke="#64748b"/>
+                <ellipse onclick="selectMuscle('shoulders')" class="muscle-path ${sel==='shoulders'?'selected':''}" cx="68" cy="82" rx="17" ry="14" fill="${col('shoulders')}"/>
+                <ellipse onclick="selectMuscle('shoulders')" class="muscle-path ${sel==='shoulders'?'selected':''}" cx="172" cy="82" rx="17" ry="14" fill="${col('shoulders')}"/>
+                <path onclick="selectMuscle('chest')" class="muscle-path ${sel==='chest'?'selected':''}" d="M82,68 Q120,76 158,68 L152,112 Q120,120 88,112 Z" fill="${col('chest')}"/>
+                <rect onclick="selectMuscle('biceps')" class="muscle-path ${sel==='biceps'?'selected':''}" x="48" y="98" width="18" height="46" rx="8" fill="${col('biceps')}"/>
+                <rect onclick="selectMuscle('biceps')" class="muscle-path ${sel==='biceps'?'selected':''}" x="174" y="98" width="18" height="46" rx="8" fill="${col('biceps')}"/>
+                <rect onclick="selectMuscle('core')" class="muscle-path ${sel==='core'?'selected':''}" x="94" y="116" width="52" height="64" rx="10" fill="${col('core')}"/>
+                <rect onclick="selectMuscle('quads')" class="muscle-path ${sel==='quads'?'selected':''}" x="82" y="188" width="32" height="84" rx="12" fill="${col('quads')}"/>
+                <rect onclick="selectMuscle('quads')" class="muscle-path ${sel==='quads'?'selected':''}" x="126" y="188" width="32" height="84" rx="12" fill="${col('quads')}"/>
+                <rect onclick="selectMuscle('calves')" class="muscle-path ${sel==='calves'?'selected':''}" x="86" y="280" width="24" height="60" rx="9" fill="${col('calves')}"/>
+                <rect onclick="selectMuscle('calves')" class="muscle-path ${sel==='calves'?'selected':''}" x="130" y="280" width="24" height="60" rx="9" fill="${col('calves')}"/>
+              </svg>
+              <svg viewBox="0 0 240 370" class="w-full max-w-[165px] mx-auto">
+                <circle cx="120" cy="34" r="18" fill="#1e293b" stroke="#64748b"/>
+                <path onclick="selectMuscle('back')" class="muscle-path ${sel==='back'?'selected':''}" d="M78,66 L162,66 L148,162 L92,162 Z" fill="${col('back')}"/>
+                <rect onclick="selectMuscle('triceps')" class="muscle-path ${sel==='triceps'?'selected':''}" x="48" y="98" width="18" height="46" rx="8" fill="${col('triceps')}"/>
+                <rect onclick="selectMuscle('triceps')" class="muscle-path ${sel==='triceps'?'selected':''}" x="174" y="98" width="18" height="46" rx="8" fill="${col('triceps')}"/>
+                <rect onclick="selectMuscle('hamstrings')" class="muscle-path ${sel==='hamstrings'?'selected':''}" x="82" y="168" width="32" height="104" rx="12" fill="${col('hamstrings')}"/>
+                <rect onclick="selectMuscle('hamstrings')" class="muscle-path ${sel==='hamstrings'?'selected':''}" x="126" y="168" width="32" height="104" rx="12" fill="${col('hamstrings')}"/>
+                <rect onclick="selectMuscle('calves')" class="muscle-path ${sel==='calves'?'selected':''}" x="86" y="280" width="24" height="60" rx="9" fill="${col('calves')}"/>
+                <rect onclick="selectMuscle('calves')" class="muscle-path ${sel==='calves'?'selected':''}" x="130" y="280" width="24" height="60" rx="9" fill="${col('calves')}"/>
+              </svg>
+            </div>
+
+            <div class="lg:col-span-6 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm sm:text-base font-extrabold text-white">${trObj(m, 'name')}</h3>
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold text-xs mono-num">${v.effective.toFixed(1)} Sets/Wk</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="p-2 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400 text-[10px]">${tr('مباشر', 'Direct', 'Direct')}</div><div class="text-sm font-extrabold text-emerald-400 mono-num">${v.direct}</div></div>
+                <div class="p-2 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400 text-[10px]">${tr('فرعي (0.5x)', 'Indirect', 'Synergist')}</div><div class="text-sm font-extrabold text-amber-400 mono-num">+${v.indirect.toFixed(1)}</div></div>
+                <div class="p-2 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400 text-[10px]">${tr('الاستشفاء', 'Récup.', 'Recovery')}</div><div class="text-sm font-extrabold text-sky-400 mono-num">${m.recoveryHours}h</div></div>
+              </div>
+              <div class="space-y-1.5 text-xs">
+                ${v.list.map(item => `
+                  <div onclick="openExerciseModal('${item.id}')" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-between cursor-pointer">
+                    <span class="font-bold text-white truncate">${item.name}</span>
+                    <span class="mono-num text-emerald-400 font-bold shrink-0">Day ${item.day} • ${item.sets}s</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const muscleChips = [
+        { k: 'ALL', l: tr('الكل (32)', 'Tous (32)', 'All (32)') },
+        { k: 'chest', l: tr('الصدر', 'Pectoraux', 'Chest') },
+        { k: 'back', l: tr('الظهر والترابيس', 'Dos & Trapèzes', 'Back & Traps') },
+        { k: 'quads', l: tr('الرباعية', 'Quadriceps', 'Quads') },
+        { k: 'hamstrings', l: tr('الخلفية والأرداف', 'Ischios & Fessiers', 'Hamstrings & Glutes') },
+        { k: 'shoulders', l: tr('الأكتاف', 'Épaules', 'Shoulders') },
+        { k: 'biceps', l: tr('البايسبس والساعد', 'Biceps & Avant-bras', 'Biceps & Forearms') },
+        { k: 'triceps', l: tr('الترايسبس', 'Triceps', 'Triceps') },
+        { k: 'calves', l: tr('السمانة', 'Mollets', 'Calves') },
+        { k: 'core', l: tr('البطن وأسفل الظهر', 'Abdos & Lombaires', 'Core & Lower Back') }
+      ];
+
+      const q = (appState.searchQuery || '').trim().toLowerCase();
+      const filtered = EXERCISES_DB.filter(ex => {
+        if (appState.muscleFilter !== 'ALL' && ex.primaryMuscle !== appState.muscleFilter) return false;
+        if (q) {
+          const hay = `${ex.nameAr} ${ex.nameFr} ${ex.nameEn} ${ex.muscleAr} ${ex.muscleFr} ${ex.muscleEn}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      return subNav + `
+        <div class="app-card p-3 space-y-2">
+          <input type="text" value="${appState.searchQuery}" oninput="updateExSearch(this.value)" placeholder="🔍 ${tr('ابحث عن تمرين...', 'Rechercher un exercice...', 'Search exercises...')}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+          <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll pb-1">
+            ${muscleChips.map(c => `
+              <button onclick="setMuscleFilter('${c.k}')" class="whitespace-nowrap px-2.5 py-1 rounded-xl text-[11px] font-bold border transition ${appState.muscleFilter===c.k ? 'bg-emerald-500 text-slate-950 border-emerald-500 font-extrabold' : 'bg-slate-900 text-slate-300 border-slate-800'}">${c.l}</button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          ${filtered.map(ex => {
+            const f = appState.photoFrames[ex.id] || 0;
+            return `
+              <div class="app-card overflow-hidden flex flex-col justify-between">
+                <div onclick="handleImageTap('${ex.id}', event)" class="relative bg-slate-950 h-44 overflow-hidden cursor-pointer select-none">
+                  <img id="ex-img-${ex.id}" src="${getExPhotoUrl(ex, f)}" onerror="handleImgError(this,'${ex.altFolder}',${f})" alt="${ex.nameEn}" class="w-full h-full object-cover object-center" loading="lazy" />
+                  <!-- Top-Right Zoom Button -->
+                  <button onclick="openPhotoLightbox('${ex.id}', event)" class="absolute top-2 right-2 px-2 py-1 rounded-lg bg-slate-950/90 border border-slate-700 text-white text-[11px] font-bold flex items-center gap-1 shadow">
+                    🔍 ${tr('تكبير', 'Zoom', 'Zoom')}
+                  </button>
+                  <span id="ex-img-badge-${ex.id}" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg bg-slate-950/85 text-[10px] font-bold text-emerald-300 border border-emerald-500/40">
+                    ${f === 0 ? '1/2' : '2/2'} 🔄
+                  </span>
+                  <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[10px] font-extrabold mono-num">${ex.tier} • Day ${ex.day}</span>
+                </div>
+
+                <div class="p-3 space-y-2 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div class="text-[11px] font-bold text-emerald-400 truncate">${trObj(ex, 'muscle')} • ${ex.sets}×${ex.reps}</div>
+                    <h3 class="text-sm font-extrabold text-white mt-0.5 leading-snug">${trObj(ex, 'name')}</h3>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800/80">
+                    <button onclick="openExerciseModal('${ex.id}')" class="flex-1 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">
+                      📖 ${tr('الشرح والصور', 'Guide', 'Guide')}
+                    </button>
+                    <a href="${ex.ytUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 font-extrabold text-xs">
+                      ▶️ ${tr('فيديو', 'Vidéo', 'Video')}
+                    </a>
+                    <button onclick="openSwapModal('${ex.id}')" class="px-2 py-1.5 rounded-xl bg-slate-800 text-slate-200 text-xs font-bold">🔄</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function setExSubTab(s) { appState.exSubTab = s; renderMainView(); }
+    function setMuscleFilter(m) { appState.muscleFilter = m; renderMainView(); }
+    function updateExSearch(val) { appState.searchQuery = val; renderMainView(); }
+    function selectMuscle(k) { appState.selectedMuscleKey = k; renderMainView(); }
+
+    // =========================================================================
+    // 8. EXERCISE MODAL & SWAP MODAL (WITH LIGHTBOX ZOOM TRIGGER)
+    // =========================================================================
+    function openExerciseModal(exId) {
+      appState.selectedExerciseId = exId;
+      appState.activeModalTab = 'howto';
+      renderExerciseModalContent();
+      document.getElementById('exercise-modal')?.classList.remove('hidden');
+    }
+
+    function closeExerciseModal() {
+      document.getElementById('exercise-modal')?.classList.add('hidden');
+    }
+
+    function setModalTab(t) {
+      appState.activeModalTab = t;
+      renderExerciseModalContent();
+    }
+
+    function renderExerciseModalContent() {
+      const ex = EXERCISES_DB.find(e => e.id === appState.selectedExerciseId);
+      const box = document.getElementById('exercise-modal-body');
+      if (!ex || !box) return;
+
+      const t = appState.activeModalTab;
+      let tabBody = '';
+      if (t === 'howto') {
+        tabBody = `
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1">
+            <div class="font-extrabold text-emerald-400">1. ${tr('وضعية البداية:', 'Position de Départ :', 'Starting Position:')}</div>
+            <p class="text-slate-200 leading-relaxed">${trObj(ex, 'start')}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1">
+            <div class="font-extrabold text-sky-400">2. ${tr('خطوات الأداء:', 'Exécution :', 'Execution Steps:')}</div>
+            <p class="text-slate-200 leading-relaxed">${trObj(ex, 'steps')}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs space-y-1">
+            <div class="font-extrabold text-indigo-300">🧬 ${tr('الدليل العلمي:', 'Preuve Scientifique :', 'Scientific Evidence:')}</div>
+            <p class="text-slate-200 leading-relaxed">${trObj(ex, 'science')}</p>
+          </div>
+        `;
+      } else if (t === 'safety') {
+        tabBody = `
+          <div class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-xs text-emerald-200 font-semibold leading-relaxed">
+            ${trObj(ex, 'safety')}
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400">${tr('المجموعات', 'Séries', 'Sets')}</div><div class="font-extrabold text-white mono-num">${ex.sets}×${ex.reps}</div></div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400">${tr('الراحة', 'Repos', 'Rest')}</div><div class="font-extrabold text-sky-400 mono-num">${ex.restSec}s</div></div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400">RIR</div><div class="font-extrabold text-amber-400 mono-num">${ex.rir}</div></div>
+          </div>
+        `;
+      } else {
+        const alts = (ex.alternatives || []).map(id => EXERCISES_DB.find(x => x.id === id)).filter(Boolean);
+        tabBody = `
+          <a href="${ex.ytUrl}" target="_blank" rel="noopener noreferrer" class="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-between text-xs">
+            <div>
+              <div class="font-extrabold text-rose-300">▶️ ${tr('فيديو الشرح على يوتيوب', 'Tutoriel Vidéo YouTube', 'Watch Video on YouTube')}</div>
+              <div class="text-slate-300 mt-0.5">${ex.ytAuthor}</div>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg bg-rose-500 text-white font-extrabold">YouTube ↗</span>
+          </a>
+          <div class="space-y-1.5 pt-1 text-xs">
+            <div class="font-bold text-slate-400">${tr('بدائل ذكية لنفس العضلة:', 'Alternatives :', 'Smart Alternatives:')}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              ${alts.map(a => `
+                <button onclick="openExerciseModal('${a.id}')" class="p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-2 text-right">
+                  <img src="${getExPhotoUrl(a, 0)}" onerror="handleImgError(this,'${a.altFolder}',0)" class="w-11 h-10 rounded-lg object-cover bg-slate-950 shrink-0" />
+                  <span class="font-bold text-emerald-300 text-xs truncate">${trObj(a, 'name')}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      box.innerHTML = `
+        <div class="flex items-start justify-between gap-2 border-b border-slate-800 pb-2">
+          <div class="min-w-0">
+            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold mono-num">${ex.id} • ${ex.tier}</span>
+            <h3 class="text-sm sm:text-base font-extrabold text-white mt-0.5 truncate">${trObj(ex, 'name')}</h3>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick="openPhotoLightbox('${ex.id}', event)" class="px-2.5 py-1 rounded-xl bg-sky-500/20 text-sky-300 text-xs font-bold">🔍 ${tr('تكبير الصور', 'Zoom', 'Zoom')}</button>
+            <button onclick="closeExerciseModal()" class="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">✕</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div onclick="openPhotoLightbox('${ex.id}', event)" class="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-pointer">
+            <img src="${getExPhotoUrl(ex, 0)}" onerror="handleImgError(this,'${ex.altFolder}',0)" alt="Start" class="w-full h-36 sm:h-44 object-cover" />
+            <span class="absolute top-1.5 right-1.5 w-6 h-6 rounded bg-slate-950/80 text-xs flex items-center justify-center">🔍</span>
+            <div class="p-1 text-center text-[10px] font-bold text-emerald-400 bg-slate-900">1. ${tr('وضعية البداية', 'Départ', 'Start')}</div>
+          </div>
+          <div onclick="openPhotoLightbox('${ex.id}', event)" class="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-pointer">
+            <img src="${getExPhotoUrl(ex, 1)}" onerror="handleImgError(this,'${ex.altFolder}',1)" alt="Peak" class="w-full h-36 sm:h-44 object-cover" />
+            <span class="absolute top-1.5 right-1.5 w-6 h-6 rounded bg-slate-950/80 text-xs flex items-center justify-center">🔍</span>
+            <div class="p-1 text-center text-[10px] font-bold text-sky-400 bg-slate-900">2. ${tr('وضعية الذروة', 'Contraction', 'Peak')}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px]">
+          <button onclick="setModalTab('howto')" class="sub-pill ${t==='howto'?'active':'text-slate-300'} py-1.5 rounded-lg font-bold truncate">${tr('1. الأداء والعلم', '1. Exécution', '1. Form')}</button>
+          <button onclick="setModalTab('safety')" class="sub-pill ${t==='safety'?'active':'text-slate-300'} py-1.5 rounded-lg font-bold truncate">${tr('2. المفاصل', '2. Sécurité', '2. Safety')}</button>
+          <button onclick="setModalTab('video')" class="sub-pill ${t==='video'?'active':'text-slate-300'} py-1.5 rounded-lg font-bold truncate">${tr('3. فيديو وبدائل', '3. Vidéo', '3. Video')}</button>
+        </div>
+
+        <div class="space-y-2">${tabBody}</div>
+      `;
+    }
+
+    function openSwapModal(exId) {
+      const src = EXERCISES_DB.find(e => e.id === exId);
+      const box = document.getElementById('swap-modal-body');
+      if (!src || !box) return;
+      const cands = EXERCISES_DB.filter(e => e.id !== src.id && e.primaryMuscle === src.primaryMuscle);
+      box.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h3 class="text-xs sm:text-sm font-extrabold text-white truncate">🔄 ${tr('استبدال:', 'Remplacer :', 'Swap:')} ${trObj(src, 'name')}</h3>
+          <button onclick="closeSwapModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs">✕</button>
+        </div>
+        <div class="space-y-2">
+          ${cands.map(c => `
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <img src="${getExPhotoUrl(c, 0)}" onerror="handleImgError(this,'${c.altFolder}',0)" class="w-12 h-11 rounded-lg object-cover bg-slate-950 shrink-0" />
+                <div class="min-w-0">
+                  <div class="text-xs font-extrabold text-white truncate">${trObj(c, 'name')}</div>
+                  <div class="text-[10px] text-emerald-400 truncate">${trObj(c, 'safety')}</div>
+                </div>
+              </div>
+              <button onclick="applySwap('${src.id}','${c.id}')" class="px-2.5 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs shrink-0">${tr('اعتماد', 'Choisir', 'Select')}</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      document.getElementById('swap-modal')?.classList.remove('hidden');
+    }
+
+    function closeSwapModal() { document.getElementById('swap-modal')?.classList.add('hidden'); }
+
+    function applySwap(oldId, newId) {
+      const dm = appState.customDayExercises[appState.programMode];
+      ['A', 'B', 'C', 'D'].forEach(d => {
+        const i = (dm[d] || []).indexOf(oldId);
+        if (i !== -1) dm[d][i] = newId;
+      });
+      saveAppState();
+      closeSwapModal();
+      renderMainView();
+      showToast(tr('🔄 تم استبدال التمرين بنجاح!', '🔄 Exercice remplacé !', '🔄 Exercise swapped!'));
+    }
+
+    // =========================================================================
+    // 9. PILLAR 3: NUTRITION, MEALS, FOODS & SUPPLEMENTS (CONTAINED)
+    // =========================================================================
+    function renderNutritionPillar() {
+      const subNav = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
+          <button onclick="setNutriSubTab('calc')" class="sub-pill ${appState.nutriSubTab==='calc'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">1️⃣ ${tr('الحاسبة', 'Calculateur', 'Calculator')}</button>
+          <button onclick="setNutriSubTab('meals')" class="sub-pill ${appState.nutriSubTab==='meals'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">2️⃣ ${tr('وجباتي', 'Mes Repas', 'Daily Meals')}</button>
+          <button onclick="setNutriSubTab('foods')" class="sub-pill ${appState.nutriSubTab==='foods'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">3️⃣ ${tr('الأغذية والتسوق', 'Aliments', 'Foods & List')}</button>
+          <button onclick="setNutriSubTab('supps')" class="sub-pill ${appState.nutriSubTab==='supps'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">4️⃣ ${tr('المكملات', 'Compléments', 'Supplements')}</button>
+        </div>
+      `;
+
+      const bio = calculateBiometrics();
+      const p = appState.profile;
+
+      if (appState.nutriSubTab === 'calc') {
+        return subNav + `
+          <div class="app-card p-3.5 sm:p-5 space-y-3.5">
+            <h2 class="text-sm sm:text-base font-extrabold text-white">🧮 ${tr('حاسبة السعرات والماكروز (Mifflin-St Jeor + ISSN)', 'Calculateur de Calories & Macros', 'Calorie & Macro Calculator')}</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div><label class="text-slate-400 block mb-1">${tr('العمر', 'Âge', 'Age')}</label><input type="number" value="${p.age}" onchange="updateProfileField('age',this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white mono-num"></div>
+              <div><label class="text-slate-400 block mb-1">${tr('الطول (cm)', 'Taille', 'Height')}</label><input type="number" value="${p.heightCm}" onchange="updateProfileField('heightCm',this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white mono-num"></div>
+              <div><label class="text-slate-400 block mb-1">${tr('الوزن (kg)', 'Poids', 'Weight')}</label><input type="number" step="0.5" value="${p.weightKg}" onchange="updateProfileField('weightKg',this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white mono-num"></div>
+              <div>
+                <label class="text-slate-400 block mb-1">${tr('الهدف', 'Objectif', 'Goal')}</label>
+                <select onchange="updateProfileField('goalMode',this.value)" class="w-full bg-slate-900 border border-emerald-500/50 rounded-xl px-2 py-2 text-emerald-300 font-bold">
+                  <option value="recomp_train" ${p.goalMode==='recomp_train'?'selected':''}>${tr('يوم تدريب (+100)', 'Entraînement (+100)', 'Training (+100)')}</option>
+                  <option value="recomp_rest" ${p.goalMode==='recomp_rest'?'selected':''}>${tr('يوم راحة (-200)', 'Repos (-200)', 'Rest (-200)')}</option>
+                  <option value="lean_bulk" ${p.goalMode==='lean_bulk'?'selected':''}>${tr('تضخيم (+250)', 'Masse (+250)', 'Lean Bulk (+250)')}</option>
+                  <option value="fat_loss" ${p.goalMode==='fat_loss'?'selected':''}>${tr('تنشيف (-400)', 'Sèche (-400)', 'Cut (-400)')}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400 text-[10px]">BMI</div><div class="text-base font-extrabold text-white mono-num">${bio.bmi}</div></div>
+              <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400 text-[10px]">BMR</div><div class="text-base font-extrabold text-sky-400 mono-num">${bio.bmr}</div></div>
+              <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800"><div class="text-slate-400 text-[10px]">TDEE</div><div class="text-base font-extrabold text-amber-400 mono-num">${bio.tdee}</div></div>
+              <div class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40"><div class="text-emerald-300 font-bold text-[10px]">${tr('المستهدف', 'Cible Kcal', 'Target Kcal')}</div><div class="text-base font-extrabold text-emerald-400 mono-num">${bio.targetKcal}</div></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30"><div class="text-emerald-300 font-bold text-[11px]">${tr('بروتين', 'Protéines', 'Protein')}</div><div class="text-base font-extrabold text-white mono-num">${bio.proteinG}g</div></div>
+              <div class="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/30"><div class="text-sky-300 font-bold text-[11px]">${tr('كارب', 'Glucides', 'Carbs')}</div><div class="text-base font-extrabold text-white mono-num">${bio.carbsG}g</div></div>
+              <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30"><div class="text-amber-300 font-bold text-[11px]">${tr('دهون', 'Lipides', 'Fats')}</div><div class="text-base font-extrabold text-white mono-num">${bio.fatG}g</div></div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (appState.nutriSubTab === 'meals') {
+        const meals = appState.customMeals[appState.activeMealPreset || 'training'];
+        let tk = 0, tp = 0;
+        return subNav + `
+          <div class="app-card p-3.5 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <h3 class="text-xs sm:text-base font-extrabold text-white">🍽️ ${tr('وجباتي اليومية', 'Plan de Repas', 'Daily Meals')}</h3>
+              <div class="flex gap-1">
+                <button onclick="setMealPreset('training')" class="px-2.5 py-1 rounded-xl text-[11px] font-bold ${appState.activeMealPreset==='training'?'bg-emerald-500 text-slate-950':'bg-slate-800 text-slate-300'}">${tr('يوم تدريب', 'Entraînement', 'Training')}</button>
+                <button onclick="setMealPreset('rest')" class="px-2.5 py-1 rounded-xl text-[11px] font-bold ${appState.activeMealPreset==='rest'?'bg-emerald-500 text-slate-950':'bg-slate-800 text-slate-300'}">${tr('يوم راحة', 'Repos', 'Rest')}</button>
+              </div>
+            </div>
+            ${meals.map((m, mi) => `
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-emerald-400">${trObj(m, 'title')}</div>
+                ${m.items.map((it, ii) => {
+                  const f = MOROCCAN_FOOD_DB.find(x => x.id === it.foodId) || MOROCCAN_FOOD_DB[0];
+                  const k = Math.round(f.kcal * it.grams / 100);
+                  const pr = Math.round(f.p * it.grams / 100);
+                  tk += k; tp += pr;
+                  return `
+                    <div class="flex items-center justify-between gap-1.5 py-1.5 border-b border-slate-800/60 text-xs">
+                      <div class="min-w-0 flex-1 truncate"><span class="font-bold text-white">${trObj(f, 'name')}</span></div>
+                      <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="stepMealGrams(${mi},${ii},-10)" class="step-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-xs">−</button>
+                        <span class="mono-num font-bold text-emerald-300 w-11 text-center text-[11px]">${it.grams}g</span>
+                        <button onclick="stepMealGrams(${mi},${ii},10)" class="step-btn rounded-lg bg-slate-800 text-slate-200 font-bold text-xs">+</button>
+                        <span class="mono-num text-slate-400 text-[10px] w-16 text-left">${k}kcal</span>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `).join('')}
+            <div class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex justify-between text-xs font-extrabold">
+              <span class="text-emerald-300">${tr('إجمالي الوجبات:', 'Total :', 'Total:')}</span>
+              <span class="mono-num text-white">${tk} kcal • ${tp}g P</span>
+            </div>
+          </div>
+        `;
+      }
+
+      if (appState.nutriSubTab === 'foods') {
+        const tot = {};
+        ['training', 'rest'].forEach(mode => {
+          const mult = mode === 'training' ? 3 : 4;
+          appState.customMeals[mode].forEach(m => m.items.forEach(it => { tot[it.foodId] = (tot[it.foodId] || 0) + it.grams * mult; }));
+        });
+        return subNav + `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+            <div class="lg:col-span-7 app-card p-3.5 space-y-2.5">
+              <h3 class="text-xs sm:text-sm font-extrabold text-white">🇲🇦 ${tr('قاعدة الأغذية المغربية (لكل 100g)', 'Base Alimentaire (100g)', 'Moroccan Foods (100g)')}</h3>
+              <div class="space-y-1.5 max-h-80 overflow-y-auto custom-scroll">
+                ${MOROCCAN_FOOD_DB.map(f => `
+                  <div class="p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2 text-xs">
+                    <div class="min-w-0 truncate"><span class="font-bold text-white">${trObj(f, 'name')}</span> <span class="text-[10px] text-slate-400">(${trObj(f, 'state')})</span></div>
+                    <div class="mono-num text-[11px] shrink-0"><span class="text-amber-300 font-bold">${f.kcal}kcal</span> • <span class="text-emerald-400 font-bold">${f.p}P</span></div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="lg:col-span-5 app-card p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs sm:text-sm font-extrabold text-white">🛒 ${tr('قائمة التسوق الأسبوعية', 'Liste de Courses', 'Weekly Grocery List')}</h3>
+                <button onclick="window.print()" class="px-2 py-1 rounded-lg bg-slate-800 text-xs">🖨️</button>
+              </div>
+              <div class="space-y-1.5 text-xs">
+                ${Object.keys(tot).map(id => {
+                  const f = MOROCCAN_FOOD_DB.find(x => x.id === id);
+                  if (!f) return '';
+                  const rawG = Math.round(tot[id] * f.rawFactor);
+                  const disp = rawG >= 1000 ? `${(rawG/1000).toFixed(2)} kg` : `${rawG} g`;
+                  return `<label class="flex justify-between p-2 rounded-xl bg-slate-900 border border-slate-800"><span class="flex items-center gap-2 truncate"><input type="checkbox" class="accent-emerald-500"> ${trObj(f, 'name')}</span><span class="mono-num text-emerald-300 font-bold shrink-0">${disp}</span></label>`;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return subNav + `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${SUPPLEMENTS_DB.map(s => {
+            const doseFn = appState.lang === 'fr' ? s.doseFr : (appState.lang === 'en' ? s.doseEn : s.doseAr);
+            return `
+              <div class="app-card p-3.5 space-y-2 border-t-4 border-t-emerald-500">
+                <span class="text-[10px] font-bold text-emerald-400">${s.tier}</span>
+                <h3 class="text-sm font-extrabold text-white">${trObj(s, 'name')}</h3>
+                <p class="text-xs text-slate-200">${doseFn(p.weightKg)}</p>
+                <p class="text-[11px] text-slate-400">${trObj(s, 'note')}</p>
+                <a href="${s.refUrl}" target="_blank" rel="noopener noreferrer" class="inline-block text-xs font-bold text-sky-400 hover:underline">🔬 PubMed / ISSN ↗</a>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function setNutriSubTab(s) { appState.nutriSubTab = s; renderMainView(); }
+    function updateProfileField(f, v) {
+      appState.profile[f] = isNaN(parseFloat(v)) ? v : parseFloat(v);
+      saveAppState();
+      renderMainView();
+    }
+    function setMealPreset(k) { appState.activeMealPreset = k; renderMainView(); }
+    function stepMealGrams(mi, ii, delta) {
+      const p = appState.activeMealPreset || 'training';
+      const item = appState.customMeals[p][mi].items[ii];
+      item.grams = Math.max(0, item.grams + delta);
+      saveAppState();
+      renderMainView();
+    }
+
+    // =========================================================================
+    // 10. PILLAR 4: PROGRESS, AI COACH & SCIENCE / BACKUP
+    // =========================================================================
+    function renderProgressPillar() {
+      const subNav = `
+        <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
+          <button onclick="setProgSubTab('metrics')" class="sub-pill ${appState.progSubTab==='metrics'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">📏 ${tr('القياسات', 'Mensurations', 'Metrics')}</button>
+          <button onclick="setProgSubTab('coach')" class="sub-pill ${appState.progSubTab==='coach'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">🧠 ${tr('المدرب والركبة', 'Coach & Genoux', 'AI Coach')}</button>
+          <button onclick="setProgSubTab('refs')" class="sub-pill ${appState.progSubTab==='refs'?'active':'text-slate-300'} py-2 px-1.5 rounded-xl text-[11px] font-bold transition truncate">🔬 ${tr('العلم والنسخ', 'Science & JSON', 'Science & JSON')}</button>
+        </div>
+      `;
+
+      if (appState.progSubTab === 'metrics') {
+        const pts = appState.e1rmHistory.EX01 || [30.5, 32.0, 33.5, 34.7];
+        const minV = Math.min(...pts) * 0.92, maxV = Math.max(...pts) * 1.05;
+        const coords = pts.map((v, i) => ({ x: 45 + i * (320 / Math.max(1, pts.length - 1)), y: 145 - ((v - minV) / Math.max(1, maxV - minV)) * 100, v }));
+        return subNav + `
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+            <div class="lg:col-span-5 app-card p-3.5 space-y-3">
+              <h3 class="text-xs sm:text-sm font-extrabold text-white">📏 ${tr('تسجيل القياسات الأسبوعية', 'Enregistrer les Mensurations', 'Log Body Measurements')}</h3>
+              <div class="grid grid-cols-3 gap-2 text-xs">
+                <div><label class="text-slate-400 block mb-1 text-[10px]">${tr('الوزن', 'Poids', 'Weight')}</label><input type="number" id="m-weight" step="0.1" value="${appState.profile.weightKg}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-white mono-num"></div>
+                <div><label class="text-slate-400 block mb-1 text-[10px]">${tr('الخصر', 'Taille', 'Waist')}</label><input type="number" id="m-waist" step="0.5" value="90.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-white mono-num"></div>
+                <div><label class="text-slate-400 block mb-1 text-[10px]">${tr('الذراع', 'Bras', 'Arm')}</label><input type="number" id="m-arm" step="0.2" value="38.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2 py-1.5 text-white mono-num"></div>
+              </div>
+              <button onclick="saveMeasurement()" class="w-full py-2 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">+ ${tr('حفظ القياس', 'Enregistrer', 'Save')}</button>
+              <div class="space-y-1.5 text-xs">
+                ${appState.measurements.slice().reverse().map(m => `
+                  <div class="p-2 rounded-lg bg-slate-900 border border-slate-800 flex justify-between mono-num text-[11px]">
+                    <span class="text-slate-400">${m.date}</span>
+                    <span class="text-emerald-400 font-bold">${m.weight}kg</span>
+                    <span class="text-sky-300">${m.waist}cm</span>
+                    <span class="text-amber-300">${m.arm}cm</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="lg:col-span-7 app-card p-3.5 space-y-2.5">
+              <h3 class="text-xs sm:text-sm font-extrabold text-white">📈 ${tr('تطور القوة التقديرية (e1RM)', 'Progression de Force (e1RM)', 'Estimated 1RM Progression')}</h3>
+              <div class="bg-slate-950 rounded-xl p-2.5 border border-slate-800">
+                <svg viewBox="0 0 420 170" class="w-full max-h-[170px]">
+                  <polyline fill="none" stroke="#10b981" stroke-width="3.5" points="${coords.map(c=>`${c.x},${c.y}`).join(' ')}"/>
+                  ${coords.map(c=>`<circle cx="${c.x}" cy="${c.y}" r="5" fill="#10b981"/><text x="${c.x}" y="${c.y-10}" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">${c.v}kg</text>`).join('')}
+                </svg>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (appState.progSubTab === 'coach') {
+        const s = appState.profile.sleepHrs || 7.5;
+        const k = appState.profile.kneePain ?? 1;
+        return subNav + `
+          <div class="app-card p-3.5 sm:p-5 space-y-3.5">
+            <h3 class="text-sm sm:text-base font-extrabold text-white">🧠 ${tr('المدرب الذكي التكيفي وبروتوكول تسكين الركبة', 'Coach IA & Analgésie Rotulienne', 'AI Coach & Knee Rehab')}</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+                <div class="flex justify-between"><span>${tr('ساعات النوم', 'Sommeil', 'Sleep')}</span><strong class="mono-num text-emerald-400">${s}h</strong></div>
+                <input type="range" min="4" max="10" step="0.5" value="${s}" oninput="updateCoachSlider('sleepHrs',this.value)" class="w-full accent-emerald-500">
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5">
+                <div class="flex justify-between"><span>${tr('انزعاج الركبة (0–10)', 'Gêne au genou', 'Knee Sensitivity')}</span><strong class="mono-num text-amber-400">${k}/10</strong></div>
+                <input type="range" min="0" max="10" step="1" value="${k}" oninput="updateCoachSlider('kneePain',this.value)" class="w-full accent-amber-500">
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-900 border ${k>=4?'border-amber-500/40':'border-emerald-500/40'} text-xs space-y-1">
+              <div class="font-extrabold ${k>=4?'text-amber-300':'text-emerald-400'}">
+                ${k>=4 ? tr('⚠️ توصية وقائية للركبة اليوم:', '⚠️ Ajustement Préventif Genou :', '⚠️ Proactive Knee Adjustment:') : tr('✅ جاهزية مفصلية ممتازة:', '✅ Excellente Stabilité :', '✅ Optimal Joint Readiness:')}
+              </div>
+              <p class="text-slate-200 leading-relaxed">
+                ${k>=4
+                  ? tr('ابدأ بـ 3 مجموعات Spanish Squat أيزومتري (45 ثانية) لتفعيل التسكين العصبي لوتر الرضفة، وخفف وزن Leg Extension بنسبة 15%.', 'Effectuez 3×45s de Spanish Squat isométrique avant la séance et réduisez la charge du Leg Extension de 15%.', 'Perform 3×45s isometric Spanish Squat holds and reduce Leg Extension load by 15%.')
+                  : tr('حالة الركبة مستقرة؛ يمكنك تطبيق التدرج المزدوج (Double Progression) عند RIR 1–2.', 'Genou stable ; poursuivez votre surcharge progressive à RIR 1–2.', 'Knee comfort is optimal; proceed with normal Double Progression at 1–2 RIR.')}
+              </p>
+            </div>
+
+            <button onclick="startRestTimer(45)" class="w-full py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-xs">
+              ⏱️ ${tr('تشغيل مؤقت Spanish Squat (45 ثانية)', 'Minuteur Spanish Squat (45s)', 'Start 45s Spanish Squat Timer')}
+            </button>
+          </div>
+        `;
+      }
+
+      return subNav + `
+        <div class="app-card p-3.5 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-xs sm:text-sm font-extrabold text-white">💾 ${tr('النسخ الاحتياطي (JSON)', 'Sauvegarde (JSON)', 'JSON Backup')}</h3>
+          </div>
+          <div class="flex gap-1.5">
+            <button onclick="exportJsonBackup()" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">⬇️ ${tr('تصدير', 'Exporter', 'Export')}</button>
+            <label class="px-3 py-1.5 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/40 font-extrabold text-xs cursor-pointer">
+              ⬆️ ${tr('استيراد', 'Importer', 'Import')}
+              <input type="file" accept=".json" onchange="importJsonBackup(this)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${SCIENTIFIC_REFERENCES.map(r => `
+            <div class="app-card p-3.5 space-y-1.5 text-xs">
+              <div class="font-extrabold text-white">${r.title}</div>
+              <div class="text-sky-300 font-semibold">${r.authors}</div>
+              <p class="text-slate-300 leading-relaxed">${trObj(r, 'desc')}</p>
+              <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="inline-block text-emerald-400 hover:underline font-bold">🔗 PubMed / PMC ↗</a>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function setProgSubTab(s) { appState.progSubTab = s; renderMainView(); }
+    function updateCoachSlider(f, v) { appState.profile[f] = parseFloat(v); saveAppState(); renderMainView(); }
+    function saveMeasurement() {
+      const w = parseFloat(document.getElementById('m-weight')?.value) || 85;
+      const waist = parseFloat(document.getElementById('m-waist')?.value) || 90;
+      const arm = parseFloat(document.getElementById('m-arm')?.value) || 38.5;
+      appState.measurements.push({ date: new Date().toISOString().slice(0, 10), weight: w, waist, arm });
+      appState.profile.weightKg = w;
+      saveAppState();
+      renderMainView();
+      showToast(tr('📏 تم حفظ القياس بنجاح!', '📏 Mensuration enregistrée !', '📏 Measurement saved!'));
+    }
+
+    function changeProgramMode(m) {
+      appState.programMode = m;
+      saveAppState();
+      renderMainView();
+      showToast(m === 'joint_safe'
+        ? tr('🛡️ تم تفعيل الوضع الصديق للمفاصل', '🛡️ Mode Articulations Protégées activé', '🛡️ Joint-Safe Mode enabled')
+        : tr('🏋️ تم تفعيل الوضع القياسي', '🏋️ Mode Standard activé', '🏋️ Standard Mode enabled'));
+    }
+
+    function exportJsonBackup() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'hypertrophy_os_v4.2_backup.json'; a.click();
+      URL.revokeObjectURL(url);
+      showToast(tr('⬇️ تم تحميل النسخة الاحتياطية', '⬇️ Sauvegarde téléchargée', '⬇️ Backup downloaded'));
+    }
+
+    function importJsonBackup(inp) {
+      if (!inp.files?.[0]) return;
+      const r = new FileReader();
+      r.onload = (e) => {
+        try { Object.assign(appState, JSON.parse(e.target.result)); saveAppState(); renderAll(); showToast(tr('⬆️ تمت استعادة البيانات', '⬆️ Données restaurées', '⬆️ Backup restored')); }
+        catch { showToast('⚠️ Invalid JSON'); }
+      };
+      r.readAsText(inp.files[0]);
+    }
+
+    function renderMainView() {
+      const box = document.getElementById('app-main-view');
+      if (!box) return;
+      if (appState.mainTab === 'home') box.innerHTML = renderHomePillar();
+      else if (appState.mainTab === 'exercises') box.innerHTML = renderExercisesPillar();
+      else if (appState.mainTab === 'nutrition') box.innerHTML = renderNutritionPillar();
+      else box.innerHTML = renderProgressPillar();
+    }
+
+    function renderAll() {
+      renderTopNav();
+      renderMainView();
+      if (!document.getElementById('exercise-modal')?.classList.contains('hidden')) {
+        renderExerciseModalContent();
+      }
+      if (!document.getElementById('photo-lightbox-modal')?.classList.contains('hidden')) {
+        updateLightboxUI();
+      }
+      updateTimerUI();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      setLanguage(appState.lang || 'ar');
+    });
+  </script>
+</body>
+</html>
