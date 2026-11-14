@@ -135,3 +135,29 @@ test('explainable AI coach returns transparent insights and deload suggestions o
   assert.ok(insights.some((i) => i.type === 'deload'));
   assert.ok(insights.every((i) => i.observed.en.length > 0 && i.dataBasis.en.length > 0 && i.rationale.en.length > 0));
 });
+
+test('actualRir persists across migration and calibrates effective volume & intensity overload', () => {
+  const migrated = migrateState({
+    workoutLogs: {
+      EX01_S1: { weight: 26, reps: 8, rir: 2, actualRir: 5, isWarmup: false, done: true },
+    },
+  });
+  assert.equal(migrated.workoutLogs.EX01_S1.actualRir, 5);
+
+  // Set with actualRir=5 exceeds minProximityRir=3 -> not counted as effective working set
+  migrated.volumeSettings.minProximityRir = 3;
+  const vol = computeWeeklyVolume(migrated, EXERCISES_DB);
+  assert.equal(vol.chest.loggedWorkingSets, 0);
+
+  // When actualRir across completed working sets is >= targetRir + 2, progression advises calibrating load/reps up
+  const ex01 = EXERCISES_DB.find((e) => e.id === 'EX01')!;
+  const lightLogs = {
+    EX01_S1: { weight: 26, reps: 8, rir: 4, actualRir: 4, isWarmup: false, done: true },
+    EX01_S2: { weight: 26, reps: 8, rir: 4.5, actualRir: 4.5, isWarmup: false, done: true },
+    EX01_S3: { weight: 26, reps: 8, rir: 4, actualRir: 4, isWarmup: false, done: true },
+  };
+  const dp = evaluateDoubleProgression(ex01, lightLogs);
+  assert.equal(dp.readyToIncrease, true);
+  assert.equal(dp.suggestedWeightKg, 27.25);
+});
+

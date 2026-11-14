@@ -130,7 +130,8 @@ export interface MuscleZoneInfo {
 export interface SetLog {
   weight: number;
   reps: number;
-  rir: number; // 0, 1, 2, 3
+  rir: number; // 0, 1, 2, 3 (legacy/effective fallback)
+  actualRir?: number; // Recorded actual Reps In Reserve achieved (0-10)
   isWarmup: boolean;
   done: boolean;
   timestamp?: string;

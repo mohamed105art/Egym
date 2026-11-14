@@ -163,6 +163,9 @@ export function migrateState(raw: unknown): AppState {
   if (r.lang === 'ar' || r.lang === 'fr' || r.lang === 'en') base.lang = r.lang;
   if (r.theme === 'dark' || r.theme === 'light') base.theme = r.theme;
   if (r.programMode === 'joint_safe' || r.programMode === 'benchmark') base.programMode = r.programMode;
+  if (r.activeWorkoutDay === 'A' || r.activeWorkoutDay === 'B' || r.activeWorkoutDay === 'C' || r.activeWorkoutDay === 'D') {
+    base.activeWorkoutDay = r.activeWorkoutDay;
+  }
   if (r.activeMealPreset === 'training' || r.activeMealPreset === 'rest') base.activeMealPreset = r.activeMealPreset;
 
   if (r.schedulePreset === 'mwf' || r.schedulePreset === 'tts' || r.schedulePreset === 'custom') {
@@ -228,7 +231,11 @@ export function migrateState(raw: unknown): AppState {
         cleanLogs[k] = {
           weight: typeof entry.weight === 'number' ? Math.max(0, entry.weight) : 0,
           reps: typeof entry.reps === 'number' ? Math.max(0, entry.reps) : 10,
-          rir: typeof entry.rir === 'number' ? Math.max(0, Math.min(5, entry.rir)) : 2,
+          rir: typeof entry.rir === 'number' ? Math.max(0, Math.min(10, entry.rir)) : 2,
+          actualRir:
+            typeof entry.actualRir === 'number' && !Number.isNaN(entry.actualRir)
+              ? Math.max(0, Math.min(10, entry.actualRir))
+              : undefined,
           isWarmup: Boolean(entry.isWarmup),
           done: Boolean(entry.done),
           timestamp: typeof entry.timestamp === 'string' ? entry.timestamp : undefined,

@@ -21,7 +21,8 @@ export function estimateE1RM(weightKg: number, reps: number): number {
 
 export function isEffectiveWorkingSet(log: SetLog | undefined, minProximityRir: number): boolean {
   if (!log || !log.done || log.isWarmup) return false;
-  return log.rir <= minProximityRir;
+  const effectiveRir = log.actualRir ?? log.rir;
+  return effectiveRir <= minProximityRir;
 }
 
 export function computeWeeklyVolume(
@@ -141,7 +142,12 @@ export function evaluateDoubleProgression(
   }
 
   const allHitTopReps = workingSets.every((s) => s.reps >= exercise.repMax);
-  const allGoodEffort = workingSets.every((s) => s.rir <= exercise.targetRir + 1);
+  const allGoodEffort = workingSets.every((s) => (s.actualRir ?? s.rir) <= exercise.targetRir + 1);
+  const recordedActual = workingSets.filter((s) => typeof s.actualRir === 'number');
+  const avgActualRir =
+    recordedActual.length > 0
+      ? recordedActual.reduce((acc, s) => acc + (s.actualRir as number), 0) / recordedActual.length
+      : null;
   const currentWeight = workingSets[0].weight;
 
   if (allHitTopReps && allGoodEffort) {
@@ -153,6 +159,19 @@ export function evaluateDoubleProgression(
         ar: `حققت ${exercise.repMax} تكراراً في جميع المجموعات مع RIR مناسب — زِد الوزن بمقدار +${step} كغ مع الحفاظ على التقنية.`,
         fr: `Vous avez atteint ${exercise.repMax} reps sur toutes les séries avec un RIR maîtrisé — augmentez de +${step} kg.`,
         en: `Hit ${exercise.repMax} reps across all sets at target RIR — add +${step} kg next session if form stays clean.`,
+      },
+    };
+  }
+
+  if (avgActualRir !== null && avgActualRir >= exercise.targetRir + 2) {
+    const step = currentWeight >= 60 ? 2.5 : 1.25;
+    return {
+      readyToIncrease: true,
+      suggestedWeightKg: Number((currentWeight + step).toFixed(2)),
+      reason: {
+        ar: `متوسط RIR الفعلي (${avgActualRir.toFixed(1)}) أعلى من الهدف (${exercise.targetRir}) — يمكنك زيادة التكرارات أو رفع الوزن +${step} كغ في الحصة القادمة.`,
+        fr: `RIR réel moyen (${avgActualRir.toFixed(1)}) supérieur à la cible (${exercise.targetRir}) — ajoutez des reps ou +${step} kg la prochaine séance.`,
+        en: `Recorded actual RIR (${avgActualRir.toFixed(1)}) was well above target (${exercise.targetRir}) — push reps or add +${step} kg next session to calibrate intensity.`,
       },
     };
   }

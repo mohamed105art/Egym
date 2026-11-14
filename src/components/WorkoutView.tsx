@@ -469,23 +469,92 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                           </button>
                         </div>
 
-                        {/* RIR Selector */}
+                        {/* Actual RIR Achieved Control */}
                         <div className="flex items-center gap-1">
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400">RIR</span>
-                          {[0, 1, 2, 3].map((r) => (
-                            <button
-                              key={r}
-                              type="button"
-                              onClick={() => onUpdateSetLog(key, { ...log, rir: r })}
-                              className={`w-7 h-7 rounded-lg font-bold mono-num border transition ${
-                                log.rir === r
-                                  ? 'bg-sky-600 text-white border-sky-600'
-                                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                          <label
+                            htmlFor={`${key}_actual_rir`}
+                            className="text-[11px] font-bold text-slate-600 dark:text-slate-300"
+                            title={tr(
+                              lang,
+                              `الهدف الموصى به: ${ex.targetRir} RIR`,
+                              `Cible : ${ex.targetRir} RIR`,
+                              `Target: ${ex.targetRir} RIR`
+                            )}
+                          >
+                            {tr(lang, 'RIR الفعلي', 'RIR réel', 'Actual RIR')}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = log.actualRir ?? ex.targetRir;
+                              const next = Math.max(0, Number((current - 0.5).toFixed(1)));
+                              onUpdateSetLog(key, { ...log, actualRir: next, rir: next });
+                            }}
+                            className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                            aria-label={`Decrease actual RIR for set ${setNum}`}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <input
+                            id={`${key}_actual_rir`}
+                            type="number"
+                            min={0}
+                            max={10}
+                            step={0.5}
+                            placeholder={String(ex.targetRir)}
+                            value={log.actualRir ?? ''}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              if (raw === '') {
+                                onUpdateSetLog(key, { ...log, actualRir: undefined, rir: ex.targetRir });
+                                return;
+                              }
+                              const parsed = Math.max(0, Math.min(10, Number(raw)));
+                              if (!Number.isNaN(parsed)) {
+                                onUpdateSetLog(key, { ...log, actualRir: parsed, rir: parsed });
+                              }
+                            }}
+                            aria-label={tr(
+                              lang,
+                              `RIR الفعلي للمجموعة ${setNum}`,
+                              `RIR réel série ${setNum}`,
+                              `Actual RIR achieved set ${setNum}`
+                            )}
+                            className="w-12 text-center py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold mono-num text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const current = log.actualRir ?? ex.targetRir;
+                              const next = Math.min(10, Number((current + 0.5).toFixed(1)));
+                              onUpdateSetLog(key, { ...log, actualRir: next, rir: next });
+                            }}
+                            className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                            aria-label={`Increase actual RIR for set ${setNum}`}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                          {typeof log.actualRir === 'number' && !log.isWarmup ? (
+                            <span
+                              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold mono-num ${
+                                log.actualRir >= ex.targetRir + 2
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                                  : log.actualRir < ex.targetRir - 1
+                                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                               }`}
                             >
-                              {r}
-                            </button>
-                          ))}
+                              {log.actualRir >= ex.targetRir + 2
+                                ? tr(lang, `+وزن؟`, `+Charge?`, `Light (+${(log.actualRir - ex.targetRir).toFixed(1).replace(/\.0$/, '')})`)
+                                : log.actualRir < ex.targetRir - 1
+                                ? tr(lang, `مجهد`, `Très dur`, `Heavy`)
+                                : tr(lang, `مضبوط`, `Calibré`, `On Target`)}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 mono-num">
+                              ({tr(lang, 'هدف', 'Cible', 'Tgt')} {ex.targetRir})
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2">
