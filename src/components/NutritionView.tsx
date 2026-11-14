@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AlertCircle,
   Calculator,
   ExternalLink,
   Minus,
+  PieChart as PieChartIcon,
   Pill,
   Plus,
   Printer,
@@ -11,9 +12,18 @@ import {
   ShoppingBasket,
   Utensils,
 } from 'lucide-react';
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 import { MOROCCAN_FOOD_DB, PRESET_MEAL_PLANS, SUPPLEMENTS_DB } from '../data/nutrition';
 import { tr, trText } from '../engine/i18n';
 import {
+  buildMacroPieData,
   buildWeeklyGroceryList,
   calculateBiometrics,
   calculateMealsTotals,
@@ -36,7 +46,9 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   onUpdateMeals,
 }) => {
   const { lang, nutriSubTab, profile, activeMealPreset, customMeals } = state;
-  const targets = calculateBiometrics(profile);
+  const targets = useMemo(() => calculateBiometrics(profile), [profile]);
+  const pieData = useMemo(() => buildMacroPieData(targets, lang), [targets, lang]);
+
   const currentMeals = customMeals[activeMealPreset] || PRESET_MEAL_PLANS[activeMealPreset];
   const dayTotals = calculateMealsTotals(currentMeals, MOROCCAN_FOOD_DB);
   const byFoodId = new Map(MOROCCAN_FOOD_DB.map((f) => [f.id, f]));
@@ -50,7 +62,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   const subTabs: { id: NutriSubTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'calc',
-      label: tr(lang, 'حاسبة السعرات والماكرو', 'Calculateur & Macros', 'Calorie & Macro Calc'),
+      label: tr(lang, 'حاسبة السعرات والماكرو (مع المخطط الدائري)', 'Calculateur & Camembert Macros', 'Macro Calculator & Pie Chart'),
       icon: <Calculator className="w-4 h-4 shrink-0" />,
     },
     {
@@ -124,188 +136,378 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
         ))}
       </div>
 
-      {/* 1. CALCULATOR */}
+      {/* 1. INTEGRATED AUTOMATIC CALORIE & MACRO CALCULATOR + RECHARTS PIE CHART */}
       {nutriSubTab === 'calc' && (
         <div className="space-y-4">
-          <div className="rounded-3xl border border-amber-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-orange-500" />
-                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
-                  {tr(lang, 'حاسبة الاحتياج اليومي الذكية (السعرات والماكرو)', 'Calculateur Intelligent de Calories & Macros', 'Smart Calorie & Macro Calculator')}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => onSetNutriSubTab('meals')}
-                className="px-3.5 py-1.5 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 text-xs font-extrabold hover:bg-orange-500 hover:text-white transition"
-              >
-                {tr(lang, 'انتقل إلى الوجبات اليومية ←', 'Voir les repas →', 'Go to Daily Meals →')}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-              <div>
-                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'العمر', 'Âge', 'Age')}</label>
-                <input
-                  type="number"
-                  min={15}
-                  max={90}
-                  value={profile.age}
-                  onChange={(e) => onUpdateProfile({ age: Math.max(15, Math.min(90, Number(e.target.value) || 25)) })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الطول (سم)', 'Taille (cm)', 'Height (cm)')}</label>
-                <input
-                  type="number"
-                  min={130}
-                  max={230}
-                  value={profile.heightCm}
-                  onChange={(e) => onUpdateProfile({ heightCm: Math.max(130, Math.min(230, Number(e.target.value) || 175)) })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الوزن (كغ)', 'Poids (kg)', 'Weight (kg)')}</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min={35}
-                  max={220}
-                  value={profile.weightKg}
-                  onChange={(e) => onUpdateProfile({ weightKg: Math.max(35, Math.min(220, Number(e.target.value) || 75)) })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
-                />
-              </div>
-              <div>
-                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الجنس', 'Sexe', 'Sex')}</label>
-                <select
-                  value={profile.sex}
-                  onChange={(e) => onUpdateProfile({ sex: e.target.value as 'male' | 'female' })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
-                >
-                  <option value="male">{tr(lang, 'ذكر', 'Homme', 'Male')}</option>
-                  <option value="female">{tr(lang, 'أنثى', 'Femme', 'Female')}</option>
-                </select>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'النشاط اليومي', 'Activité', 'Activity')}</label>
-                <select
-                  value={profile.activityFactor}
-                  onChange={(e) => onUpdateProfile({ activityFactor: Number(e.target.value) })}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
-                >
-                  <option value={1.35}>1.35 ({tr(lang, 'مكتبي + 3 حصص', 'Sédentaire + 3j', 'Desk + 3d')})</option>
-                  <option value={1.5}>1.50 ({tr(lang, 'نشاط متوسط', 'Modéré', 'Moderate')})</option>
-                  <option value={1.65}>1.65 ({tr(lang, 'نشط يومياً', 'Actif', 'Active')})</option>
-                  <option value={1.8}>1.80 ({tr(lang, 'مرتفع جداً', 'Très actif', 'Very High')})</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Goal Mode */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
-              {(
-                [
-                  {
-                    id: 'recomp',
-                    label: tr(lang, 'تثبيت وبناء متوازن (Recomp)', 'Recomposition (Maintien)', 'Body Recomposition'),
-                    delta: 0,
-                    activeCls: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-indigo-600 shadow-sm',
-                  },
-                  {
-                    id: 'lean_bulk',
-                    label: tr(lang, 'زيادة عضلية صافية (+220 سعرة)', 'Prise de masse propre (+220)', 'Lean Bulk (+220 kcal)'),
-                    delta: 220,
-                    activeCls: 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-500 shadow-sm',
-                  },
-                  {
-                    id: 'fat_loss',
-                    label: tr(lang, 'تنشيف وخسارة دهون (-380 سعرة)', 'Sèche contrôlée (-380)', 'Fat Loss (-380 kcal)'),
-                    delta: -380,
-                    activeCls: 'bg-gradient-to-r from-rose-500 to-pink-600 text-white border-rose-500 shadow-sm',
-                  },
-                ] as { id: GoalMode; label: string; delta: number; activeCls: string }[]
-              ).map((g) => (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left Column (7 cols): Automatic Calculator Controls (Weight + Goal: Bulk / Cut / Recomp) */}
+            <div className="lg:col-span-7 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Calculator className="w-5 h-5 text-orange-500 shrink-0" />
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                      {tr(
+                        lang,
+                        'حاسبة السعرات والماكروز التلقائية (حسب الوزن والهدف)',
+                        'Calculateur Automatique Calories & Macros (Poids & Objectif)',
+                        'Automatic Calorie & Macro Calculator (Weight & Goal)'
+                      )}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {tr(
+                        lang,
+                        'عدّل وزنك واختر هدفك (تضخيم / تنشيف / تثبيت) ليتم تحديث السعرات وتوزيع الماكروز فوراً.',
+                        'Ajustez votre poids et votre objectif (Prise de masse / Sèche / Maintien) pour un calcul instantané.',
+                        'Adjust your weight and goal (Bulk / Cut / Recomp) for instant calorie and macro calibration.'
+                      )}
+                    </p>
+                  </div>
+                </div>
                 <button
-                  key={g.id}
                   type="button"
-                  onClick={() => onUpdateProfile({ goalMode: g.id, caloricDelta: g.delta })}
-                  className={`p-3 rounded-2xl border font-extrabold text-start transition ${
-                    profile.goalMode === g.id
-                      ? g.activeCls
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-orange-400'
-                  }`}
+                  onClick={() => onSetNutriSubTab('meals')}
+                  className="h-9 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-orange-500 text-xs font-extrabold whitespace-nowrap hover:bg-orange-500 hover:text-white transition cursor-pointer"
                 >
-                  {g.label}
+                  {tr(lang, 'الوجبات اليومية ←', 'Voir les repas →', 'Daily Meals →')}
                 </button>
-              ))}
+              </div>
+
+              {/* Primary Quick Controls: Weight Stepper + Goal Mode (Bulk / Cut / Recomp) */}
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 p-3.5 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3">
+                  <div className="sm:col-span-5 space-y-1">
+                    <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 block">
+                      {tr(lang, 'الوزن الحالي (كغ)', 'Poids Actuel (kg)', 'Current Weight (kg)')}
+                    </label>
+                    <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onUpdateProfile({
+                            weightKg: Math.max(35, Number((profile.weightKg - 0.5).toFixed(1))),
+                          })
+                        }
+                        className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
+                        aria-label="Decrease weight"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min={35}
+                        max={220}
+                        value={profile.weightKg}
+                        onChange={(e) =>
+                          onUpdateProfile({
+                            weightKg: Math.max(35, Math.min(220, Number(e.target.value) || 75)),
+                          })
+                        }
+                        className="h-9 w-full text-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-sm mono-num text-orange-500 focus:border-orange-500 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onUpdateProfile({
+                            weightKg: Math.min(220, Number((profile.weightKg + 0.5).toFixed(1))),
+                          })
+                        }
+                        className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center justify-center transition cursor-pointer"
+                        aria-label="Increase weight"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-7 space-y-1">
+                    <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+                      <span>{tr(lang, 'شريط ضبط الوزن السريع', 'Curseur de poids rapide', 'Quick Weight Slider')}</span>
+                      <span className="mono-num text-orange-500 font-extrabold">{profile.weightKg} kg (BMI {targets.bmi})</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={45}
+                      max={140}
+                      step={0.5}
+                      value={profile.weightKg}
+                      onChange={(e) => onUpdateProfile({ weightKg: Number(e.target.value) })}
+                      className="w-full accent-orange-500"
+                    />
+                  </div>
+                </div>
+
+                {/* 3 Goal Buttons: Lean Bulk (تضخيم) / Fat Loss (تنشيف) / Recomp (تثبيت وبناء) */}
+                <div className="space-y-1.5">
+                  <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 block">
+                    {tr(lang, 'اختر الهدف التدريبي والغذائي:', 'Choisissez votre objectif :', 'Select Your Nutrition Goal:')}
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    {(
+                      [
+                        {
+                          id: 'lean_bulk',
+                          title: tr(lang, 'تضخيم عضلي صافٍ (Bulk)', 'Prise de Masse (Bulk)', 'Lean Bulk (Surplus)'),
+                          sub: tr(lang, '+280 سعرة لبناء الكتلة', '+280 kcal surplus', '+280 kcal muscle gain'),
+                          delta: 280,
+                        },
+                        {
+                          id: 'fat_loss',
+                          title: tr(lang, 'تنشيف وخسارة دهون (Cut)', 'Sèche & Perte de Gras (Cut)', 'Fat Loss / Cutting'),
+                          sub: tr(lang, '-420 سعرة مع حفظ العضل', '-420 kcal déficit', '-420 kcal lean cut'),
+                          delta: -420,
+                        },
+                        {
+                          id: 'recomp',
+                          title: tr(lang, 'إعادة تركيب وتثبيت (Recomp)', 'Recomposition (Maintien)', 'Body Recomposition'),
+                          sub: tr(lang, 'توازن حراري (0 سعرة)', 'Équilibre calorique', 'Maintenance calories'),
+                          delta: 0,
+                        },
+                      ] as { id: GoalMode; title: string; sub: string; delta: number }[]
+                    ).map((g) => {
+                      const active = profile.goalMode === g.id;
+                      return (
+                        <button
+                          key={g.id}
+                          type="button"
+                          onClick={() => onUpdateProfile({ goalMode: g.id, caloricDelta: g.delta })}
+                          className={`p-3 rounded-xl border text-start transition cursor-pointer ${
+                            active
+                              ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
+                              : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:border-orange-500/60'
+                          }`}
+                        >
+                          <div className="font-extrabold truncate">{g.title}</div>
+                          <div className={`text-[11px] truncate mt-0.5 ${active ? 'text-white/90' : 'text-slate-500 dark:text-slate-400'}`}>
+                            {g.sub}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary Biometric Inputs (Age, Height, Sex, Activity) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div>
+                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'العمر', 'Âge', 'Age')}</label>
+                  <input
+                    type="number"
+                    min={15}
+                    max={90}
+                    value={profile.age}
+                    onChange={(e) => onUpdateProfile({ age: Math.max(15, Math.min(90, Number(e.target.value) || 25)) })}
+                    className="w-full h-9 px-2.5 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الطول (سم)', 'Taille (cm)', 'Height (cm)')}</label>
+                  <input
+                    type="number"
+                    min={130}
+                    max={230}
+                    value={profile.heightCm}
+                    onChange={(e) => onUpdateProfile({ heightCm: Math.max(130, Math.min(230, Number(e.target.value) || 175)) })}
+                    className="w-full h-9 px-2.5 text-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold mono-num"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'الجنس', 'Sexe', 'Sex')}</label>
+                  <select
+                    value={profile.sex}
+                    onChange={(e) => onUpdateProfile({ sex: e.target.value as 'male' | 'female' })}
+                    className="w-full h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
+                  >
+                    <option value="male">{tr(lang, 'ذكر', 'Homme', 'Male')}</option>
+                    <option value="female">{tr(lang, 'أنثى', 'Femme', 'Female')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">{tr(lang, 'النشاط اليومي', 'Activité', 'Activity')}</label>
+                  <select
+                    value={profile.activityFactor}
+                    onChange={(e) => onUpdateProfile({ activityFactor: Number(e.target.value) })}
+                    className="w-full h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 font-bold"
+                  >
+                    <option value={1.35}>1.35 ({tr(lang, 'مكتبي + 3 حصص', 'Sédentaire + 3j', 'Desk + 3d')})</option>
+                    <option value={1.5}>1.50 ({tr(lang, 'نشاط متوسط', 'Modéré', 'Moderate')})</option>
+                    <option value={1.65}>1.65 ({tr(lang, 'نشط يومياً', 'Actif', 'Active')})</option>
+                    <option value={1.8}>1.80 ({tr(lang, 'مرتفع جداً', 'Très actif', 'Very High')})</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Fine-Tune Sliders for Protein g/kg & Caloric Delta */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 flex justify-between">
+                    <span>{tr(lang, 'معامل البروتين (1.4–2.2 غ/كغ):', 'Protéines (1.4–2.2 g/kg) :', 'Protein Factor (1.4–2.2 g/kg):')}</span>
+                    <span className="mono-num text-orange-500 font-extrabold">{profile.proteinPerKg.toFixed(1)} g/kg</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={1.4}
+                    max={2.2}
+                    step={0.1}
+                    value={profile.proteinPerKg}
+                    onChange={(e) => onUpdateProfile({ proteinPerKg: Number(e.target.value) })}
+                    className="w-full accent-orange-500 mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 flex justify-between">
+                    <span>{tr(lang, 'تعديل الفائض / العجز الحراري:', 'Ajustement calorique :', 'Caloric Delta Adjustment:')}</span>
+                    <span className="mono-num text-orange-500 font-extrabold">{profile.caloricDelta >= 0 ? `+${profile.caloricDelta}` : profile.caloricDelta} kcal</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={-600}
+                    max={500}
+                    step={20}
+                    value={profile.caloricDelta}
+                    onChange={(e) => onUpdateProfile({ caloricDelta: Number(e.target.value) })}
+                    className="w-full accent-orange-500 mt-1"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Sliders for Protein & Fine Delta */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
-              <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 flex justify-between">
-                  <span>{tr(lang, 'كمية البروتين اليومية (1.4–2.2 غ/كغ):', 'Protéines (1.4–2.2 g/kg) :', 'Protein Target (1.4–2.2 g/kg):')}</span>
-                  <span className="mono-num text-rose-600 dark:text-rose-400 font-extrabold">{profile.proteinPerKg.toFixed(1)} g/kg</span>
-                </label>
-                <input
-                  type="range"
-                  min={1.4}
-                  max={2.2}
-                  step={0.1}
-                  value={profile.proteinPerKg}
-                  onChange={(e) => onUpdateProfile({ proteinPerKg: Number(e.target.value) })}
-                  className="w-full accent-rose-500 mt-1"
-                />
+            {/* Right Column (5 cols): Interactive Recharts Macro Distribution Pie Chart + Breakdown */}
+            <div className="lg:col-span-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <PieChartIcon className="w-5 h-5 text-orange-500 shrink-0" />
+                  <div>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100">
+                      {tr(lang, 'توزيع القيم الغذائية اليومية (الماكروز)', 'Répartition des Macronutriments', 'Daily Macro Distribution Pie Chart')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {tr(lang, 'نسبة السعرات والغرامات لكل عنصر غذائي', 'Proportion calorique et grammes par macro', 'Caloric share & daily grams per macronutrient')}
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-xl bg-orange-500/10 text-orange-500 text-xs font-extrabold mono-num">
+                  {targets.targetKcal} kcal
+                </span>
               </div>
-              <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 flex justify-between">
-                  <span>{tr(lang, 'تعديل الفائض / العجز الحراري:', 'Ajustement calorique :', 'Caloric Delta Adjustment:')}</span>
-                  <span className="mono-num text-orange-600 dark:text-orange-400 font-extrabold">{profile.caloricDelta >= 0 ? `+${profile.caloricDelta}` : profile.caloricDelta} kcal</span>
-                </label>
-                <input
-                  type="range"
-                  min={-600}
-                  max={450}
-                  step={20}
-                  value={profile.caloricDelta}
-                  onChange={(e) => onUpdateProfile({ caloricDelta: Number(e.target.value) })}
-                  className="w-full accent-orange-500 mt-1"
-                />
+
+              {/* Recharts Donut / Pie Chart */}
+              <div className="relative h-56 w-full" dir="ltr">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="kcal"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={56}
+                      outerRadius={84}
+                      paddingAngle={4}
+                      stroke="none"
+                    >
+                      {pieData.map((slice) => (
+                        <Cell key={slice.key} fill={slice.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#334155',
+                        borderRadius: '12px',
+                        color: '#f8fafc',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                      }}
+                      formatter={(_val, _name, item) => {
+                        const s = item?.payload;
+                        if (!s) return [''];
+                        return [`${s.grams}g (${s.kcal} kcal · ${s.pct}%)`, s.name];
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={28}
+                      wrapperStyle={{ fontSize: '11px', fontWeight: 700 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Center Label inside Donut */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-6">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    {tr(lang, 'الهدف اليومي', 'Cible / Jour', 'Daily Target')}
+                  </span>
+                  <span className="text-lg font-extrabold mono-num text-slate-900 dark:text-white">
+                    {targets.targetKcal}
+                  </span>
+                  <span className="text-[10px] font-bold text-orange-500 mono-num">kcal</span>
+                </div>
+              </div>
+
+              {/* 3 Macro Breakdown Rows with Left Accent Borders */}
+              <div className="space-y-2 text-xs">
+                {pieData.map((slice) => (
+                  <div
+                    key={slice.key}
+                    className="grid grid-cols-[1fr_auto] items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                    style={{ borderInlineStartWidth: '4px', borderInlineStartColor: slice.color }}
+                  >
+                    <div className="min-w-0">
+                      <div className="font-extrabold text-slate-900 dark:text-white truncate">
+                        {slice.name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mono-num">
+                        {slice.kcal} kcal · {slice.pct}% {tr(lang, 'من إجمالي الطاقة', 'de l’énergie totale', 'of total energy')}
+                      </div>
+                    </div>
+                    <span
+                      className="px-3 py-1 rounded-lg font-extrabold text-sm mono-num text-white"
+                      style={{ backgroundColor: slice.color }}
+                    >
+                      {slice.grams}g
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Colorful Output Targets Cards */}
+          {/* Summary Biometric Strip (6 Cards) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { label: 'BMR', val: `${targets.bmr}`, unit: 'kcal', cardBg: 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800', accent: 'text-slate-900 dark:text-slate-100' },
-              { label: 'TDEE', val: `${targets.tdee}`, unit: 'kcal', cardBg: 'bg-sky-50/80 dark:bg-sky-950/30 border-sky-200 dark:border-sky-900/50', accent: 'text-sky-600 dark:text-sky-400' },
-              { label: tr(lang, 'الهدف اليومي', 'Cible Kcal', 'Target'), val: `${targets.targetKcal}`, unit: 'kcal', cardBg: 'bg-orange-50/80 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50', accent: 'text-orange-600 dark:text-orange-400' },
-              { label: tr(lang, 'بروتين', 'Protéines', 'Protein'), val: `${targets.proteinG}g`, unit: `${Math.round((targets.proteinG * 4 / targets.targetKcal) * 100)}%`, cardBg: 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50', accent: 'text-rose-600 dark:text-rose-400' },
-              { label: tr(lang, 'كربوهيدرات', 'Glucides', 'Carbs'), val: `${targets.carbsG}g`, unit: `${Math.round((targets.carbsG * 4 / targets.targetKcal) * 100)}%`, cardBg: 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50', accent: 'text-amber-600 dark:text-amber-400' },
-              { label: tr(lang, 'دهون صحية', 'Lipides', 'Fats'), val: `${targets.fatG}g`, unit: `BMI ${targets.bmi}`, cardBg: 'bg-violet-50/80 dark:bg-violet-950/30 border-violet-200 dark:border-violet-900/50', accent: 'text-violet-600 dark:text-violet-400' },
+              { label: 'BMR', val: `${targets.bmr}`, unit: tr(lang, 'سعرة أساسية', 'kcal base', 'kcal base') },
+              { label: 'TDEE', val: `${targets.tdee}`, unit: tr(lang, 'سعرة الصيانة', 'kcal maintien', 'maintenance') },
+              { label: tr(lang, 'السعرات المستهدفة', 'Cible Kcal', 'Target Kcal'), val: `${targets.targetKcal}`, unit: 'kcal / day', highlight: true },
+              { label: tr(lang, 'البروتين اليومي', 'Protéines', 'Daily Protein'), val: `${targets.proteinG}g`, unit: `${targets.proteinPct}% (${targets.proteinKcal} kcal)` },
+              { label: tr(lang, 'الكربوهيدرات', 'Glucides', 'Daily Carbs'), val: `${targets.carbsG}g`, unit: `${targets.carbsPct}% (${targets.carbsKcal} kcal)` },
+              { label: tr(lang, 'الدهون الصحية', 'Lipides', 'Healthy Fats'), val: `${targets.fatG}g`, unit: `${targets.fatPct}% (${targets.fatKcal} kcal)` },
             ].map((c) => (
               <div
                 key={c.label}
-                className={`rounded-2xl border p-3.5 text-center shadow-xs ${c.cardBg}`}
+                className={`rounded-2xl border p-3.5 text-center shadow-xs ${
+                  c.highlight
+                    ? 'bg-orange-500/10 border-orange-500/50'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                }`}
               >
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block">{c.label}</span>
-                <span className={`text-xl font-extrabold mono-num mt-0.5 block ${c.accent}`}>{c.val}</span>
-                <span className="text-[10px] font-semibold mono-num text-slate-500 dark:text-slate-400">{c.unit}</span>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">{c.label}</span>
+                <span className={`text-xl font-extrabold mono-num mt-0.5 block ${c.highlight ? 'text-orange-500' : 'text-slate-900 dark:text-white'}`}>
+                  {c.val}
+                </span>
+                <span className="text-[10px] font-semibold mono-num text-slate-500 dark:text-slate-400 block truncate">{c.unit}</span>
               </div>
             ))}
           </div>
 
-          <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 p-3 flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="rounded-xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+            <AlertCircle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
             <span>
               {tr(
                 lang,
-                'نصيحة عملية: هذه الأرقام نقطة بداية ممتازة؛ راقب متوسط وزنك كل أسبوعين وعدّل السعرات بـ ±150 سعرة حسب هدفك.',
+                'نصيحة عملية: هذه الأرقام تُحسب تلقائياً بمعادلة Mifflin-St Jeor؛ راقب متوسط وزنك كل أسبوعين وعدّل السعرات بـ ±150 سعرة حسب استجابة جسمك.',
                 'Conseil pratique : surveillez votre poids sur 2 semaines et ajustez de ±150 kcal.',
                 'Practical tip: track your 2-week weight trend and adjust by ±150 kcal as needed.'
               )}
@@ -317,7 +519,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 2. DAILY MEALS */}
       {nutriSubTab === 'meals' && (
         <div className="space-y-4">
-          <div className="rounded-3xl border border-orange-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Utensils className="w-5 h-5 text-orange-500" />
@@ -330,9 +532,9 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetMealPreset('training')}
-                  className={`px-3.5 py-1.5 rounded-xl font-extrabold border transition ${
+                  className={`h-9 px-3.5 rounded-xl font-extrabold border whitespace-nowrap transition cursor-pointer ${
                     activeMealPreset === 'training'
-                      ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white border-orange-500 shadow-sm'
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
                       : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
                   }`}
                 >
@@ -341,9 +543,9 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetMealPreset('rest')}
-                  className={`px-3.5 py-1.5 rounded-xl font-extrabold border transition ${
+                  className={`h-9 px-3.5 rounded-xl font-extrabold border whitespace-nowrap transition cursor-pointer ${
                     activeMealPreset === 'rest'
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-indigo-600 shadow-sm'
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-xs'
                       : 'bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800'
                   }`}
                 >
@@ -352,7 +554,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onUpdateMeals(activeMealPreset, JSON.parse(JSON.stringify(PRESET_MEAL_PLANS[activeMealPreset])))}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-rose-50 hover:text-rose-600 transition"
+                  className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center hover:border-orange-500 border border-transparent transition cursor-pointer"
                   title={tr(lang, 'إعادة للقالب الافتراضي', 'Réinitialiser', 'Reset preset')}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -360,17 +562,17 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               </div>
             </div>
 
-            {/* Totals vs Target Bars with Lively Colors */}
+            {/* Totals vs Target Bars */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
               {[
-                { label: tr(lang, 'السعرات', 'Calories', 'Calories'), cur: dayTotals.kcal, tgt: targets.targetKcal, unit: 'kcal', barCls: 'bg-gradient-to-r from-orange-500 to-amber-500' },
-                { label: tr(lang, 'البروتين', 'Protéines', 'Protein'), cur: dayTotals.protein, tgt: targets.proteinG, unit: 'g', barCls: 'bg-gradient-to-r from-rose-500 to-pink-500' },
-                { label: tr(lang, 'الكربوهيدرات', 'Glucides', 'Carbs'), cur: dayTotals.carbs, tgt: targets.carbsG, unit: 'g', barCls: 'bg-gradient-to-r from-amber-500 to-yellow-500' },
-                { label: tr(lang, 'الدهون', 'Lipides', 'Fat'), cur: dayTotals.fat, tgt: targets.fatG, unit: 'g', barCls: 'bg-gradient-to-r from-violet-500 to-indigo-500' },
+                { label: tr(lang, 'السعرات', 'Calories', 'Calories'), cur: dayTotals.kcal, tgt: targets.targetKcal, unit: 'kcal', barCls: 'bg-orange-500' },
+                { label: tr(lang, 'البروتين', 'Protéines', 'Protein'), cur: dayTotals.protein, tgt: targets.proteinG, unit: 'g', barCls: 'bg-orange-500' },
+                { label: tr(lang, 'الكربوهيدرات', 'Glucides', 'Carbs'), cur: dayTotals.carbs, tgt: targets.carbsG, unit: 'g', barCls: 'bg-sky-500' },
+                { label: tr(lang, 'الدهون', 'Lipides', 'Fat'), cur: dayTotals.fat, tgt: targets.fatG, unit: 'g', barCls: 'bg-purple-500' },
               ].map((m) => {
                 const pct = Math.min(100, Math.round((m.cur / Math.max(1, m.tgt)) * 100));
                 return (
-                  <div key={m.label} className="rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-1.5">
+                  <div key={m.label} className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-1.5">
                     <div className="flex justify-between font-bold">
                       <span className="text-slate-600 dark:text-slate-400">{m.label}</span>
                       <span className="mono-num text-slate-900 dark:text-slate-100">
@@ -390,22 +592,16 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {currentMeals.map((meal, mealIdx) => {
               const mealTotals = calculateMealsTotals([meal], MOROCCAN_FOOD_DB);
-              const badgeColors = [
-                'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40',
-                'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40',
-                'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40',
-                'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40',
-              ];
               return (
                 <div
                   key={`MEAL_${mealIdx}`}
-                  className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                       {trText(lang, meal.title)}
                     </h4>
-                    <span className={`px-2.5 py-1 rounded-xl text-xs font-extrabold mono-num ${badgeColors[mealIdx % badgeColors.length]}`}>
+                    <span className="px-2.5 py-1 rounded-xl text-xs font-extrabold mono-num bg-orange-500/10 text-orange-500">
                       {mealTotals.kcal} kcal · P {mealTotals.protein}g
                     </span>
                   </div>
@@ -487,11 +683,10 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 3. MOROCCAN FOOD DB + 7-DAY PRINTABLE GROCERY LIST */}
       {nutriSubTab === 'foods' && (
         <div className="space-y-4">
-          {/* 7-Day Grocery List */}
-          <div className="rounded-3xl border border-indigo-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <ShoppingBasket className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <ShoppingBasket className="w-5 h-5 text-orange-500" />
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                     {tr(lang, `قائمة التسوق الأسبوعية الجاهزة (${trainingDays} تدريب + ${7 - trainingDays} راحة)`, `Liste de Courses 7 Jours (${trainingDays} entraînement)`, `7-Day Printable Grocery List (${trainingDays}T / ${7 - trainingDays}R)`)}
@@ -509,7 +704,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="no-print inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-500 transition shadow-sm"
+                className="no-print inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-extrabold whitespace-nowrap transition shadow-xs cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>{tr(lang, 'طباعة القائمة', 'Imprimer', 'Print List')}</span>
@@ -520,7 +715,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               {groceryList.map((item) => (
                 <div
                   key={`GROC_${item.food.id}`}
-                  className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500"
                 >
                   <div className="min-w-0">
                     <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
@@ -530,7 +725,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                       {tr(lang, 'المستهلك:', 'Consommé:', 'Logged:')} {item.weeklyLoggedGrams}g ({trText(lang, item.food.stateLabel)})
                     </div>
                   </div>
-                  <span className="shrink-0 px-2.5 py-1 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 font-extrabold mono-num">
+                  <span className="shrink-0 px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-500 font-extrabold mono-num">
                     {item.formattedRawAmount}
                   </span>
                 </div>
@@ -538,8 +733,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             </div>
           </div>
 
-          {/* 22-Food Reference Table */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-sm no-print">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-xs no-print">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                 {tr(lang, `جدول الأغذية المغربية والمتوسطية (${MOROCCAN_FOOD_DB.length} عنصراً لكل 100 غرام)`, `Base Alimentaire Marocaine (${MOROCCAN_FOOD_DB.length} aliments)`, `Moroccan & Mediterranean Food Reference (${MOROCCAN_FOOD_DB.length} items / 100g)`)}
@@ -549,7 +743,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 value={foodSearch}
                 onChange={(e) => setFoodSearch(e.target.value)}
                 placeholder={tr(lang, 'ابحث عن طعام...', 'Rechercher aliment...', 'Search food...')}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs"
+                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs"
               />
             </div>
 
@@ -571,10 +765,10 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                     <tr key={f.id} className="border-b border-slate-100 dark:border-slate-800/70">
                       <td className="py-2 px-2 font-bold text-slate-900 dark:text-slate-100">{trText(lang, f.name)}</td>
                       <td className="py-2 px-2 text-slate-600 dark:text-slate-300">{trText(lang, f.stateLabel)}</td>
-                      <td className="py-2 px-2 font-mono font-bold text-orange-600 dark:text-orange-400">{f.kcal}</td>
-                      <td className="py-2 px-2 font-mono font-bold text-rose-600 dark:text-rose-400">{f.p}</td>
-                      <td className="py-2 px-2 font-mono text-amber-700 dark:text-amber-300">{f.c}</td>
-                      <td className="py-2 px-2 font-mono text-violet-600 dark:text-violet-400">{f.f}</td>
+                      <td className="py-2 px-2 font-mono font-bold text-orange-500">{f.kcal}</td>
+                      <td className="py-2 px-2 font-mono font-bold text-slate-900 dark:text-slate-100">{f.p}</td>
+                      <td className="py-2 px-2 font-mono text-sky-500">{f.c}</td>
+                      <td className="py-2 px-2 font-mono text-purple-500">{f.f}</td>
                       <td className="py-2 px-2 text-[11px] text-slate-500 dark:text-slate-400">{f.sourceDb}</td>
                     </tr>
                   ))}
@@ -588,7 +782,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
       {/* 4. NON-COMMERCIAL SUPPLEMENTS GUIDE */}
       {nutriSubTab === 'supps' && (
         <div className="space-y-3">
-          <div className="rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/60 p-3 text-xs text-sky-900 dark:text-sky-200">
+          <div className="rounded-xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 text-xs text-slate-700 dark:text-slate-300">
             {tr(
               lang,
               'ملاحظة موضوعية: الغذاء الطبيعي المتكامل، التمرين المنتظم، والنوم الجيد تصنع 95%+ من النتائج. المكملات التالية اختيارية تماماً.',
@@ -600,31 +794,31 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             {SUPPLEMENTS_DB.map((sup) => (
               <div
                 key={sup.id}
-                className="rounded-3xl border border-sky-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs shadow-sm"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 border-s-4 border-s-orange-500 bg-white dark:bg-slate-900 p-4 space-y-2 text-xs shadow-xs"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                      <Pill className="w-4 h-4 text-sky-500" />
+                      <Pill className="w-4 h-4 text-orange-500" />
                       {trText(lang, sup.name)}
                     </h4>
-                    <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">{sup.evidenceGrade}</span>
+                    <span className="text-[11px] font-bold text-orange-500">{sup.evidenceGrade}</span>
                   </div>
                   <a
                     href={sup.refUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-bold hover:underline"
+                    className="inline-flex items-center gap-1 text-orange-500 font-bold hover:underline"
                   >
                     <span>PMC</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{trText(lang, sup.roleNote)}</p>
-                <div className="rounded-xl bg-sky-50/70 dark:bg-slate-950 border border-sky-200/70 dark:border-slate-800 p-2.5 font-bold text-slate-900 dark:text-slate-100">
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2.5 font-bold text-slate-900 dark:text-slate-100">
                   {tr(lang, 'الجرعة المرجعية:', 'Dosage indicatif :', 'Reference Dose:')} {trText(lang, sup.doseFormula(profile.weightKg))}
                 </div>
-                <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                <p className="text-[11px] text-amber-600 dark:text-amber-400">
                   <strong>{tr(lang, 'احتياطات السلامة:', 'Précautions :', 'Safety Cautions:')}</strong> {trText(lang, sup.cautions)}
                 </p>
               </div>

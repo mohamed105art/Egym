@@ -109,7 +109,119 @@ export function computeSessionStreakAndDelay(
   };
 }
 
+export interface ThirtyDayAnalyticsPoint {
+  date: string;
+  shortDate: string;
+  dayTag: string;
+  volumeKg: number;
+  workingSets: number;
+  e1rmKg: number | null;
+}
+
+export interface ThirtyDayAnalyticsSummary {
+  sessionPoints: ThirtyDayAnalyticsPoint[];
+  dailyPoints: ThirtyDayAnalyticsPoint[];
+  sessionsIn30d: number;
+  totalVolume30dKg: number;
+  avgVolumePerSessionKg: number;
+  latestE1rmKg: number;
+  startE1rmKg: number;
+  e1rmGainKg: number;
+}
+
+export function buildLast30DaysAnalytics(
+  state: AppState,
+  selectedExId: string,
+  referenceDateStr?: string
+): ThirtyDayAnalyticsSummary {
+  const todayIso = referenceDateStr || new Date().toISOString().slice(0, 10);
+  const todayMs = Date.parse(`${todayIso}T12:00:00Z`);
+  const cutoffMs = todayMs - 30 * 86400000;
+
+  const exSeries = state.e1rmHistory[selectedExId] || [];
+
+  // Map date -> aggregated session volume & working sets within the 30-day window
+  const volumeByDate = new Map<string, { volumeKg: number; workingSets: number; dayTag: string }>();
+  for (const ses of state.sessionHistory) {
+    const ms = Date.parse(`${ses.date}T12:00:00Z`);
+    if (!Number.isNaN(ms) && ms >= cutoffMs && ms <= todayMs + 86400000) {
+      const prev = volumeByDate.get(ses.date);
+      volumeByDate.set(ses.date, {
+        volumeKg: (prev?.volumeKg || 0) + (ses.totalVolumeKg || 0),
+        workingSets: (prev?.workingSets || 0) + (ses.totalWorkingSets || 0),
+        dayTag: ses.day,
+      });
+    }
+  }
+
+  // Map date -> e1RM for selected exercise
+  const e1rmByDate = new Map<string, number>();
+  let latestKnownE1rm: number | null = null;
+  for (const pt of exSeries) {
+    e1rmByDate.set(pt.date, pt.value);
+    const ms = Date.parse(`${pt.date}T12:00:00Z`);
+    if (!Number.isNaN(ms) && ms < cutoffMs) {
+      latestKnownE1rm = pt.value;
+    }
+  }
+  if (latestKnownE1rm === null && exSeries.length > 0) {
+    latestKnownE1rm = exSeries[0].value;
+  }
+
+  const dailyPoints: ThirtyDayAnalyticsPoint[] = [];
+  let runningE1rm = latestKnownE1rm;
+
+  for (let offset = 29; offset >= 0; offset--) {
+    const d = new Date(todayMs - offset * 86400000);
+    const iso = d.toISOString().slice(0, 10);
+    const shortDate = iso.slice(5);
+    const volEntry = volumeByDate.get(iso);
+    if (e1rmByDate.has(iso)) {
+      runningE1rm = e1rmByDate.get(iso)!;
+    }
+    dailyPoints.push({
+      date: iso,
+      shortDate,
+      dayTag: volEntry?.dayTag || '-',
+      volumeKg: volEntry?.volumeKg || 0,
+      workingSets: volEntry?.workingSets || 0,
+      e1rmKg: runningE1rm,
+    });
+  }
+
+  // Active workout dates in the last 30 days (where either a session or an e1RM update occurred)
+  const sessionPoints = dailyPoints.filter((p) => p.volumeKg > 0 || e1rmByDate.has(p.date));
+  const effectiveSessionPoints = sessionPoints.length > 0 ? sessionPoints : dailyPoints.slice(-7);
+
+  const sessionsWithVol = dailyPoints.filter((p) => p.volumeKg > 0);
+  const sessionsIn30d = sessionsWithVol.length;
+  const totalVolume30dKg = sessionsWithVol.reduce((acc, p) => acc + p.volumeKg, 0);
+  const avgVolumePerSessionKg = sessionsIn30d > 0 ? Math.round(totalVolume30dKg / sessionsIn30d) : 0;
+
+  const validE1rms = effectiveSessionPoints
+    .map((p) => p.e1rmKg)
+    .filter((v): v is number => typeof v === 'number' && v > 0);
+  const startE1rmKg = validE1rms.length > 0 ? validE1rms[0] : 0;
+  const latestE1rmKg = validE1rms.length > 0 ? validE1rms[validE1rms.length - 1] : 0;
+  const e1rmGainKg = Number((latestE1rmKg - startE1rmKg).toFixed(1));
+
+  return {
+    sessionPoints: effectiveSessionPoints,
+    dailyPoints,
+    sessionsIn30d,
+    totalVolume30dKg,
+    avgVolumePerSessionKg,
+    latestE1rmKg,
+    startE1rmKg,
+    e1rmGainKg,
+  };
+}
+
 export function createDefaultAppState(): AppState {
+  const date28DaysAgo = getIsoDateDaysAgo(28);
+  const date24DaysAgo = getIsoDateDaysAgo(24);
+  const date19DaysAgo = getIsoDateDaysAgo(19);
+  const date14DaysAgo = getIsoDateDaysAgo(14);
   const date9DaysAgo = getIsoDateDaysAgo(9);
   const date5DaysAgo = getIsoDateDaysAgo(5);
 
@@ -169,15 +281,51 @@ export function createDefaultAppState(): AppState {
     sessionHistory: [
       {
         id: 'SES_INIT_1',
-        date: date9DaysAgo,
-        day: 'D',
-        totalWorkingSets: 16,
-        totalVolumeKg: 5840,
+        date: date28DaysAgo,
+        day: 'A',
+        totalWorkingSets: 17,
+        totalVolumeKg: 6120,
         preJointDiscomfort: 1,
         postJointDiscomfort: 1,
       },
       {
         id: 'SES_INIT_2',
+        date: date24DaysAgo,
+        day: 'B',
+        totalWorkingSets: 18,
+        totalVolumeKg: 6390,
+        preJointDiscomfort: 1,
+        postJointDiscomfort: 1,
+      },
+      {
+        id: 'SES_INIT_3',
+        date: date19DaysAgo,
+        day: 'C',
+        totalWorkingSets: 18,
+        totalVolumeKg: 6580,
+        preJointDiscomfort: 1,
+        postJointDiscomfort: 1,
+      },
+      {
+        id: 'SES_INIT_4',
+        date: date14DaysAgo,
+        day: 'D',
+        totalWorkingSets: 16,
+        totalVolumeKg: 5920,
+        preJointDiscomfort: 1,
+        postJointDiscomfort: 1,
+      },
+      {
+        id: 'SES_INIT_5',
+        date: date9DaysAgo,
+        day: 'C',
+        totalWorkingSets: 18,
+        totalVolumeKg: 6840,
+        preJointDiscomfort: 1,
+        postJointDiscomfort: 1,
+      },
+      {
+        id: 'SES_INIT_6',
         date: date5DaysAgo,
         day: 'A',
         totalWorkingSets: 18,
@@ -197,26 +345,26 @@ export function createDefaultAppState(): AppState {
       },
     ],
     measurements: [
-      { date: '2026-10-15', weight: 85.6, waist: 91.0, arm: 38.1 },
-      { date: '2026-11-12', weight: 85.0, waist: 90.0, arm: 38.5 },
+      { date: date24DaysAgo, weight: 85.6, waist: 91.0, arm: 38.1 },
+      { date: date5DaysAgo, weight: 85.0, waist: 90.0, arm: 38.5 },
     ],
     e1rmHistory: {
       EX01: [
-        { date: '2026-10-18', value: 30.5 },
-        { date: '2026-10-25', value: 32.0 },
-        { date: '2026-11-04', value: 33.5 },
+        { date: date28DaysAgo, value: 30.5 },
+        { date: date19DaysAgo, value: 32.0 },
+        { date: date9DaysAgo, value: 33.5 },
         { date: date5DaysAgo, value: 34.7 },
       ],
       EX03: [
-        { date: '2026-10-18', value: 165.0 },
-        { date: '2026-10-25', value: 175.0 },
-        { date: '2026-11-04', value: 184.0 },
+        { date: date28DaysAgo, value: 165.0 },
+        { date: date19DaysAgo, value: 175.0 },
+        { date: date9DaysAgo, value: 184.0 },
         { date: date5DaysAgo, value: 191.3 },
       ],
       EX07: [
-        { date: '2026-10-20', value: 36.0 },
-        { date: '2026-10-27', value: 38.5 },
-        { date: '2026-11-06', value: 40.0 },
+        { date: date24DaysAgo, value: 36.0 },
+        { date: date14DaysAgo, value: 38.5 },
+        { date: date9DaysAgo, value: 40.0 },
         { date: date5DaysAgo, value: 42.0 },
       ],
     },

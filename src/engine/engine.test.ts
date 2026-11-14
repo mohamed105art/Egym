@@ -4,6 +4,7 @@ import { EXERCISES_DB } from '../data/exercises';
 import { MOROCCAN_FOOD_DB } from '../data/nutrition';
 import { MUSCLE_ZONE_ORDER } from '../data/muscles';
 import {
+  buildLast30DaysAnalytics,
   computeSessionStreakAndDelay,
   createDefaultAppState,
   getNextSequenceDay,
@@ -11,7 +12,12 @@ import {
   validateAndImportBackup,
 } from './storage';
 import { computeWeeklyVolume, estimateE1RM, evaluateDoubleProgression } from './volume';
-import { buildWeeklyGroceryList, calculateBiometrics, calculateMealsTotals } from './nutrition';
+import {
+  buildMacroPieData,
+  buildWeeklyGroceryList,
+  calculateBiometrics,
+  calculateMealsTotals,
+} from './nutrition';
 import { generateCoachInsights } from './coach';
 
 test('EXERCISES_DB has 32 unique IDs, verified media metadata, and valid primary muscles', () => {
@@ -220,5 +226,27 @@ test('dynamic sequence rotation (A->B->C->D->A) and >3-day delay warning work ac
   assert.equal(checkActive.isDelayed, false);
   assert.equal(checkActive.nextDayInSequence, 'D');
 });
+
+test('buildLast30DaysAnalytics and buildMacroPieData compute 30-day Volume/e1RM series and macro pie distribution', () => {
+  const state = createDefaultAppState();
+  const analytics = buildLast30DaysAnalytics(state, 'EX01');
+  assert.equal(analytics.dailyPoints.length, 30);
+  assert.ok(analytics.sessionsIn30d >= 6);
+  assert.ok(analytics.totalVolume30dKg > 35000);
+  assert.ok(analytics.latestE1rmKg >= analytics.startE1rmKg);
+
+  // Macro Pie distribution sums to 100% and adjusts dynamically for bulk vs cut
+  state.profile.goalMode = 'lean_bulk';
+  state.profile.caloricDelta = 0;
+  const bulkTargets = calculateBiometrics(state.profile);
+  const bulkPie = buildMacroPieData(bulkTargets, 'ar');
+  assert.equal(bulkPie.length, 3);
+  assert.equal(bulkPie[0].pct + bulkPie[1].pct + bulkPie[2].pct, 100);
+
+  state.profile.goalMode = 'fat_loss';
+  const cutTargets = calculateBiometrics(state.profile);
+  assert.ok(bulkTargets.targetKcal > cutTargets.targetKcal);
+});
+
 
 
