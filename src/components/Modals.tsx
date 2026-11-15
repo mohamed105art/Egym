@@ -61,14 +61,14 @@ export const ExerciseDetailModal: React.FC<ExerciseDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1120]/80 p-3 sm:p-5 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0f19]/85 p-3 sm:p-5 overflow-y-auto animate-modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label={trText(lang, exercise.name)}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="app-card animate-modal-sheet w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -332,12 +332,12 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-[#0B1120] text-white p-3 sm:p-6"
+      className="fixed inset-0 z-50 flex flex-col bg-[#0b0f19] text-white p-3 sm:p-6 animate-modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label={trText(lang, exercise.name)}
     >
-      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#24324F]">
+      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#1e293b]">
         <div className="min-w-0">
           <div className="text-xs font-bold text-teal-300 mono-num">
             {exercise.id} · {idx + 1}/{exercises.length}
@@ -465,14 +465,14 @@ export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1120]/80 p-3 sm:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0f19]/85 p-3 sm:p-5 animate-modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label={tr(lang, 'استبدال التمرين', 'Remplacer l’exercice', 'Smart Exercise Swap')}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
+        className="app-card animate-modal-sheet w-full max-w-xl max-h-[88vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 shadow-2xl p-4 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">

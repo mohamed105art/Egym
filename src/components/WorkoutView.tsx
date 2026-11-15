@@ -275,9 +275,9 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         : 0;
 
     return (
-      <div className="space-y-4">
+      <div key={`active-workout-${activeWorkoutDay}`} className="space-y-4 animate-view-in">
         {/* Session Header & Sequence Switcher — Solid Dark #111827 */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3.5">
+        <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3.5">
           <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-3">
             {/* Left/Start Controls */}
             <div className="lg:col-span-7 flex flex-wrap items-center gap-2">
@@ -881,7 +881,7 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
 
   // ================= PROGRAM OVERVIEW MODE =================
   return (
-    <div className="space-y-4">
+    <div key="workout-overview" className="space-y-4 animate-view-in">
       {/* 1. WORKOUT DELAY & STREAK WARNING BANNER (> 3 DAYS INACTIVITY) — Rose Coral */}
       {streakInfo.isDelayed && streakInfo.daysSinceLastWorkout !== null && (
         <div

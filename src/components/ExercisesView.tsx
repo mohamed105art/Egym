@@ -120,35 +120,35 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
       id: 'library',
       label: tr(
         lang,
-        `المكتبة المصورة (${exercises.length})`,
-        `Photos & Exercices (${exercises.length})`,
-        `Photo Library (${exercises.length})`
+        `المكتبة (${exercises.length})`,
+        `Photos (${exercises.length})`,
+        `Library (${exercises.length})`
       ),
       icon: <ImageIcon className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'map',
-      label: tr(lang, 'خريطة العضلات (14)', 'Carte Muscles (14)', '14-Muscle Map'),
+      label: tr(lang, 'العضلات (14)', 'Muscles (14)', 'Map (14)'),
       icon: <Layers className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'compare',
       label: tr(
         lang,
-        `مقارنة المفضلة (${favoriteExercises.length})`,
-        `Comparer Favoris (${favoriteExercises.length})`,
-        `Compare Favorites (${favoriteExercises.length})`
+        `مقارنة (${favoriteExercises.length})`,
+        `Comparer (${favoriteExercises.length})`,
+        `Compare (${favoriteExercises.length})`
       ),
       icon: <GitCompare className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'science_pick',
-      label: tr(lang, 'ملخص الأبحاث', 'Science & Études', 'Science Summary'),
+      label: tr(lang, 'الأبحاث', 'Science', 'Science'),
       icon: <Sparkles className="w-4 h-4 shrink-0" />,
     },
     {
       id: 'quality',
-      label: tr(lang, 'توثيق الصور', 'Sources Photos', 'Photo Sources'),
+      label: tr(lang, 'التوثيق', 'Sources', 'Sources'),
       icon: <ShieldCheck className="w-4 h-4 shrink-0" />,
     },
   ];
@@ -158,8 +158,8 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
     { key: 'chest', label: tr(lang, 'الصدر', 'Pectoraux', 'Chest') },
     { key: 'lats_back', label: tr(lang, 'الظهر', 'Dos', 'Back') },
     { key: 'side_delts', label: tr(lang, 'الأكتاف', 'Épaules', 'Shoulders') },
-    { key: 'quads', label: tr(lang, 'الأفخاذ الأمامية', 'Quadriceps', 'Quads') },
-    { key: 'hamstrings', label: tr(lang, 'الخلفية والأرداف', 'Ischios', 'Hamstrings') },
+    { key: 'quads', label: tr(lang, 'الأفخاذ', 'Quadriceps', 'Quads') },
+    { key: 'hamstrings', label: tr(lang, 'الخلفية', 'Ischios', 'Hamstrings') },
     { key: 'biceps', label: tr(lang, 'البايسبس', 'Biceps', 'Biceps') },
     { key: 'triceps', label: tr(lang, 'الترايسبس', 'Triceps', 'Triceps') },
   ];
@@ -210,16 +210,16 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Clear Sub-Navigation Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-white dark:bg-[#131C31] p-2 rounded-2xl border border-slate-200 dark:border-[#24324F] shadow-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 app-card p-1.5 sm:p-2">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetExSubTab(t.id)}
-            className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap overflow-hidden cursor-pointer ${
               exSubTab === t.id
                 ? 'bg-teal-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1A2642]'
+                : 'text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e293b]'
             }`}
           >
             {t.icon}
@@ -230,12 +230,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
 
       {/* 1. PHOTO LIBRARY (32 EXERCISES) */}
       {exSubTab === 'library' && (
-        <div className="space-y-4">
+        <div key="ex-library" className="space-y-4 animate-view-in">
           {/* Quick Search + One-Tap Muscle Filter Bar */}
-          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 shadow-xs">
+          <div className="app-card p-3.5 sm:p-4 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
               <div className="md:col-span-5 relative">
-                <Search className="w-4 h-4 text-teal-400 absolute top-1/2 -translate-y-1/2 start-3" />
+                <Search className="w-4 h-4 text-teal-400 absolute top-1/2 -translate-y-1/2 start-3 pointer-events-none" />
                 <input
                   type="search"
                   value={searchQuery}
@@ -246,7 +246,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                     'Rechercher exercice, muscle...',
                     'Search exercise, muscle, equipment...'
                   )}
-                  className="w-full ps-9 pe-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-semibold text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
+                  className="w-full h-10 ps-9 pe-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-xs font-semibold text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
                 />
               </div>
               <div className="md:col-span-3">
@@ -254,7 +254,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'فلتر العضلة', 'Filtre muscle', 'Muscle Filter')}
                   value={muscleFilter}
                   onChange={(e) => onSetMuscleFilter(e.target.value as MuscleZoneKey | 'ALL')}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-bold text-slate-800 dark:text-slate-100"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-xs font-bold text-slate-800 dark:text-slate-100 truncate"
                 >
                   <option value="ALL">
                     {tr(lang, 'جميع العضلات (14)', 'Tous les muscles (14)', 'All 14 Muscle Zones')}
@@ -271,7 +271,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'المعدات', 'Équipement', 'Equipment')}
                   value={equipmentFilter}
                   onChange={(e) => onSetEquipmentFilter(e.target.value as EquipmentType | 'ALL')}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-bold text-slate-800 dark:text-slate-100"
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-xs font-bold text-slate-800 dark:text-slate-100 truncate"
                 >
                   <option value="ALL">
                     {tr(lang, 'كل المعدات', 'Tout équipement', 'All Equipment')}
@@ -288,7 +288,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   aria-label={tr(lang, 'المستوى', 'Niveau', 'Difficulty')}
                   value={difficultyFilter}
                   onChange={(e) => onSetDifficultyFilter(e.target.value as DifficultyLevel | 'ALL')}
-                  className="w-full px-2.5 py-2.5 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-xs font-bold text-slate-800 dark:text-slate-100"
+                  className="w-full h-10 px-2.5 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-xs font-bold text-slate-800 dark:text-slate-100 truncate"
                 >
                   <option value="ALL">{tr(lang, 'المستوى', 'Niveau', 'Level')}</option>
                   <option value="beginner">{tr(lang, 'مبتدئ', 'Débutant', 'Beginner')}</option>
@@ -301,10 +301,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                   type="button"
                   onClick={onToggleFavoritesOnly}
                   aria-label={tr(lang, 'المفضلة فقط', 'Favoris uniquement', 'Favorites Only')}
-                  className={`p-2.5 rounded-xl border shrink-0 transition cursor-pointer ${
+                  className={`w-10 h-10 rounded-xl border shrink-0 flex items-center justify-center transition cursor-pointer ${
                     favoritesOnly
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
-                      : 'bg-slate-50 dark:bg-[#0B1120] text-slate-500 dark:text-slate-300 border-slate-200 dark:border-[#24324F]'
+                      : 'bg-slate-50 dark:bg-[#0b0f19] text-slate-500 dark:text-slate-300 border-slate-200 dark:border-[#1e293b]'
                   }`}
                 >
                   <Star className={`w-4 h-4 ${favoritesOnly ? 'fill-current' : ''}`} />
@@ -314,7 +314,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
 
             {/* One-Tap Quick Muscle Group Selector + Favorites Compare Shortcut */}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scroll">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scroll max-w-full">
                 {quickMuscleGroups.map((mg) => {
                   const active = muscleFilter === mg.key;
                   return (
@@ -325,7 +325,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                       className={`h-8 px-3 rounded-xl text-xs font-extrabold whitespace-nowrap shrink-0 transition cursor-pointer ${
                         active
                           ? 'bg-teal-600 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] hover:border-teal-500'
+                          : 'bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] hover:border-teal-500'
                       }`}
                     >
                       {mg.label}
@@ -340,12 +340,12 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold whitespace-nowrap transition shadow-xs cursor-pointer"
               >
                 <GitCompare className="w-3.5 h-3.5 shrink-0" />
-                <span>
+                <span className="truncate">
                   {tr(
                     lang,
-                    `مقارنة تمرينين من المفضلة (${favoriteExercises.length})`,
-                    `Comparer 2 Favoris (${favoriteExercises.length})`,
-                    `Compare 2 Favorites (${favoriteExercises.length})`
+                    `مقارنة المفضلة (${favoriteExercises.length})`,
+                    `Comparer (${favoriteExercises.length})`,
+                    `Compare (${favoriteExercises.length})`
                   )}
                 </span>
               </button>
@@ -361,10 +361,10 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
               return (
                 <div
                   key={ex.id}
-                  className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] overflow-hidden flex flex-col justify-between shadow-xs hover:border-teal-500/60 transition"
+                  className="app-card flex flex-col justify-between hover:border-teal-500/60 transition"
                 >
                   <div>
-                    <div className="relative h-52 bg-slate-100 dark:bg-[#0B1120] border-b border-slate-100 dark:border-[#24324F]">
+                    <div className="relative h-52 bg-slate-100 dark:bg-[#0b0f19] border-b border-slate-100 dark:border-[#1e293b]">
                       <button
                         type="button"
                         onClick={() => onOpenExercise(ex.id)}
@@ -384,13 +384,13 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                         type="button"
                         onClick={() => onToggleFavorite(ex.id)}
                         aria-label={tr(lang, 'مفضلة', 'Favori', 'Toggle Favorite')}
-                        className={`absolute top-2.5 start-2.5 w-8 h-8 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+                        className={`absolute top-2.5 start-2.5 w-9 h-9 rounded-xl border flex items-center justify-center transition cursor-pointer ${
                           isFav
                             ? 'bg-amber-500 text-slate-950 border-amber-300 shadow'
-                            : 'bg-[#0B1120]/85 text-white border-white/15 hover:bg-[#131C31]'
+                            : 'bg-[#0b0f19]/85 text-white border-white/15 hover:bg-[#111827]'
                         }`}
                       >
-                        <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                        <Star className={`w-4 h-4 ${isFav ? 'fill-current' : ''}`} />
                       </button>
 
                       {/* Full-Screen Zoom */}
@@ -398,14 +398,14 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                         type="button"
                         onClick={() => onOpenLightbox(ex.id)}
                         aria-label={tr(lang, 'تكبير الصورة', 'Zoom image', 'Zoom Photo')}
-                        className="absolute top-2.5 end-2.5 w-8 h-8 rounded-xl bg-[#0B1120]/85 text-white border border-white/15 hover:bg-teal-600 flex items-center justify-center transition cursor-pointer"
+                        className="absolute top-2.5 end-2.5 w-9 h-9 rounded-xl bg-[#0b0f19]/85 text-white border border-white/15 hover:bg-teal-600 flex items-center justify-center transition cursor-pointer"
                       >
-                        <Maximize2 className="w-3.5 h-3.5" />
+                        <Maximize2 className="w-4 h-4" />
                       </button>
 
                       {/* Direct 1. Start / 2. Peak Photo Toggle on Card */}
                       <div className="absolute bottom-2.5 inset-x-2.5 flex items-center justify-between gap-2">
-                        <div className="grid grid-cols-2 rounded-xl bg-[#0B1120]/90 p-0.5 border border-white/15 text-[11px] font-extrabold text-white">
+                        <div className="grid grid-cols-2 rounded-xl bg-[#0b0f19]/90 p-0.5 border border-white/15 text-[11px] font-extrabold text-white">
                           <button
                             type="button"
                             onClick={() => setCardFrameMap((prev) => ({ ...prev, [ex.id]: 0 }))}
@@ -426,20 +426,20 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                           </button>
                         </div>
 
-                        <span className="px-2.5 py-1 rounded-xl bg-[#0B1120]/90 text-teal-300 border border-teal-500/30 text-[11px] font-extrabold mono-num whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-xl bg-[#0b0f19]/90 text-teal-300 border border-teal-500/30 text-[11px] font-extrabold mono-num whitespace-nowrap shrink-0">
                           {ex.sets}×{ex.repsLabel}
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-4 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-300">
+                    <div className="p-4 space-y-1.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2 text-xs font-bold text-teal-600 dark:text-teal-300 min-w-0">
                         <span className="truncate">{trText(lang, ex.muscleLabel)}</span>
-                        <span className="mono-num text-sky-600 dark:text-sky-300 shrink-0">
+                        <span className="mono-num text-sky-600 dark:text-sky-300 shrink-0 whitespace-nowrap">
                           {ex.id} · {ex.equipment}
                         </span>
                       </div>
-                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
+                      <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
                         {trText(lang, ex.name)}
                       </h3>
                       <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
@@ -448,36 +448,37 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="px-4 pb-4 pt-2 grid grid-cols-[1fr_auto_auto] items-center gap-1.5 border-t border-slate-100 dark:border-[#24324F] text-xs">
+                  <div className="px-4 pb-4 pt-2 grid grid-cols-3 items-center gap-1.5 border-t border-slate-100 dark:border-[#1e293b] text-xs">
                     <button
                       type="button"
                       onClick={() => onOpenExercise(ex.id)}
-                      className="h-9 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold whitespace-nowrap transition text-center shadow-xs cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold whitespace-nowrap overflow-hidden transition shadow-xs cursor-pointer"
                     >
-                      {tr(lang, 'عرض التفاصيل', 'Détails & Photos', 'Details & Photos')}
+                      <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">{tr(lang, 'التفاصيل', 'Détails', 'Details')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleQuickCompareFromCard(ex.id)}
-                      className={`inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl border font-extrabold whitespace-nowrap transition cursor-pointer ${
+                      className={`inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl border font-extrabold whitespace-nowrap overflow-hidden transition cursor-pointer ${
                         isInCompare
                           ? 'bg-indigo-600 text-white border-indigo-500'
-                          : 'bg-slate-100 dark:bg-[#1A2642] text-indigo-600 dark:text-indigo-300 border-slate-200 dark:border-[#24324F] hover:border-indigo-400'
+                          : 'bg-slate-100 dark:bg-[#0b0f19] text-indigo-600 dark:text-indigo-300 border-slate-200 dark:border-[#1e293b] hover:border-indigo-400'
                       }`}
                       title={tr(lang, 'مقارنة مع تمرين آخر', 'Comparer cet exercice', 'Compare exercise')}
                     >
                       <GitCompare className="w-3.5 h-3.5 shrink-0" />
-                      <span>{tr(lang, 'قارن', 'Comparer', 'Compare')}</span>
+                      <span className="truncate">{tr(lang, 'قارن', 'Comparer', 'Compare')}</span>
                     </button>
                     <a
                       href={ex.media.youtubeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#1A2642] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#24324F] font-extrabold whitespace-nowrap hover:border-sky-400 transition"
+                      className="inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] font-extrabold whitespace-nowrap overflow-hidden hover:border-sky-400 transition"
                       aria-label={`YouTube ${trText(lang, ex.name)}`}
                     >
                       <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                      <span>{tr(lang, 'فيديو', 'Vidéo', 'Video')}</span>
+                      <span className="truncate">{tr(lang, 'فيديو', 'Vidéo', 'Video')}</span>
                     </a>
                   </div>
                 </div>
@@ -489,48 +490,50 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
 
       {/* 2. 14-ZONE MUSCLE MAP */}
       {exSubTab === 'map' && (
-        <MuscleMap14
-          state={state}
-          exercises={exercises}
-          volumeMap={volumeMap}
-          onSelectMuscle={onSelectMuscle}
-          onUpdateVolumeSettings={onUpdateVolumeSettings}
-          onOpenExercise={onOpenExercise}
-        />
+        <div key="ex-map" className="animate-view-in">
+          <MuscleMap14
+            state={state}
+            exercises={exercises}
+            volumeMap={volumeMap}
+            onSelectMuscle={onSelectMuscle}
+            onUpdateVolumeSettings={onUpdateVolumeSettings}
+            onOpenExercise={onOpenExercise}
+          />
+        </div>
       )}
 
       {/* 3. SIDE-BY-SIDE FAVORITES COMPARISON VIEW (2-COLUMN BIOMECHANICAL & EVIDENCE MATRIX) */}
       {exSubTab === 'compare' && (
-        <div className="space-y-4">
+        <div key="ex-compare" className="space-y-4 animate-view-in">
           {/* Favorites Selector & Control Header */}
-          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 sm:p-5 space-y-4 shadow-xs">
+          <div className="app-card p-4 sm:p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
                   <GitCompare className="w-4 h-4" />
                 </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                <div className="min-w-0">
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
                     {tr(
                       lang,
-                      'المقارنة الثنائية المباشرة لتمارينك المفضلة (عمودان جنباً إلى جنب)',
-                      'Comparaison Côte à Côte de Vos Exercices Favoris (2 Colonnes)',
-                      'Side-by-Side Favorites Exercise Comparison (Two-Column View)'
+                      'المقارنة الثنائية لتمارينك المفضلة (عمودان)',
+                      'Comparaison Côte à Côte (2 Colonnes)',
+                      'Side-by-Side Favorites Comparison'
                     )}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-300">
+                  <p className="text-xs text-slate-500 dark:text-slate-300 truncate">
                     {tr(
                       lang,
-                      'اختر تمرينين من قائمة المفضلة لمقارنة العضلات الأساسية والمساعدة، درجة الدليل العلمي، وتفاصيل النموذج الحركي (Kinematic Rig).',
-                      'Sélectionnez deux exercices favoris pour comparer leurs muscles primaires/secondaires, le grade de preuve et le modèle cinématique.',
-                      'Select two exercises from your favorites to compare primary/secondary muscles, scientific evidence grade, and kinematic rig details.'
+                      'مقارنة العضلات الأساسية والمساعدة، درجة الدليل العلمي، والنموذج الحركي.',
+                      'Muscles primaires/secondaires, grade de preuve et modèle cinématique.',
+                      'Compare target muscles, evidence grade, and kinematic rig.'
                     )}
                   </p>
                 </div>
               </div>
 
               {/* Filter Pool Toggle: Favorites Only vs All 32 Exercises */}
-              <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0B1120] p-1 rounded-xl border border-slate-200 dark:border-[#24324F] text-xs">
+              <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0b0f19] p-1 rounded-xl border border-slate-200 dark:border-[#1e293b] text-xs">
                 <button
                   type="button"
                   onClick={() => setCompareSourceScope('favorites')}
@@ -540,13 +543,13 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  <span>
+                  <Star className="w-3.5 h-3.5 fill-current shrink-0" />
+                  <span className="truncate">
                     {tr(
                       lang,
-                      `تماريني المفضلة (${favoriteExerciseObjects.length})`,
-                      `Mes Favoris (${favoriteExerciseObjects.length})`,
-                      `My Favorites (${favoriteExerciseObjects.length})`
+                      `المفضلة (${favoriteExerciseObjects.length})`,
+                      `Favoris (${favoriteExerciseObjects.length})`,
+                      `Favorites (${favoriteExerciseObjects.length})`
                     )}
                   </span>
                 </button>
@@ -559,47 +562,47 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                       : 'text-slate-600 dark:text-slate-300'
                   }`}
                 >
-                  {tr(lang, 'كل التمارين (32)', 'Tous (32)', 'All Exercises (32)')}
+                  {tr(lang, 'الكل (32)', 'Tous (32)', 'All (32)')}
                 </button>
               </div>
             </div>
 
             {/* Interactive Favorites Bar: One-Tap Assignment to Column 1 or Column 2 */}
-            <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3 space-y-2.5">
+            <div className="rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-3 space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="font-extrabold text-amber-600 dark:text-amber-300 flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 fill-current" />
-                  <span>
+                <span className="font-extrabold text-amber-600 dark:text-amber-300 flex items-center gap-1.5 min-w-0">
+                  <Star className="w-3.5 h-3.5 fill-current shrink-0" />
+                  <span className="truncate">
                     {tr(
                       lang,
-                      'شريط اختيار سريع من المفضلة (اضغط على أي تمرين مفضل لإدراجه في المقارنة):',
-                      'Sélection rapide depuis vos favoris :',
-                      'Quick-Pick from Favorites (click any favorite exercise to compare):'
+                      'اختيار سريع من المفضلة:',
+                      'Sélection rapide favoris :',
+                      'Quick-Pick from Favorites:'
                     )}
                   </span>
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setActiveSlotToAssign(0)}
-                    className={`h-7 px-2.5 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${
+                    className={`h-7 px-2.5 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition cursor-pointer ${
                       activeSlotToAssign === 0
                         ? 'bg-teal-600 text-white'
-                        : 'bg-slate-200 dark:bg-[#1A2642] text-slate-700 dark:text-slate-300'
+                        : 'bg-slate-200 dark:bg-[#1e293b] text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    {tr(lang, 'تعيين للعمود 1', 'Cibler Colonne 1', 'Assign Slot 1')}
+                    {tr(lang, 'العمود 1', 'Colonne 1', 'Slot 1')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveSlotToAssign(1)}
-                    className={`h-7 px-2.5 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${
+                    className={`h-7 px-2.5 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition cursor-pointer ${
                       activeSlotToAssign === 1
                         ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-200 dark:bg-[#1A2642] text-slate-700 dark:text-slate-300'
+                        : 'bg-slate-200 dark:bg-[#1e293b] text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    {tr(lang, 'تعيين للعمود 2', 'Cibler Colonne 2', 'Assign Slot 2')}
+                    {tr(lang, 'العمود 2', 'Colonne 2', 'Slot 2')}
                   </button>
                 </div>
               </div>
@@ -1037,7 +1040,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
 
       {/* 4. MEDIA & DATA QUALITY CENTER */}
       {exSubTab === 'quality' && (
-        <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 shadow-xs">
+        <div key="ex-quality" className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3 shadow-xs animate-view-in">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1063,7 +1066,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-start border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-[#24324F] text-slate-500 dark:text-slate-300">
+                <tr className="border-b border-slate-200 dark:border-[#1e293b] text-slate-500 dark:text-slate-300">
                   <th className="py-2 px-2 text-start">ID</th>
                   <th className="py-2 px-2 text-start">{tr(lang, 'التمرين', 'Exercice', 'Exercise')}</th>
                   <th className="py-2 px-2 text-start">{tr(lang, 'النموذج الحركي', 'Rig Cinématique', 'Kinematic Rig')}</th>
@@ -1073,7 +1076,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
               </thead>
               <tbody>
                 {exercises.map((ex) => (
-                  <tr key={`QA_${ex.id}`} className="border-b border-slate-100 dark:border-[#24324F]/70">
+                  <tr key={`QA_${ex.id}`} className="border-b border-slate-100 dark:border-[#1e293b]/70">
                     <td className="py-2 px-2 font-mono font-bold text-teal-600 dark:text-teal-300">{ex.id}</td>
                     <td className="py-2 px-2 font-semibold text-slate-900 dark:text-white">
                       <button
@@ -1106,11 +1109,11 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
 
       {/* 5. SCIENTIFIC EXERCISE SELECTION */}
       {exSubTab === 'science_pick' && (
-        <div className="space-y-3">
+        <div key="ex-science" className="space-y-3 animate-view-in">
           {SCIENTIFIC_STUDIES.slice(0, 4).map((st) => (
             <div
               key={st.id}
-              className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-2 text-xs shadow-xs"
+              className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-2 text-xs shadow-xs"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-extrabold text-teal-600 dark:text-teal-300 flex items-center gap-1.5">

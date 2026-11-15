@@ -62,27 +62,27 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
   const subTabs: { id: NutriSubTab; label: string; icon: React.ReactNode; activeCls: string }[] = [
     {
       id: 'calc',
-      label: tr(lang, 'حاسبة السعرات والماكرو (مع المخطط الدائري)', 'Calculateur & Camembert Macros', 'Macro Calculator & Pie Chart'),
+      label: tr(lang, 'الحاسبة', 'Calcul', 'Calculator'),
       icon: <Calculator className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-teal-600 text-white',
+      activeCls: 'bg-teal-600 text-white shadow-xs',
     },
     {
       id: 'meals',
-      label: tr(lang, 'الوجبات اليومية', 'Repas du Jour', 'Daily Meals'),
+      label: tr(lang, 'الوجبات', 'Repas', 'Meals'),
       icon: <Utensils className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-sky-600 text-white',
+      activeCls: 'bg-sky-600 text-white shadow-xs',
     },
     {
       id: 'foods',
-      label: tr(lang, 'قائمة التسوق والأغذية', 'Courses & Aliments', 'Grocery & Foods'),
+      label: tr(lang, 'التسوق', 'Courses', 'Grocery'),
       icon: <ShoppingBasket className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-emerald-600 text-white',
+      activeCls: 'bg-emerald-600 text-white shadow-xs',
     },
     {
       id: 'supps',
-      label: tr(lang, 'دليل المكملات', 'Suppléments', 'Supplements'),
+      label: tr(lang, 'المكملات', 'Suppléments', 'Supplements'),
       icon: <Pill className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-indigo-600 text-white',
+      activeCls: 'bg-indigo-600 text-white shadow-xs',
     },
   ];
 
@@ -121,17 +121,17 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Sub-tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white dark:bg-[#131C31] p-2 rounded-2xl border border-slate-200 dark:border-[#24324F] no-print">
+      {/* Sub-tabs — Native Icon + Concise Label Bar */}
+      <div className="app-card grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-white dark:bg-[#111827] p-1.5 rounded-2xl border border-slate-200 dark:border-[#1e293b] no-print">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetNutriSubTab(t.id)}
-            className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 h-10 px-2.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer min-w-0 ${
               nutriSubTab === t.id
                 ? t.activeCls
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0B1120]'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0b0f19]'
             }`}
           >
             {t.icon}
@@ -142,28 +142,28 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
 
       {/* 1. INTEGRATED AUTOMATIC CALORIE & MACRO CALCULATOR + RECHARTS PIE CHART */}
       {nutriSubTab === 'calc' && (
-        <div className="space-y-4">
+        <div key="nutri-calc" className="space-y-4 animate-view-in">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Left Column (7 cols): Automatic Calculator Controls (Weight + Goal: Bulk / Cut / Recomp) */}
-            <div className="lg:col-span-7 rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 sm:p-5 space-y-4">
+            <div className="app-card lg:col-span-7 rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <Calculator className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
-                  <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
                       {tr(
                         lang,
-                        'حاسبة السعرات والماكروز التلقائية (حسب الوزن والهدف)',
-                        'Calculateur Automatique Calories & Macros (Poids & Objectif)',
-                        'Automatic Calorie & Macro Calculator (Weight & Goal)'
+                        'حاسبة السعرات والماكروز التلقائية',
+                        'Calculateur Automatique Calories & Macros',
+                        'Automatic Calorie & Macro Calculator'
                       )}
                     </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-300">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-300 truncate">
                       {tr(
                         lang,
-                        'عدّل وزنك واختر هدفك (تضخيم / تنشيف / تثبيت) ليتم تحديث السعرات وتوزيع الماكروز فوراً.',
-                        'Ajustez votre poids et votre objectif (Prise de masse / Sèche / Maintien) pour un calcul instantané.',
-                        'Adjust your weight and goal (Bulk / Cut / Recomp) for instant calorie and macro calibration.'
+                        'عدّل وزنك واختر هدفك لتحديث السعرات والماكروز فوراً',
+                        'Ajustez poids et objectif pour un calcul instantané',
+                        'Adjust weight and goal for instant macro calibration'
                       )}
                     </p>
                   </div>
@@ -171,14 +171,15 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetNutriSubTab('meals')}
-                  className="h-9 px-3.5 rounded-xl bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] text-sky-600 dark:text-sky-300 text-xs font-extrabold whitespace-nowrap hover:bg-sky-600 hover:text-white transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-300 text-xs font-extrabold whitespace-nowrap hover:bg-sky-600 hover:text-white transition cursor-pointer shrink-0"
                 >
-                  {tr(lang, 'الوجبات اليومية ←', 'Voir les repas →', 'Daily Meals →')}
+                  <Utensils className="w-3.5 h-3.5 shrink-0" />
+                  <span>{tr(lang, 'الوجبات', 'Repas', 'Meals')}</span>
                 </button>
               </div>
 
               {/* Primary Quick Controls: Weight Stepper + Goal Mode (Bulk / Cut / Recomp) */}
-              <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3.5 space-y-3">
+              <div className="rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-3.5 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-12 items-center gap-3">
                   <div className="sm:col-span-5 space-y-1">
                     <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 block">
@@ -381,27 +382,27 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
               </div>
             </div>
 
-            {/* Right Column (5 cols): Interactive Recharts Macro Distribution Pie Chart + Breakdown — Solid Dark #131C31 Card */}
-            <div className="lg:col-span-5 rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 sm:p-5 flex flex-col justify-between space-y-4">
+            {/* Right Column (5 cols): Interactive Recharts Macro Distribution Pie Chart + Breakdown — Solid Dark #111827 Card */}
+            <div className="app-card lg:col-span-5 rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 sm:p-5 flex flex-col justify-between space-y-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <PieChartIcon className="w-5 h-5 text-sky-600 dark:text-sky-400 shrink-0" />
-                  <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                      {tr(lang, 'توزيع القيم الغذائية اليومية (الماكروز)', 'Répartition des Macronutriments', 'Daily Macro Distribution Pie Chart')}
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
+                      {tr(lang, 'توزيع القيم الغذائية (الماكروز)', 'Répartition des Macros', 'Macro Distribution Pie Chart')}
                     </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-300">
-                      {tr(lang, 'نسبة السعرات والغرامات لكل عنصر غذائي', 'Proportion calorique et grammes par macro', 'Caloric share & daily grams per macronutrient')}
+                    <p className="text-[11px] text-slate-500 dark:text-slate-300 truncate">
+                      {tr(lang, 'نسبة السعرات والغرامات لكل عنصر غذائي', 'Proportion calorique et grammes', 'Caloric share & daily grams')}
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-300 text-xs font-extrabold mono-num">
+                <span className="px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-300 text-xs font-extrabold mono-num shrink-0">
                   {targets.targetKcal} kcal
                 </span>
               </div>
 
-              {/* Recharts Donut / Pie Chart inside Solid Dark #0B1120 Box */}
-              <div className="relative h-56 w-full rounded-xl bg-slate-900 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-2" dir="ltr">
+              {/* Recharts Donut / Pie Chart inside Solid Dark #0b0f19 Box */}
+              <div className="relative h-56 w-full rounded-xl bg-slate-900 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-2" dir="ltr">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -530,12 +531,12 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
 
       {/* 2. DAILY MEALS */}
       {nutriSubTab === 'meals' && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3">
+        <div key="nutri-meals" className="space-y-4 animate-view-in">
+          <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Utensils className="w-5 h-5 text-sky-600 dark:text-sky-400" />
-                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+              <div className="flex items-center gap-2 min-w-0">
+                <Utensils className="w-5 h-5 text-sky-600 dark:text-sky-400 shrink-0" />
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
                   {tr(lang, 'جدول الوجبات اليومية التفاعلي', 'Planificateur de Repas Quotidien', 'Interactive Daily Meal Planner')}
                 </h3>
               </div>
@@ -694,14 +695,14 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
 
       {/* 3. MOROCCAN FOOD DB + 7-DAY PRINTABLE GROCERY LIST */}
       {nutriSubTab === 'foods' && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3">
+        <div key="nutri-foods" className="space-y-4 animate-view-in">
+          <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <ShoppingBasket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                    {tr(lang, `قائمة التسوق الأسبوعية الجاهزة (${trainingDays} تدريب + ${7 - trainingDays} راحة)`, `Liste de Courses 7 Jours (${trainingDays} entraînement)`, `7-Day Printable Grocery List (${trainingDays}T / ${7 - trainingDays}R)`)}
+              <div className="flex items-center gap-2 min-w-0">
+                <ShoppingBasket className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                    {tr(lang, `قائمة التسوق الأسبوعية (${trainingDays} تدريب + ${7 - trainingDays} راحة)`, `Liste de Courses 7 Jours (${trainingDays} entraînement)`, `7-Day Grocery List (${trainingDays}T / ${7 - trainingDays}R)`)}
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-300">
                     {tr(
@@ -793,8 +794,8 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
 
       {/* 4. NON-COMMERCIAL SUPPLEMENTS GUIDE */}
       {nutriSubTab === 'supps' && (
-        <div className="space-y-3">
-          <div className="rounded-xl bg-white dark:bg-[#131C31] border border-slate-200 dark:border-[#24324F] p-3 text-xs text-slate-700 dark:text-slate-200">
+        <div key="nutri-supps" className="space-y-3 animate-view-in">
+          <div className="app-card rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#1e293b] p-3 text-xs text-slate-700 dark:text-slate-200">
             {tr(
               lang,
               'ملاحظة موضوعية: الغذاء الطبيعي المتكامل، التمرين المنتظم، والنوم الجيد تصنع 95%+ من النتائج. المكملات التالية اختيارية تماماً.',
@@ -806,7 +807,7 @@ export const NutritionView: React.FC<NutritionViewProps> = ({
             {SUPPLEMENTS_DB.map((sup) => (
               <div
                 key={sup.id}
-                className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-2 text-xs"
+                className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-2 text-xs"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

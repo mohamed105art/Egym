@@ -400,50 +400,55 @@ export default function App() {
     activeBgClass: string;
     iconBadgeClass: string;
     mobileTextClass: string;
+    mobileActivePill: string;
   }[] = [
     {
       id: 'home',
       step: '1',
       label: tr(state.lang, 'حصتي التدريبية', 'Ma Séance', 'My Workout'),
       shortLabel: tr(state.lang, 'الحصص', 'Séance', 'Workout'),
-      subtitle: tr(state.lang, 'تدوير A→B→C→D وتعبئة ذكية S1', 'Rotation A→B→C→D & saisie S1', 'Sequence A→B→C→D & Smart S1'),
+      subtitle: tr(state.lang, 'A→B→C→D وتعبئة S1', 'Séquence & S1', 'A→B→C→D & S1'),
       icon: <Dumbbell className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-teal-600 text-white border-teal-500',
+      activeBgClass: 'bg-teal-600 text-white border-teal-500 shadow-sm',
       iconBadgeClass: 'bg-teal-500/15 text-teal-600 dark:text-teal-300',
       mobileTextClass: 'text-teal-500 dark:text-teal-400',
+      mobileActivePill: 'bg-teal-500/15 text-teal-500 dark:text-teal-300',
     },
     {
       id: 'exercises',
       step: '2',
       label: tr(state.lang, 'التمارين والمقارنة', 'Exercices & Comparer', 'Exercises & Compare'),
       shortLabel: tr(state.lang, 'التمارين', 'Exercices', 'Exercises'),
-      subtitle: tr(state.lang, '32 تمريناً، مقارنة المفضلة، وخريطة العضلات', '32 exercices, comparateur & carte', '32 Guides, Favorites Compare & Map'),
+      subtitle: tr(state.lang, '32 تمريناً والعضلات', '32 Guides & Carte', '32 Guides & Map'),
       icon: <Activity className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-sky-600 text-white border-sky-500',
+      activeBgClass: 'bg-sky-600 text-white border-sky-500 shadow-sm',
       iconBadgeClass: 'bg-sky-500/15 text-sky-600 dark:text-sky-300',
       mobileTextClass: 'text-sky-500 dark:text-sky-400',
+      mobileActivePill: 'bg-sky-500/15 text-sky-500 dark:text-sky-300',
     },
     {
       id: 'nutrition',
       step: '3',
       label: tr(state.lang, 'التغذية والوجبات', 'Nutrition & Repas', 'Meals & Macros'),
       shortLabel: tr(state.lang, 'التغذية', 'Nutrition', 'Nutrition'),
-      subtitle: tr(state.lang, 'حاسبة السعرات والماكروز والوجبات', 'Calories, macros & repas', 'Macro Calculator & Meals'),
+      subtitle: tr(state.lang, 'حاسبة الماكروز والوجبات', 'Macros & Repas', 'Macros & Meals'),
       icon: <Utensils className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-emerald-600 text-white border-emerald-500',
+      activeBgClass: 'bg-emerald-600 text-white border-emerald-500 shadow-sm',
       iconBadgeClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
       mobileTextClass: 'text-emerald-500 dark:text-emerald-400',
+      mobileActivePill: 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-300',
     },
     {
       id: 'progress',
       step: '4',
       label: tr(state.lang, 'تقدمي والمدرب', 'Progrès & Coach', 'Progress & Coach'),
       shortLabel: tr(state.lang, 'تقدمي', 'Progrès', 'Progress'),
-      subtitle: tr(state.lang, 'مخطط 30 يوماً والمدرب والنسخ الاحتياطي', 'Courbe 30j, coach & sauvegarde', '30d Chart, Coach & Backup'),
+      subtitle: tr(state.lang, 'مخطط 30ي والمدرب', 'Courbe 30j & Coach', '30d Chart & Coach'),
       icon: <TrendingUp className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-indigo-600 text-white border-indigo-500',
+      activeBgClass: 'bg-indigo-600 text-white border-indigo-500 shadow-sm',
       iconBadgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300',
       mobileTextClass: 'text-indigo-500 dark:text-indigo-400',
+      mobileActivePill: 'bg-indigo-500/15 text-indigo-500 dark:text-indigo-300',
     },
   ];
 
@@ -513,13 +518,13 @@ export default function App() {
   const detailEx = detailExId ? EXERCISES_DB.find((e) => e.id === detailExId) || null : null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] dark:bg-[#0b0f19] dark:text-[#F8FAFC] pb-20 md:pb-8 transition-colors">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] dark:bg-[#0b0f19] dark:text-[#F8FAFC] pb-20 md:pb-8 transition-colors overflow-x-hidden">
       {/* Compact Sticky Top Bar — Pure Solid Dark #111827 */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] no-print">
-        <div className="max-w-7xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] shadow-xs no-print">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-5 h-14 flex items-center justify-between gap-2">
           {/* Brand Logo + Title */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1 md:flex-initial">
+            <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-xs">
               <Dumbbell className="w-4 h-4" />
             </div>
             <div className="min-w-0 leading-tight">
@@ -532,7 +537,7 @@ export default function App() {
 
           {/* Desktop 4-Tab Nav */}
           <nav
-            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-[#0b0f19] p-1 rounded-xl border border-slate-200 dark:border-[#1e293b]"
+            className="hidden md:grid md:grid-cols-4 gap-1 bg-slate-100 dark:bg-[#0b0f19] p-1 rounded-xl border border-slate-200 dark:border-[#1e293b] shrink-0"
             aria-label="Main Navigation"
           >
             {navItems.map((item) => (
@@ -547,13 +552,13 @@ export default function App() {
                 }`}
               >
                 {item.icon}
-                <span>{item.shortLabel}</span>
+                <span className="truncate">{item.shortLabel}</span>
               </button>
             ))}
           </nav>
 
           {/* Compact Utility Cluster: Compare + Backup Export/Import + Rest Timer + Lang + Theme + Refresh */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* Quick Shortcut to Side-by-Side Favorites Comparison */}
             <button
               type="button"
@@ -606,7 +611,7 @@ export default function App() {
 
             {/* Rest Timer Control with Visual Flash Alert */}
             <div
-              className={`inline-flex items-center gap-1 h-9 px-2.5 rounded-xl border text-xs transition ${
+              className={`inline-flex items-center gap-1 h-9 px-2 rounded-xl border text-xs transition shrink-0 ${
                 restCompleteFlash
                   ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
                   : state.timer.running
@@ -619,7 +624,7 @@ export default function App() {
               ) : (
                 <Timer className={`w-3.5 h-3.5 shrink-0 ${state.timer.running ? 'text-teal-500 dark:text-teal-400' : 'text-slate-400'}`} />
               )}
-              <span className="font-mono font-extrabold tabular-nums w-10 text-center">
+              <span className="font-mono font-extrabold tabular-nums w-9 text-center">
                 {formatSec(state.timer.remainingSec)}
               </span>
               <button
@@ -658,13 +663,13 @@ export default function App() {
             </div>
 
             {/* Language Selector */}
-            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-0.5 text-[11px] font-extrabold h-9 items-center">
+            <div className="grid grid-cols-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-0.5 text-[11px] font-extrabold h-9 items-center shrink-0">
               {(['ar', 'fr', 'en'] as Lang[]).map((l) => (
                 <button
                   key={l}
                   type="button"
                   onClick={() => setState((prev) => ({ ...prev, lang: l }))}
-                  className={`h-7 px-2 rounded-lg uppercase transition cursor-pointer ${
+                  className={`h-7 px-1.5 sm:px-2 rounded-lg uppercase transition cursor-pointer ${
                     state.lang === l
                       ? 'bg-teal-600 text-white'
                       : 'text-slate-600 dark:text-slate-300'
@@ -682,7 +687,7 @@ export default function App() {
                 setState((prev) => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }))
               }
               aria-label={state.theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-teal-500 transition cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-slate-700 dark:text-slate-200 flex items-center justify-center hover:border-teal-500 transition cursor-pointer shrink-0"
             >
               {state.theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -693,7 +698,7 @@ export default function App() {
               onClick={() => void handlePurgeCacheAndReload()}
               title={tr(state.lang, 'تحديث الكاش وإعادة تحميل الواجهة النظيفة', 'Actualiser le cache', 'Refresh cache & reload')}
               aria-label="Refresh App Cache"
-              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-400 flex items-center justify-center hover:border-sky-500 transition cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-400 flex items-center justify-center hover:border-sky-500 transition cursor-pointer shrink-0"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -703,7 +708,7 @@ export default function App() {
                 type="button"
                 onClick={() => void install()}
                 aria-label="Install PWA"
-                className="hidden sm:inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-extrabold whitespace-nowrap transition cursor-pointer"
+                className="hidden sm:inline-flex items-center justify-center gap-1 h-9 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-extrabold whitespace-nowrap transition cursor-pointer shrink-0"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>{tr(state.lang, 'تثبيت', 'Installer', 'Install')}</span>
@@ -717,11 +722,11 @@ export default function App() {
       {restCompleteFlash && (
         <div
           role="status"
-          className="bg-rose-600 text-white text-xs font-extrabold py-2 px-4 flex items-center justify-between gap-2 no-print"
+          className="bg-rose-600 text-white text-xs font-extrabold py-2 px-4 flex items-center justify-between gap-2 no-print animate-view-in"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <BellRing className="w-4 h-4 shrink-0" />
-            <span>
+            <span className="truncate">
               {tr(
                 state.lang,
                 'انتهى وقت الراحة! يمكنك الآن بدء المجموعة التالية بكل تركيز.',
@@ -733,7 +738,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setRestCompleteFlash(false)}
-            className="px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[11px] font-bold whitespace-nowrap cursor-pointer"
+            className="px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer"
           >
             {tr(state.lang, 'إخفاء', 'Fermer', 'Dismiss')}
           </button>
@@ -743,8 +748,8 @@ export default function App() {
       {/* Offline Banner */}
       {!isOnline && (
         <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-bold py-1.5 px-4 flex items-center justify-center gap-2 no-print">
-          <WifiOff className="w-3.5 h-3.5" />
-          <span>
+          <WifiOff className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">
             {tr(
               state.lang,
               'أنت تعمل الآن دون إنترنت — بياناتك محفوظة محلياً بأمان.',
@@ -769,14 +774,14 @@ export default function App() {
                 key={`HERO_NAV_${item.id}`}
                 type="button"
                 onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-                className={`flex items-center gap-3 p-3 rounded-xl border text-start transition active:scale-[0.99] cursor-pointer ${
+                className={`flex items-center gap-2.5 sm:gap-3 p-3 rounded-2xl border text-start transition cursor-pointer overflow-hidden ${
                   isActive
                     ? item.activeBgClass
-                    : 'bg-white dark:bg-[#111827] border-slate-200 dark:border-[#1e293b] hover:border-teal-500/50'
+                    : 'app-card hover:border-teal-500/50'
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-extrabold text-xs ${
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs ${
                     isActive ? 'bg-white/20 text-white' : item.iconBadgeClass
                   }`}
                 >
@@ -804,220 +809,228 @@ export default function App() {
         </section>
 
         {state.mainTab === 'home' && (
-          <WorkoutView
-            state={state}
-            exercises={EXERCISES_DB}
-            onStartDay={(day) => setState((prev) => ({ ...prev, activeWorkoutDay: day }))}
-            onExitWorkout={() => setState((prev) => ({ ...prev, activeWorkoutDay: null }))}
-            onSetProgramMode={(mode) => setState((prev) => ({ ...prev, programMode: mode }))}
-            onSetSchedulePreset={setSchedulePreset}
-            onUpdateDayLabel={(day, label) =>
-              setState((prev) => ({
-                ...prev,
-                trainingDaysLabels: { ...prev.trainingDaysLabels, [day]: label },
-              }))
-            }
-            onUpdateProfile={(patch) =>
-              setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }))
-            }
-            onToggleOptionalDayD={(enabled) =>
-              setState((prev) => ({
-                ...prev,
-                volumeSettings: { ...prev.volumeSettings, includeOptionalDayD: enabled },
-              }))
-            }
-            onUpdateSetLog={(key, log) =>
-              setState((prev) => ({
-                ...prev,
-                workoutLogs: {
-                  ...prev.workoutLogs,
-                  [key]: {
-                    ...log,
-                    weight: Math.max(0, Math.round(log.weight || 0)),
-                    reps: Math.max(1, Math.round(log.reps || 1)),
+          <div key="tab-home" className="animate-view-in">
+            <WorkoutView
+              state={state}
+              exercises={EXERCISES_DB}
+              onStartDay={(day) => setState((prev) => ({ ...prev, activeWorkoutDay: day }))}
+              onExitWorkout={() => setState((prev) => ({ ...prev, activeWorkoutDay: null }))}
+              onSetProgramMode={(mode) => setState((prev) => ({ ...prev, programMode: mode }))}
+              onSetSchedulePreset={setSchedulePreset}
+              onUpdateDayLabel={(day, label) =>
+                setState((prev) => ({
+                  ...prev,
+                  trainingDaysLabels: { ...prev.trainingDaysLabels, [day]: label },
+                }))
+              }
+              onUpdateProfile={(patch) =>
+                setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }))
+              }
+              onToggleOptionalDayD={(enabled) =>
+                setState((prev) => ({
+                  ...prev,
+                  volumeSettings: { ...prev.volumeSettings, includeOptionalDayD: enabled },
+                }))
+              }
+              onUpdateSetLog={(key, log) =>
+                setState((prev) => ({
+                  ...prev,
+                  workoutLogs: {
+                    ...prev.workoutLogs,
+                    [key]: {
+                      ...log,
+                      weight: Math.max(0, Math.round(log.weight || 0)),
+                      reps: Math.max(1, Math.round(log.reps || 1)),
+                    },
                   },
-                },
-              }))
-            }
-            onSmartUpdateSet={(ex, setNum, log) =>
-              setState((prev) => ({
-                ...prev,
-                workoutLogs: applySmartSetCarryOver(prev.workoutLogs, ex, setNum, log),
-              }))
-            }
-            onStartRestTimer={startRestTimer}
-            onFinishSession={(payload) => {
-              const today = new Date().toISOString().slice(0, 10);
-              const nextDay = getNextSequenceDay(payload.day);
-              setState((prev) => {
-                const nextE1rm = { ...prev.e1rmHistory };
-                for (const [exId, val] of Object.entries(payload.e1rmUpdates)) {
-                  const arr = nextE1rm[exId] ? [...nextE1rm[exId]] : [];
-                  arr.push({ date: today, value: val });
-                  nextE1rm[exId] = arr;
-                }
+                }))
+              }
+              onSmartUpdateSet={(ex, setNum, log) =>
+                setState((prev) => ({
+                  ...prev,
+                  workoutLogs: applySmartSetCarryOver(prev.workoutLogs, ex, setNum, log),
+                }))
+              }
+              onStartRestTimer={startRestTimer}
+              onFinishSession={(payload) => {
+                const today = new Date().toISOString().slice(0, 10);
+                const nextDay = getNextSequenceDay(payload.day);
+                setState((prev) => {
+                  const nextE1rm = { ...prev.e1rmHistory };
+                  for (const [exId, val] of Object.entries(payload.e1rmUpdates)) {
+                    const arr = nextE1rm[exId] ? [...nextE1rm[exId]] : [];
+                    arr.push({ date: today, value: val });
+                    nextE1rm[exId] = arr;
+                  }
 
-                // Increment completion count per completed exercise
-                const nextCounts = { ...(prev.exerciseCompletionCounts || {}) };
-                for (const exId of payload.completedExerciseIds) {
-                  nextCounts[exId] = (nextCounts[exId] || 0) + 1;
-                }
+                  // Increment completion count per completed exercise
+                  const nextCounts = { ...(prev.exerciseCompletionCounts || {}) };
+                  for (const exId of payload.completedExerciseIds) {
+                    nextCounts[exId] = (nextCounts[exId] || 0) + 1;
+                  }
 
-                // Update Personal Records (PRs)
-                const nextPrs = { ...(prev.prRecords || {}) };
-                for (const exId of payload.completedExerciseIds) {
-                  const exObj = EXERCISES_DB.find((e) => e.id === exId);
-                  if (!exObj) continue;
-                  let maxW = nextPrs[exId]?.bestWeightKg || Math.round(exObj.defaultWeightKg);
-                  let maxR = nextPrs[exId]?.bestReps || exObj.repMin;
-                  let maxE1 = nextPrs[exId]?.bestE1rm || 0;
+                  // Update Personal Records (PRs)
+                  const nextPrs = { ...(prev.prRecords || {}) };
+                  for (const exId of payload.completedExerciseIds) {
+                    const exObj = EXERCISES_DB.find((e) => e.id === exId);
+                    if (!exObj) continue;
+                    let maxW = nextPrs[exId]?.bestWeightKg || Math.round(exObj.defaultWeightKg);
+                    let maxR = nextPrs[exId]?.bestReps || exObj.repMin;
+                    let maxE1 = nextPrs[exId]?.bestE1rm || 0;
 
-                  for (let s = 1; s <= exObj.sets; s++) {
-                    const setLog = prev.workoutLogs[`${exId}_S${s}`];
-                    if (setLog && setLog.done && !setLog.isWarmup) {
-                      const w = Math.max(0, Math.round(setLog.weight));
-                      const r = Math.max(1, Math.round(setLog.reps));
-                      const e1 = Number((w * (1 + r / 30)).toFixed(1));
-                      if (e1 > maxE1 || w > maxW) {
-                        maxW = Math.max(maxW, w);
-                        maxR = r;
-                        maxE1 = Math.max(maxE1, e1);
-                        nextPrs[exId] = {
-                          bestWeightKg: maxW,
-                          bestReps: maxR,
-                          bestE1rm: maxE1,
-                          achievedAt: today,
-                        };
+                    for (let s = 1; s <= exObj.sets; s++) {
+                      const setLog = prev.workoutLogs[`${exId}_S${s}`];
+                      if (setLog && setLog.done && !setLog.isWarmup) {
+                        const w = Math.max(0, Math.round(setLog.weight));
+                        const r = Math.max(1, Math.round(setLog.reps));
+                        const e1 = Number((w * (1 + r / 30)).toFixed(1));
+                        if (e1 > maxE1 || w > maxW) {
+                          maxW = Math.max(maxW, w);
+                          maxR = r;
+                          maxE1 = Math.max(maxE1, e1);
+                          nextPrs[exId] = {
+                            bestWeightKg: maxW,
+                            bestReps: maxR,
+                            bestE1rm: maxE1,
+                            achievedAt: today,
+                          };
+                        }
                       }
                     }
                   }
-                }
 
-                return {
-                  ...prev,
-                  activeWorkoutDay: null,
-                  nextSequenceDay: nextDay,
-                  exerciseCompletionCounts: nextCounts,
-                  prRecords: nextPrs,
-                  sessionHistory: [
-                    ...prev.sessionHistory,
-                    {
-                      id: `SES_${Date.now()}`,
-                      date: today,
-                      day: payload.day,
-                      totalWorkingSets: payload.totalWorkingSets,
-                      totalVolumeKg: payload.totalVolumeKg,
-                      preJointDiscomfort: payload.preJointDiscomfort,
-                      postJointDiscomfort: payload.postJointDiscomfort,
-                      sessionNotes: payload.sessionNotes,
-                    },
-                  ],
-                  jointResponseLogs: [
-                    ...prev.jointResponseLogs,
-                    {
-                      date: today,
-                      preDiscomfort: payload.preJointDiscomfort,
-                      postDiscomfort: payload.postJointDiscomfort,
-                      nextDayDiscomfort: payload.postJointDiscomfort,
-                      performanceQuality: 4,
-                      functionalNote: payload.sessionNotes || `Workout Day ${payload.day}`,
-                    },
-                  ],
-                  e1rmHistory: nextE1rm,
-                };
-              });
+                  return {
+                    ...prev,
+                    activeWorkoutDay: null,
+                    nextSequenceDay: nextDay,
+                    exerciseCompletionCounts: nextCounts,
+                    prRecords: nextPrs,
+                    sessionHistory: [
+                      ...prev.sessionHistory,
+                      {
+                        id: `SES_${Date.now()}`,
+                        date: today,
+                        day: payload.day,
+                        totalWorkingSets: payload.totalWorkingSets,
+                        totalVolumeKg: payload.totalVolumeKg,
+                        preJointDiscomfort: payload.preJointDiscomfort,
+                        postJointDiscomfort: payload.postJointDiscomfort,
+                        sessionNotes: payload.sessionNotes,
+                      },
+                    ],
+                    jointResponseLogs: [
+                      ...prev.jointResponseLogs,
+                      {
+                        date: today,
+                        preDiscomfort: payload.preJointDiscomfort,
+                        postDiscomfort: payload.postJointDiscomfort,
+                        nextDayDiscomfort: payload.postJointDiscomfort,
+                        performanceQuality: 4,
+                        functionalNote: payload.sessionNotes || `Workout Day ${payload.day}`,
+                      },
+                    ],
+                    e1rmHistory: nextE1rm,
+                  };
+                });
 
-              const prMsg =
-                payload.newPrCount > 0
-                  ? tr(
-                      state.lang,
-                      ` 🏆 مبروك تحقيق ${payload.newPrCount} رقم قياسي جديد (PR)!`,
-                      ` 🏆 Bravo pour ${payload.newPrCount} nouveau(x) PR !`,
-                      ` 🏆 Congrats on ${payload.newPrCount} new PR(s)!`
-                    )
-                  : '';
+                const prMsg =
+                  payload.newPrCount > 0
+                    ? tr(
+                        state.lang,
+                        ` 🏆 مبروك تحقيق ${payload.newPrCount} رقم قياسي جديد (PR)!`,
+                        ` 🏆 Bravo pour ${payload.newPrCount} nouveau(x) PR !`,
+                        ` 🏆 Congrats on ${payload.newPrCount} new PR(s)!`
+                      )
+                    : '';
 
-              showToast(
-                tr(
-                  state.lang,
-                  `تم حفظ الحصة ${payload.day} بنجاح! الحصة التالية: ${nextDay}.${prMsg}`,
-                  `Séance ${payload.day} enregistrée ! Prochaine : ${nextDay}.${prMsg}`,
-                  `Saved Session ${payload.day}! Next up: Session ${nextDay}.${prMsg}`
-                )
-              );
-            }}
-            onOpenExercise={(exId) => setDetailExId(exId)}
-            onOpenSwap={(exId) => setSwapSourceExId(exId)}
-          />
+                showToast(
+                  tr(
+                    state.lang,
+                    `تم حفظ الحصة ${payload.day} بنجاح! الحصة التالية: ${nextDay}.${prMsg}`,
+                    `Séance ${payload.day} enregistrée ! Prochaine : ${nextDay}.${prMsg}`,
+                    `Saved Session ${payload.day}! Next up: Session ${nextDay}.${prMsg}`
+                  )
+                );
+              }}
+              onOpenExercise={(exId) => setDetailExId(exId)}
+              onOpenSwap={(exId) => setSwapSourceExId(exId)}
+            />
+          </div>
         )}
 
         {state.mainTab === 'exercises' && (
-          <ExercisesView
-            state={state}
-            exercises={EXERCISES_DB}
-            volumeMap={volumeMap}
-            onSetExSubTab={(tab) => setState((prev) => ({ ...prev, exSubTab: tab }))}
-            onSetSearch={(q) => setState((prev) => ({ ...prev, searchQuery: q }))}
-            onSetMuscleFilter={(m) => setState((prev) => ({ ...prev, muscleFilter: m }))}
-            onSetEquipmentFilter={(eq) => setState((prev) => ({ ...prev, equipmentFilter: eq }))}
-            onSetDifficultyFilter={(diff) => setState((prev) => ({ ...prev, difficultyFilter: diff }))}
-            onToggleFavoritesOnly={() =>
-              setState((prev) => ({ ...prev, favoritesOnly: !prev.favoritesOnly }))
-            }
-            onToggleFavorite={handleToggleFavorite}
-            onSelectMuscle={(key) => setState((prev) => ({ ...prev, selectedMuscleKey: key }))}
-            onUpdateVolumeSettings={(patch) =>
-              setState((prev) => ({
-                ...prev,
-                volumeSettings: { ...prev.volumeSettings, ...patch },
-              }))
-            }
-            onSetCompareIds={(ids) => setState((prev) => ({ ...prev, compareIds: ids }))}
-            onOpenExercise={(exId) => setDetailExId(exId)}
-            onOpenLightbox={(exId) => setLightboxExId(exId)}
-          />
+          <div key="tab-exercises" className="animate-view-in">
+            <ExercisesView
+              state={state}
+              exercises={EXERCISES_DB}
+              volumeMap={volumeMap}
+              onSetExSubTab={(tab) => setState((prev) => ({ ...prev, exSubTab: tab }))}
+              onSetSearch={(q) => setState((prev) => ({ ...prev, searchQuery: q }))}
+              onSetMuscleFilter={(m) => setState((prev) => ({ ...prev, muscleFilter: m }))}
+              onSetEquipmentFilter={(eq) => setState((prev) => ({ ...prev, equipmentFilter: eq }))}
+              onSetDifficultyFilter={(diff) => setState((prev) => ({ ...prev, difficultyFilter: diff }))}
+              onToggleFavoritesOnly={() =>
+                setState((prev) => ({ ...prev, favoritesOnly: !prev.favoritesOnly }))
+              }
+              onToggleFavorite={handleToggleFavorite}
+              onSelectMuscle={(key) => setState((prev) => ({ ...prev, selectedMuscleKey: key }))}
+              onUpdateVolumeSettings={(patch) =>
+                setState((prev) => ({
+                  ...prev,
+                  volumeSettings: { ...prev.volumeSettings, ...patch },
+                }))
+              }
+              onSetCompareIds={(ids) => setState((prev) => ({ ...prev, compareIds: ids }))}
+              onOpenExercise={(exId) => setDetailExId(exId)}
+              onOpenLightbox={(exId) => setLightboxExId(exId)}
+            />
+          </div>
         )}
 
         {state.mainTab === 'nutrition' && (
-          <NutritionView
-            state={state}
-            onSetNutriSubTab={(tab) => setState((prev) => ({ ...prev, nutriSubTab: tab }))}
-            onUpdateProfile={(patch) =>
-              setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }))
-            }
-            onSetMealPreset={(preset) => setState((prev) => ({ ...prev, activeMealPreset: preset }))}
-            onUpdateMeals={(preset, meals) =>
-              setState((prev) => ({
-                ...prev,
-                customMeals: { ...prev.customMeals, [preset]: meals },
-              }))
-            }
-          />
+          <div key="tab-nutrition" className="animate-view-in">
+            <NutritionView
+              state={state}
+              onSetNutriSubTab={(tab) => setState((prev) => ({ ...prev, nutriSubTab: tab }))}
+              onUpdateProfile={(patch) =>
+                setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }))
+              }
+              onSetMealPreset={(preset) => setState((prev) => ({ ...prev, activeMealPreset: preset }))}
+              onUpdateMeals={(preset, meals) =>
+                setState((prev) => ({
+                  ...prev,
+                  customMeals: { ...prev.customMeals, [preset]: meals },
+                }))
+              }
+            />
+          </div>
         )}
 
         {state.mainTab === 'progress' && (
-          <ProgressView
-            state={state}
-            exercises={EXERCISES_DB}
-            volumeMap={volumeMap}
-            onSetProgSubTab={(tab) => setState((prev) => ({ ...prev, progSubTab: tab }))}
-            onAddMeasurement={(m) =>
-              setState((prev) => ({
-                ...prev,
-                measurements: [...prev.measurements, m],
-                profile: { ...prev.profile, weightKg: m.weight },
-              }))
-            }
-            onAddJointLog={(j) =>
-              setState((prev) => ({
-                ...prev,
-                jointResponseLogs: [...prev.jointResponseLogs, j],
-              }))
-            }
-            onApplyCoachAction={handleApplyCoachAction}
-            onImportState={(nextState) => setState(nextState)}
-            onNotify={showToast}
-          />
+          <div key="tab-progress" className="animate-view-in">
+            <ProgressView
+              state={state}
+              exercises={EXERCISES_DB}
+              volumeMap={volumeMap}
+              onSetProgSubTab={(tab) => setState((prev) => ({ ...prev, progSubTab: tab }))}
+              onAddMeasurement={(m) =>
+                setState((prev) => ({
+                  ...prev,
+                  measurements: [...prev.measurements, m],
+                  profile: { ...prev.profile, weightKg: m.weight },
+                }))
+              }
+              onAddJointLog={(j) =>
+                setState((prev) => ({
+                  ...prev,
+                  jointResponseLogs: [...prev.jointResponseLogs, j],
+                }))
+              }
+              onApplyCoachAction={handleApplyCoachAction}
+              onImportState={(nextState) => setState(nextState)}
+              onNotify={showToast}
+            />
+          </div>
         )}
 
         {/* Footer Technical Glossary & Abbreviations Legend (دليل المصطلحات والاختصارات التقنية) */}
@@ -1028,28 +1041,28 @@ export default function App() {
             'Lexique des termes techniques',
             'Technical Terms & Abbreviations Glossary'
           )}
-          className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3 no-print"
+          className="app-card p-4 space-y-3 no-print"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-[#1e293b]">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-              <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+              <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">
                 {tr(
                   state.lang,
-                  'دليل المصطلحات والاختصارات التقنية في التطبيق',
-                  'Lexique des Abréviations & Termes Techniques',
+                  'دليل المصطلحات والاختصارات التقنية',
+                  'Lexique des Abréviations & Termes',
                   'Technical Terms & Abbreviations Glossary'
                 )}
               </h2>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={handleQuickExportBackup}
                 className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-teal-600 dark:text-teal-300 text-[11px] font-bold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
               >
                 <Download className="w-3 h-3 shrink-0" />
-                <span>{tr(state.lang, 'حفظ نسخة JSON', 'Exporter JSON', 'Backup JSON')}</span>
+                <span>{tr(state.lang, 'تصدير JSON', 'Exporter', 'Backup')}</span>
               </button>
               <button
                 type="button"
@@ -1057,7 +1070,7 @@ export default function App() {
                 className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-300 text-[11px] font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
               >
                 <Upload className="w-3 h-3 shrink-0" />
-                <span>{tr(state.lang, 'استعادة JSON', 'Importer JSON', 'Restore JSON')}</span>
+                <span>{tr(state.lang, 'استعادة JSON', 'Importer', 'Restore')}</span>
               </button>
             </div>
           </div>
@@ -1066,10 +1079,10 @@ export default function App() {
             {glossaryTerms.map((term) => (
               <div
                 key={term.code}
-                className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200/80 dark:border-[#1e293b] space-y-1"
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200/80 dark:border-[#1e293b] space-y-1 overflow-hidden"
               >
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-600 dark:text-teal-300 font-mono text-[11px] font-extrabold whitespace-nowrap">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-600 dark:text-teal-300 font-mono text-[11px] font-extrabold whitespace-nowrap shrink-0">
                     {term.code}
                   </span>
                   <strong className="font-extrabold text-slate-900 dark:text-white truncate">
@@ -1087,7 +1100,7 @@ export default function App() {
 
       {/* Mobile Bottom 4-Tab Bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-[#1e293b] grid grid-cols-4 no-print"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-15 bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-[#1e293b] grid grid-cols-4 px-1 no-print"
         aria-label="Mobile Navigation"
       >
         {navItems.map((item) => {
@@ -1097,12 +1110,18 @@ export default function App() {
               key={`MOB_${item.id}`}
               type="button"
               onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-              className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold transition cursor-pointer ${
+              className={`flex flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold transition cursor-pointer overflow-hidden ${
                 active ? item.mobileTextClass : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {item.icon}
-              <span className="truncate max-w-[90%] whitespace-nowrap">{item.shortLabel}</span>
+              <span
+                className={`px-3 py-0.5 rounded-full transition-colors ${
+                  active ? item.mobileActivePill : ''
+                }`}
+              >
+                {item.icon}
+              </span>
+              <span className="truncate max-w-[92%] whitespace-nowrap">{item.shortLabel}</span>
             </button>
           );
         })}
@@ -1143,7 +1162,7 @@ export default function App() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center border border-teal-400/40"
+          className="fixed bottom-16 md:bottom-6 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-extrabold shadow-xl max-w-[90vw] text-center border border-teal-400/40 animate-toast-pop"
         >
           {toast}
         </div>

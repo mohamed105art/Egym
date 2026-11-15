@@ -100,21 +100,21 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
   const subTabs: { id: ProgSubTab; label: string; icon: React.ReactNode; activeCls: string }[] = [
     {
       id: 'metrics',
-      label: tr(lang, 'مخطط 30 يوماً (الحجم والقوة) والقياسات', 'Graphique 30j (Volume & e1RM)', '30-Day Volume & e1RM Chart'),
+      label: tr(lang, 'التطور (30ي)', 'Courbe 30j', '30d Chart'),
       icon: <TrendingUp className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-indigo-600 text-white',
+      activeCls: 'bg-indigo-600 text-white shadow-xs',
     },
     {
       id: 'coach',
-      label: tr(lang, 'المدرب الذكي والمفاصل', 'Coach IA & Articulations', 'Smart Coach & Joints'),
+      label: tr(lang, 'المدرب والمفاصل', 'Coach & Artic.', 'Coach & Joints'),
       icon: <Bot className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-teal-600 text-white',
+      activeCls: 'bg-teal-600 text-white shadow-xs',
     },
     {
       id: 'refs',
-      label: tr(lang, 'النسخ الاحتياطي والمراجع', 'Sauvegarde & Science', 'Backup & Science'),
+      label: tr(lang, 'النسخ والمراجع', 'Sauvegarde', 'Backup & Refs'),
       icon: <BookOpen className="w-4 h-4 shrink-0" />,
-      activeCls: 'bg-sky-600 text-white',
+      activeCls: 'bg-sky-600 text-white shadow-xs',
     },
   ];
 
@@ -155,16 +155,16 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-white dark:bg-[#131C31] p-2 rounded-2xl border border-slate-200 dark:border-[#24324F]">
+      <div className="app-card grid grid-cols-3 gap-1.5 bg-white dark:bg-[#111827] p-1.5 rounded-2xl border border-slate-200 dark:border-[#1e293b]">
         {subTabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => onSetProgSubTab(t.id)}
-            className={`flex items-center justify-center gap-2 h-10 px-3 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 h-10 px-2 rounded-xl text-xs font-extrabold transition whitespace-nowrap cursor-pointer min-w-0 ${
               progSubTab === t.id
                 ? t.activeCls
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0B1120]'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#0b0f19]'
             }`}
           >
             {t.icon}
@@ -175,10 +175,10 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
       {/* 1. 30-DAY INTERACTIVE RECHARTS (VOLUME + e1RM) & BODY METRICS */}
       {progSubTab === 'metrics' && (
-        <div className="space-y-4">
+        <div key="prog-metrics" className="space-y-4 animate-view-in">
           {/* 30-Day KPI Summary Strip — Harmonious 5-Color Web Palette */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-3.5">
+            <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3.5">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block truncate">
                 {tr(lang, 'إجمالي الحجم (آخر 30 يوماً)', 'Volume Total (30 jours)', '30-Day Total Volume')}
               </span>
@@ -272,19 +272,19 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
               {/* Chart Mode & Scope Toggles */}
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-[#0B1120] p-1 rounded-xl border border-slate-200 dark:border-[#24324F]">
+                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-[#0b0f19] p-1 rounded-xl border border-slate-200 dark:border-[#1e293b]">
                   {(
                     [
-                      { id: 'combined', label: tr(lang, 'مدمج (الحجم + القوة)', 'Combiné', 'Combined') },
-                      { id: 'volume', label: tr(lang, 'الحجم فقط (Volume)', 'Volume seul', 'Volume Only') },
-                      { id: 'e1rm', label: tr(lang, 'القوة فقط (e1RM)', 'Force e1RM', 'e1RM Only') },
+                      { id: 'combined', label: tr(lang, 'مدمج', 'Combiné', 'Combined') },
+                      { id: 'volume', label: tr(lang, 'الحجم', 'Volume', 'Volume') },
+                      { id: 'e1rm', label: tr(lang, 'القوة e1RM', 'Force e1RM', 'e1RM') },
                     ] as const
                   ).map((m) => (
                     <button
                       key={m.id}
                       type="button"
                       onClick={() => setChartMetricMode(m.id)}
-                      className={`h-8 px-2.5 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer ${
+                      className={`h-8 px-2.5 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer truncate ${
                         chartMetricMode === m.id
                           ? 'bg-indigo-600 text-white'
                           : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -295,35 +295,35 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                   ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0B1120] p-1 rounded-xl border border-slate-200 dark:border-[#24324F]">
+                <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0b0f19] p-1 rounded-xl border border-slate-200 dark:border-[#1e293b]">
                   <button
                     type="button"
                     onClick={() => setTimelineScope('sessions')}
-                    className={`h-8 px-2.5 rounded-lg font-bold whitespace-nowrap transition cursor-pointer ${
+                    className={`h-8 px-2.5 rounded-lg font-bold whitespace-nowrap transition cursor-pointer truncate ${
                       timelineScope === 'sessions'
                         ? 'bg-teal-600 text-white'
                         : 'text-slate-600 dark:text-slate-300'
                     }`}
                   >
-                    {tr(lang, 'أيام الحصص (30د)', 'Séances (30j)', 'Session Dates')}
+                    {tr(lang, 'الحصص', 'Séances', 'Sessions')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setTimelineScope('daily')}
-                    className={`h-8 px-2.5 rounded-lg font-bold whitespace-nowrap transition cursor-pointer ${
+                    className={`h-8 px-2.5 rounded-lg font-bold whitespace-nowrap transition cursor-pointer truncate ${
                       timelineScope === 'daily'
                         ? 'bg-teal-600 text-white'
                         : 'text-slate-600 dark:text-slate-300'
                     }`}
                   >
-                    {tr(lang, '30 يوماً متصلة', '30 jours continus', 'Full 30 Days')}
+                    {tr(lang, '30 يوماً', '30 jours', '30 Days')}
                   </button>
                 </div>
               </div>
 
-              {/* Interactive Recharts Container — Solid Dark #0B1120 Canvas with Zero Gradients */}
+              {/* Interactive Recharts Container — Solid Dark #0b0f19 Canvas with Zero Gradients */}
               <div
-                className="h-72 w-full rounded-xl bg-slate-900 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-2 sm:p-3"
+                className="h-72 w-full rounded-xl bg-slate-900 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-2 sm:p-3"
                 dir="ltr"
               >
                 <ResponsiveContainer width="100%" height="100%">
@@ -513,12 +513,12 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
       {/* 2. EXPLAINABLE SMART COACH & JOINT RESPONSE TRACKER */}
       {progSubTab === 'coach' && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 text-xs">
+        <div key="prog-coach" className="space-y-4 animate-view-in">
+          <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3 text-xs">
             <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                {tr(lang, 'متابعة راحة واستجابة المفاصل (قبل / بعد / اليوم التالي)', 'Suivi Articulaire (Avant / Après / Lendemain)', 'Joint Comfort & Response Tracker')}
+              <Activity className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                {tr(lang, 'متابعة راحة واستجابة المفاصل', 'Suivi Articulaire (Avant / Après)', 'Joint Comfort & Response Tracker')}
               </h3>
             </div>
 
@@ -555,7 +555,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 value={jNote}
                 onChange={(e) => setJNote(e.target.value)}
                 placeholder={tr(lang, 'ملاحظة سريعة (مثال: راحة ممتازة في تمارين الأرجل)...', 'Note fonctionnelle...', 'Functional note (e.g. comfortable leg press)...')}
-                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#24324F] bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-white"
+                className="h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white"
               />
               <button
                 type="button"
@@ -587,7 +587,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
             {coachRecs.map((rec) => (
               <div
                 key={rec.id}
-                className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-2.5 text-xs"
+                className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-2.5 text-xs"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
@@ -599,11 +599,11 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3">
+                  <div className="rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-3">
                     <strong className="text-teal-600 dark:text-teal-300 block mb-0.5">{tr(lang, 'ما رُصد:', 'Observé :', 'Observed:')}</strong>
                     <p className="text-slate-700 dark:text-slate-200">{trText(lang, rec.observed)}</p>
                   </div>
-                  <div className="rounded-xl bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] p-3">
+                  <div className="rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-3">
                     <strong className="text-sky-600 dark:text-sky-300 block mb-0.5">{tr(lang, 'أساس البيانات:', 'Base de données :', 'Data Basis:')}</strong>
                     <p className="text-slate-700 dark:text-slate-200">{trText(lang, rec.dataBasis)}</p>
                   </div>
@@ -634,8 +634,8 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
 
       {/* 3. SCIENTIFIC STUDIES + JSON BACKUP + PWA INSTALL */}
       {progSubTab === 'refs' && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 text-xs">
+        <div key="prog-refs" className="space-y-4 animate-view-in">
+          <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3 text-xs">
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
               {tr(lang, 'حفظ واستعادة بياناتك وتثبيت التطبيق (PWA)', 'Sauvegarde JSON & Installation PWA', 'Data Backup (Validated JSON) & App Install')}
             </h3>
@@ -644,15 +644,15 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
               <button
                 type="button"
                 onClick={handleExportJson}
-                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold whitespace-nowrap transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold whitespace-nowrap transition cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                <span>{tr(lang, 'تصدير نسخة احتياطية JSON', 'Exporter JSON', 'Export Backup JSON')}</span>
+                <Download className="w-4 h-4 shrink-0" />
+                <span>{tr(lang, 'تصدير JSON', 'Exporter JSON', 'Export JSON')}</span>
               </button>
 
-              <label className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-slate-100 dark:bg-[#0B1120] text-slate-800 dark:text-white border border-slate-300 dark:border-[#24324F] font-extrabold whitespace-nowrap cursor-pointer hover:border-sky-500 transition">
-                <Upload className="w-4 h-4 text-sky-500" />
-                <span>{tr(lang, 'استيراد نسخة احتياطية JSON', 'Importer JSON', 'Import Backup JSON')}</span>
+              <label className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-800 dark:text-white border border-slate-300 dark:border-[#1e293b] font-extrabold whitespace-nowrap cursor-pointer hover:border-sky-500 transition">
+                <Upload className="w-4 h-4 text-sky-500 shrink-0" />
+                <span>{tr(lang, 'استيراد JSON', 'Importer JSON', 'Import JSON')}</span>
                 <input type="file" accept="application/json,.json" onChange={handleImportFile} className="hidden" />
               </label>
 
