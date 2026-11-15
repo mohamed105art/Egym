@@ -2,15 +2,17 @@ import { CORE_ABC_PROGRAM } from '../data/exercises';
 import { PRESET_MEAL_PLANS } from '../data/nutrition';
 import {
   AppState,
+  Exercise,
   GoalMode,
   MealBlock,
+  PersonalRecordEntry,
   SetLog,
   WorkoutDayKey,
   WorkoutSessionRecord,
 } from '../types/app';
 
 export const STORAGE_KEY = 'HYPERTROPHY_OS_STATE_V1';
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
 
 export const SEQUENCE_ORDER: WorkoutDayKey[] = ['A', 'B', 'C', 'D'];
 
@@ -18,6 +20,112 @@ export function getNextSequenceDay(completedDay: WorkoutDayKey): WorkoutDayKey {
   const idx = SEQUENCE_ORDER.indexOf(completedDay);
   if (idx === -1) return 'A';
   return SEQUENCE_ORDER[(idx + 1) % SEQUENCE_ORDER.length];
+}
+
+/**
+ * Smart Set Carry-Over & Integer Weight Enforcement:
+ * - Rounds all weights to whole integer kilograms (`Math.max(0, Math.round(weight))`).
+ * - When the user updates Set 1 (`setNum === 1`) weight or reps, automatically propagates
+ *   those values as defaults to subsequent sets (`S2..Sn`) that are not yet marked `done`.
+ * - Subsequent sets (`S2`, `S3`, ...) can still be edited independently at any time.
+ */
+export function applySmartSetCarryOver(
+  workoutLogs: Record<string, SetLog>,
+  ex: Exercise,
+  setNum: number,
+  nextLog: SetLog
+): Record<string, SetLog> {
+  const sanitizedPrimary: SetLog = {
+    ...nextLog,
+    weight: Math.max(0, Math.round(nextLog.weight || 0)),
+    reps: Math.max(1, Math.round(nextLog.reps || ex.repMin)),
+  };
+
+  const primaryKey = `${ex.id}_S${setNum}`;
+  const prevPrimary = workoutLogs[primaryKey];
+  const updatedLogs: Record<string, SetLog> = {
+    ...workoutLogs,
+    [primaryKey]: sanitizedPrimary,
+  };
+
+  if (setNum === 1) {
+    const weightOrRepsChanged =
+      !prevPrimary ||
+      Math.round(prevPrimary.weight) !== sanitizedPrimary.weight ||
+      prevPrimary.reps !== sanitizedPrimary.reps;
+
+    if (weightOrRepsChanged) {
+      for (let s = 2; s <= ex.sets; s++) {
+        const subKey = `${ex.id}_S${s}`;
+        const existingSub = updatedLogs[subKey];
+        if (!existingSub || !existingSub.done) {
+          updatedLogs[subKey] = {
+            weight: sanitizedPrimary.weight,
+            reps: sanitizedPrimary.reps,
+            rir: existingSub?.rir ?? ex.targetRir,
+            actualRir: existingSub?.actualRir,
+            isWarmup: existingSub?.isWarmup ?? false,
+            done: false,
+            timestamp: existingSub?.timestamp,
+          };
+        }
+      }
+    }
+  }
+
+  return updatedLogs;
+}
+
+export interface SetPREvaluation {
+  isPR: boolean;
+  currentE1rm: number;
+  bestHistoricalE1rm: number;
+  bestHistoricalWeight: number;
+}
+
+/**
+ * Evaluates whether a set achieves a new Personal Record (PR) compared to
+ * historical e1RM and PR records for that exercise.
+ */
+export function evaluateSetPR(
+  ex: Exercise,
+  log: SetLog,
+  e1rmHistory: AppState['e1rmHistory'],
+  prRecords?: Record<string, PersonalRecordEntry>
+): SetPREvaluation {
+  const intWeight = Math.max(0, Math.round(log.weight || 0));
+  const reps = Math.max(0, Math.round(log.reps || 0));
+  if (log.isWarmup || intWeight <= 0 || reps <= 0) {
+    return {
+      isPR: false,
+      currentE1rm: 0,
+      bestHistoricalE1rm: 0,
+      bestHistoricalWeight: Math.round(ex.defaultWeightKg),
+    };
+  }
+
+  const currentE1rm = Number((intWeight * (1 + reps / 30)).toFixed(1));
+  const histSeries = e1rmHistory[ex.id] || [];
+  const histMaxE1rm = histSeries.reduce((max, pt) => Math.max(max, pt.value || 0), 0);
+  const recordEntry = prRecords?.[ex.id];
+
+  const baselineDefaultE1rm = Number((Math.round(ex.defaultWeightKg) * (1 + ex.repMin / 30)).toFixed(1));
+  const bestHistoricalE1rm = Math.max(histMaxE1rm, recordEntry?.bestE1rm || 0, baselineDefaultE1rm);
+  const bestHistoricalWeight = Math.max(
+    recordEntry?.bestWeightKg || 0,
+    Math.round(ex.defaultWeightKg)
+  );
+
+  const isPR =
+    currentE1rm > bestHistoricalE1rm + 0.05 ||
+    (intWeight > bestHistoricalWeight && reps >= ex.repMin);
+
+  return {
+    isPR,
+    currentE1rm,
+    bestHistoricalE1rm,
+    bestHistoricalWeight,
+  };
 }
 
 function getIsoDateDaysAgo(daysAgo: number): string {
@@ -368,6 +476,20 @@ export function createDefaultAppState(): AppState {
         { date: date5DaysAgo, value: 42.0 },
       ],
     },
+    exerciseCompletionCounts: {
+      EX01: 4,
+      EX02: 4,
+      EX03: 4,
+      EX04: 4,
+      EX05: 4,
+      EX06: 4,
+      EX07: 4,
+    },
+    prRecords: {
+      EX01: { bestWeightKg: 26, bestReps: 10, bestE1rm: 34.7, achievedAt: date5DaysAgo },
+      EX03: { bestWeightKg: 140, bestReps: 11, bestE1rm: 191.3, achievedAt: date5DaysAgo },
+      EX07: { bestWeightKg: 32, bestReps: 10, bestE1rm: 42.0, achievedAt: date5DaysAgo },
+    },
     customMeals: JSON.parse(JSON.stringify(PRESET_MEAL_PLANS)) as { training: MealBlock[]; rest: MealBlock[] },
     timer: {
       durationSec: 90,
@@ -497,8 +619,8 @@ export function migrateState(raw: unknown): AppState {
       if (val && typeof val === 'object') {
         const entry = val as Record<string, unknown>;
         cleanLogs[k] = {
-          weight: typeof entry.weight === 'number' ? Math.max(0, entry.weight) : 0,
-          reps: typeof entry.reps === 'number' ? Math.max(0, entry.reps) : 10,
+          weight: typeof entry.weight === 'number' ? Math.max(0, Math.round(entry.weight)) : 0,
+          reps: typeof entry.reps === 'number' ? Math.max(0, Math.round(entry.reps)) : 10,
           rir: typeof entry.rir === 'number' ? Math.max(0, Math.min(10, entry.rir)) : 2,
           actualRir:
             typeof entry.actualRir === 'number' && !Number.isNaN(entry.actualRir)
@@ -572,6 +694,36 @@ export function migrateState(raw: unknown): AppState {
     if (Object.keys(migratedHist).length > 0) {
       base.e1rmHistory = { ...base.e1rmHistory, ...migratedHist };
     }
+  }
+
+  if (r.exerciseCompletionCounts && typeof r.exerciseCompletionCounts === 'object') {
+    const rawCounts = r.exerciseCompletionCounts as Record<string, unknown>;
+    const cleanCounts: Record<string, number> = { ...base.exerciseCompletionCounts };
+    for (const [exId, cnt] of Object.entries(rawCounts)) {
+      if (typeof cnt === 'number' && !Number.isNaN(cnt)) {
+        cleanCounts[exId] = Math.max(0, Math.round(cnt));
+      }
+    }
+    base.exerciseCompletionCounts = cleanCounts;
+  }
+
+  if (r.prRecords && typeof r.prRecords === 'object') {
+    const rawPrs = r.prRecords as Record<string, unknown>;
+    const cleanPrs: Record<string, PersonalRecordEntry> = { ...base.prRecords };
+    for (const [exId, entry] of Object.entries(rawPrs)) {
+      if (entry && typeof entry === 'object') {
+        const e = entry as Record<string, unknown>;
+        if (typeof e.bestWeightKg === 'number' && typeof e.bestE1rm === 'number') {
+          cleanPrs[exId] = {
+            bestWeightKg: Math.max(0, Math.round(e.bestWeightKg)),
+            bestReps: typeof e.bestReps === 'number' ? Math.max(1, Math.round(e.bestReps)) : 8,
+            bestE1rm: e.bestE1rm,
+            achievedAt: typeof e.achievedAt === 'string' ? e.achievedAt : new Date().toISOString().slice(0, 10),
+          };
+        }
+      }
+    }
+    base.prRecords = cleanPrs;
   }
 
   if (r.customMeals && typeof r.customMeals === 'object') {

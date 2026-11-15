@@ -2,29 +2,54 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-  html {
+  html,
+  body {
     font-family: 'Cairo', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
     scroll-behavior: smooth;
     color-scheme: dark light;
+    overflow-x: hidden;
+    max-width: 100vw;
+    overscroll-behavior-x: none;
+    background-image: none !important;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    min-height: 100dvh;
   }
 
   html.dark,
   html.dark body {
-    background-color: #0b1120 !important;
+    background-color: #0b0f19 !important;
     background-image: none !important;
     color: #f8fafc;
   }
 
-  body {
-    overflow-x: hidden;
-    background-image: none !important;
+  /* Native App Input Feel: >= 16px font size prevents iOS/Android auto-zoom on focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    line-height: 1.25;
+    touch-action: manipulation;
   }
 
-  /* Strictly eliminate any unwanted gradients or browser-extension injected background images on containers */
+  button,
+  a,
+  label {
+    touch-action: manipulation;
+  }
+
+  /* Strictly eliminate any unwanted metallic/silver gradients on containers */
   div,
   section,
   header,
+  footer,
   nav,
   main,
   article,
@@ -33,7 +58,7 @@
     background-image: none !important;
   }
 
-  /* Remove native number input spinners for strict grid symmetry */
+  /* Remove native number input spinners for strict CSS Grid symmetry */
   input[type='number']::-webkit-inner-spin-button,
   input[type='number']::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -57,6 +82,11 @@
     direction: ltr;
     unicode-bidi: isolate;
   }
+
+  .scroll-x-allowed {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Ensure Recharts & SVG surfaces never inherit unwanted gradients */
@@ -68,8 +98,8 @@
 }
 
 .custom-scroll::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {

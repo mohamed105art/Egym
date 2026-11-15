@@ -254,6 +254,13 @@ export interface CoachRecommendation {
   actionType?: 'deload_15' | 'swap_knee_safe' | 'add_recovery_day' | 'increase_kcal_150';
 }
 
+export interface PersonalRecordEntry {
+  bestWeightKg: number;
+  bestReps: number;
+  bestE1rm: number;
+  achievedAt: string;
+}
+
 export interface AppState {
   schemaVersion: number;
   lang: Lang;
@@ -280,6 +287,8 @@ export interface AppState {
   volumeSettings: VolumeSettings;
   customDayExercises: Record<ProgramMode, Record<WorkoutDayKey, string[]>>;
   workoutLogs: Record<string, SetLog>;
+  exerciseCompletionCounts?: Record<string, number>;
+  prRecords?: Record<string, PersonalRecordEntry>;
   sessionHistory: WorkoutSessionRecord[];
   jointResponseLogs: JointResponseLog[];
   measurements: BodyMeasurement[];

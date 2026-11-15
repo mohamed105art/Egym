@@ -5,9 +5,11 @@ import { MOROCCAN_FOOD_DB } from '../data/nutrition';
 import { MUSCLE_ZONE_ORDER } from '../data/muscles';
 import { SCIENTIFIC_STUDIES } from '../data/studies';
 import {
+  applySmartSetCarryOver,
   buildLast30DaysAnalytics,
   computeSessionStreakAndDelay,
   createDefaultAppState,
+  evaluateSetPR,
   getNextSequenceDay,
   migrateState,
   validateAndImportBackup,
@@ -51,7 +53,7 @@ test('v4 state migration preserves existing profile, workout logs, measurements,
     e1rmHistory: { EX01: [28, 30, 32] },
   };
   const migrated = migrateState(legacyV4);
-  assert.equal(migrated.schemaVersion, 5);
+  assert.equal(migrated.schemaVersion, 6);
   assert.equal(migrated.lang, 'fr');
   assert.equal(migrated.programMode, 'benchmark');
   assert.equal(migrated.profile.weightKg, 82.5);
@@ -271,4 +273,55 @@ test('buildExerciseComparisonProfile resolves primary/secondary muscles, evidenc
 
   assert.equal(profB.primaryMuscle.key, 'quads');
   assert.equal(profB.kinematicRig.rigType, ex03.rigType);
+});
+
+test('applySmartSetCarryOver enforces integer weights, carries S1 weight/reps to S2 & S3 when not done, and allows independent S2/S3 edits', () => {
+  const ex01 = EXERCISES_DB.find((e) => e.id === 'EX01')!; // 3 sets
+  const logs1 = applySmartSetCarryOver({}, ex01, 1, {
+    weight: 30.4,
+    reps: 10,
+    rir: 2,
+    isWarmup: false,
+    done: false,
+  });
+
+  // Weight rounded to integer 30 and propagated to S2 & S3
+  assert.equal(logs1.EX01_S1.weight, 30);
+  assert.equal(logs1.EX01_S2.weight, 30);
+  assert.equal(logs1.EX01_S2.reps, 10);
+  assert.equal(logs1.EX01_S3.weight, 30);
+  assert.equal(logs1.EX01_S3.reps, 10);
+
+  // Editing S2 independently only updates S2
+  const logs2 = applySmartSetCarryOver(logs1, ex01, 2, {
+    ...logs1.EX01_S2,
+    weight: 28,
+    reps: 9,
+  });
+  assert.equal(logs2.EX01_S1.weight, 30);
+  assert.equal(logs2.EX01_S2.weight, 28);
+  assert.equal(logs2.EX01_S2.reps, 9);
+  assert.equal(logs2.EX01_S3.weight, 30);
+});
+
+test('evaluateSetPR detects new Personal Records accurately', () => {
+  const state = createDefaultAppState();
+  const ex01 = EXERCISES_DB.find((e) => e.id === 'EX01')!;
+
+  const nonPr = evaluateSetPR(
+    ex01,
+    { weight: 26, reps: 8, rir: 2, isWarmup: false, done: true },
+    state.e1rmHistory,
+    state.prRecords
+  );
+  assert.equal(nonPr.isPR, false);
+
+  const newPr = evaluateSetPR(
+    ex01,
+    { weight: 30, reps: 10, rir: 1, isWarmup: false, done: true },
+    state.e1rmHistory,
+    state.prRecords
+  );
+  assert.equal(newPr.isPR, true);
+  assert.equal(newPr.currentE1rm, 40);
 });
