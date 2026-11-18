@@ -49,6 +49,7 @@ interface ExercisesViewProps {
   onSetCompareIds: (ids: [string, string]) => void;
   onOpenExercise: (exId: string) => void;
   onOpenLightbox: (exId: string) => void;
+  highlightedExId?: string | null;
 }
 
 export const ExercisesView: React.FC<ExercisesViewProps> = ({
@@ -67,6 +68,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
   onSetCompareIds,
   onOpenExercise,
   onOpenLightbox,
+  highlightedExId,
 }) => {
   const {
     lang,
@@ -358,10 +360,14 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
               const isFav = favoriteExercises.includes(ex.id);
               const isInCompare = state.compareIds.includes(ex.id);
               const frame = cardFrameMap[ex.id] ?? 0;
+              const isHighlighted = highlightedExId === ex.id;
               return (
                 <div
                   key={ex.id}
-                  className="app-card flex flex-col justify-between hover:border-teal-500/60 transition"
+                  id={`exercise-card-${ex.id}`}
+                  className={`app-card flex flex-col justify-between hover:border-teal-500/60 transition ${
+                    isHighlighted ? 'ring-2 ring-teal-400 animate-focus-pulse' : ''
+                  }`}
                 >
                   <div>
                     <div className="relative h-52 bg-slate-100 dark:bg-[#0b0f19] border-b border-slate-100 dark:border-[#1e293b]">
@@ -439,7 +445,7 @@ export const ExercisesView: React.FC<ExercisesViewProps> = ({
                           {ex.id} · {ex.equipment}
                         </span>
                       </div>
-                      <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate">
+                      <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white break-words leading-snug">
                         {trText(lang, ex.name)}
                       </h3>
                       <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">

@@ -3,12 +3,13 @@ import {
   AlertTriangle,
   ArrowLeft,
   Award,
-  Calendar,
+  BarChart2,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Clock,
+  Eye,
   Flame,
   Image as ImageIcon,
   Info,
@@ -17,7 +18,10 @@ import {
   Plus,
   RefreshCw,
   Repeat,
+  Settings,
   ShieldCheck,
+  SkipForward,
+  SlidersHorizontal,
   Sparkles,
   Timer,
   Trophy,
@@ -25,9 +29,11 @@ import {
 import { tr, trText } from '../engine/i18n';
 import {
   applySmartSetCarryOver,
+  computeHistoricalExerciseAverage,
   computeSessionStreakAndDelay,
   evaluateSetPR,
   getNextSequenceDay,
+  resolveEffectiveSetLog,
   SEQUENCE_ORDER,
 } from '../engine/storage';
 import {
@@ -48,6 +54,7 @@ import { ExerciseImage } from './ExerciseImage';
 interface WorkoutViewProps {
   state: AppState;
   exercises: Exercise[];
+  highlightedExId?: string | null;
   onStartDay: (day: WorkoutDayKey) => void;
   onExitWorkout: () => void;
   onSetProgramMode: (mode: ProgramMode) => void;
@@ -57,7 +64,10 @@ interface WorkoutViewProps {
   onToggleOptionalDayD: (enabled: boolean) => void;
   onUpdateSetLog: (key: string, log: SetLog) => void;
   onSmartUpdateSet?: (ex: Exercise, setNum: number, log: SetLog) => void;
-  onStartRestTimer: (seconds: number) => void;
+  onStartRestTimer: (seconds: number, contextKey?: string) => void;
+  onAdjustRestTimer?: (deltaSec: number) => void;
+  onSkipRestTimer?: () => void;
+  onOpenSettings?: () => void;
   onFinishSession: (payload: {
     day: WorkoutDayKey;
     preJointDiscomfort: number;
@@ -123,19 +133,73 @@ const SESSION_META: Record<
   },
 };
 
+/**
+ * 6-Color Rotating Palette for Exercise Card Framing (Section ثالثاً - 1):
+ * 1. Emerald (#10b981)
+ * 2. Electric Blue (#3b82f6)
+ * 3. Golden Amber (#f59e0b)
+ * 4. Vivid Violet (#8b5cf6)
+ * 5. Cyan (#06b6d4)
+ * 6. Coral Rose (#f43f5e)
+ */
+const EXERCISE_CARD_FRAMES = [
+  {
+    name: 'emerald',
+    cardBorder: 'border-s-4 border-s-emerald-500 border-emerald-500/30 dark:border-emerald-500/35',
+    badgeBg: 'bg-emerald-600 text-white',
+    accentText: 'text-emerald-600 dark:text-emerald-400',
+    pillBg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/30',
+  },
+  {
+    name: 'blue',
+    cardBorder: 'border-s-4 border-s-blue-500 border-blue-500/30 dark:border-blue-500/35',
+    badgeBg: 'bg-blue-600 text-white',
+    accentText: 'text-blue-600 dark:text-blue-400',
+    pillBg: 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30',
+  },
+  {
+    name: 'amber',
+    cardBorder: 'border-s-4 border-s-amber-500 border-amber-500/30 dark:border-amber-500/35',
+    badgeBg: 'bg-amber-500 text-slate-950',
+    accentText: 'text-amber-600 dark:text-amber-400',
+    pillBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30',
+  },
+  {
+    name: 'violet',
+    cardBorder: 'border-s-4 border-s-violet-500 border-violet-500/30 dark:border-violet-500/35',
+    badgeBg: 'bg-violet-600 text-white',
+    accentText: 'text-violet-600 dark:text-violet-400',
+    pillBg: 'bg-violet-500/15 text-violet-600 dark:text-violet-300 border-violet-500/30',
+  },
+  {
+    name: 'cyan',
+    cardBorder: 'border-s-4 border-s-cyan-500 border-cyan-500/30 dark:border-cyan-500/35',
+    badgeBg: 'bg-cyan-600 text-white',
+    accentText: 'text-cyan-600 dark:text-cyan-400',
+    pillBg: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border-cyan-500/30',
+  },
+  {
+    name: 'rose',
+    cardBorder: 'border-s-4 border-s-rose-500 border-rose-500/30 dark:border-rose-500/35',
+    badgeBg: 'bg-rose-600 text-white',
+    accentText: 'text-rose-600 dark:text-rose-400',
+    pillBg: 'bg-rose-500/15 text-rose-600 dark:text-rose-300 border-rose-500/30',
+  },
+] as const;
+
 export const WorkoutView: React.FC<WorkoutViewProps> = ({
   state,
   exercises,
+  highlightedExId,
   onStartDay,
   onExitWorkout,
-  onSetProgramMode,
-  onSetSchedulePreset,
-  onUpdateDayLabel,
   onUpdateProfile,
-  onToggleOptionalDayD,
   onUpdateSetLog,
   onSmartUpdateSet,
   onStartRestTimer,
+  onAdjustRestTimer,
+  onSkipRestTimer,
+  onOpenSettings,
   onFinishSession,
   onOpenExercise,
   onOpenSwap,
@@ -148,12 +212,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
 
   const [showRirGuide, setShowRirGuide] = useState(false);
   const [showWarmupGuide, setShowWarmupGuide] = useState(false);
+  const [showPreJointCheck, setShowPreJointCheck] = useState(false);
   const [showReadinessSliders, setShowReadinessSliders] = useState(false);
   const [isoSec, setIsoSec] = useState(45);
   const [isoRunning, setIsoRunning] = useState(false);
   const [preDiscomfort, setPreDiscomfort] = useState(state.profile.kneeSensitivity);
   const [postDiscomfort, setPostDiscomfort] = useState(state.profile.kneeSensitivity);
   const [sessionNotes, setSessionNotes] = useState('');
+
+  // Accordion state per exercise: which set number (1..ex.sets) is currently expanded
+  const [expandedSetByEx, setExpandedSetByEx] = useState<Record<string, number>>({});
+  // Collapsible "+ خيارات" drawer state per set key (`${ex.id}_S${setNum}`)
+  const [openOptionsBySetKey, setOpenOptionsBySetKey] = useState<Record<string, boolean>>({});
+  // Overview drawer for previewing non-current sessions (A, B, C, D)
+  const [previewOtherDay, setPreviewOtherDay] = useState<WorkoutDayKey | null>(null);
 
   useEffect(() => {
     if (!isoRunning) return;
@@ -169,46 +241,20 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
     return () => clearInterval(id);
   }, [isoRunning]);
 
+  const formatSec = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
   /**
-   * Smart Set Lookup:
-   * - Returns integer weight (`Math.round`).
-   * - If `setNum > 1` has no explicit log yet, inherits Set 1's weight & reps automatically
-   *   (Smart Set Carry-Over), or falls back to historical PR / default exercise weight.
+   * Smart Set Lookup with Cascading Set Inheritance (Sn <- Sn-1) & Historical Session Average:
+   * - S1 defaults to the user's average weight & average reps from the last session.
+   * - S2 inherits from S1; S3 inherits from S2; S4 inherits from S3.
    */
   const getSetLog = (ex: Exercise, setNum: number): SetLog => {
-    const k = `${ex.id}_S${setNum}`;
-    const existing = state.workoutLogs[k];
-    if (existing) {
-      return {
-        ...existing,
-        weight: Math.max(0, Math.round(existing.weight)),
-        reps: Math.max(1, Math.round(existing.reps)),
-      };
-    }
-
-    if (setNum > 1) {
-      const s1 = state.workoutLogs[`${ex.id}_S1`];
-      if (s1) {
-        return {
-          weight: Math.max(0, Math.round(s1.weight)),
-          reps: Math.max(1, Math.round(s1.reps)),
-          rir: ex.targetRir,
-          isWarmup: false,
-          done: false,
-        };
-      }
-    }
-
-    const lastPrWeight = state.prRecords?.[ex.id]?.bestWeightKg;
-    const fallbackWeight = Math.max(0, Math.round(lastPrWeight ?? ex.defaultWeightKg));
-
-    return {
-      weight: fallbackWeight,
-      reps: ex.repMin,
-      rir: ex.targetRir,
-      isWarmup: false,
-      done: false,
-    };
+    const histAvg = computeHistoricalExerciseAverage(ex, state);
+    return resolveEffectiveSetLog(ex, setNum, state.workoutLogs, histAvg);
   };
 
   const updateSetWithCarryOver = (ex: Exercise, setNum: number, nextLog: SetLog) => {
@@ -229,6 +275,23 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         onUpdateSetLog(k, v);
       }
     }
+  };
+
+  /**
+   * Determines which set should be expanded in the accordion for an exercise:
+   * - If the user explicitly clicked a set, show that set (or `0` if all sets are done and collapsed).
+   * - Otherwise, automatically expand the first incomplete set (e.g., S1 initially, then S2 after S1 is done).
+   */
+  const getActiveSetNum = (ex: Exercise): number => {
+    const explicit = expandedSetByEx[ex.id];
+    if (typeof explicit === 'number') {
+      return explicit;
+    }
+    for (let s = 1; s <= ex.sets; s++) {
+      const log = getSetLog(ex, s);
+      if (!log.done) return s;
+    }
+    return 0; // All sets completed -> all collapsed into emerald summary bars
   };
 
   // ================= ACTIVE WORKOUT MODE =================
@@ -276,15 +339,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
 
     return (
       <div key={`active-workout-${activeWorkoutDay}`} className="space-y-4 animate-view-in">
-        {/* Session Header & Sequence Switcher — Solid Dark #111827 */}
-        <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3.5">
-          <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-3">
-            {/* Left/Start Controls */}
-            <div className="lg:col-span-7 flex flex-wrap items-center gap-2">
+        {/* 1. TOP OF PAGE: Session Progress Bar, Sequence Switcher & Optional Pre-Workout Check */}
+        <div className="app-card rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3.5 sm:p-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={onExitWorkout}
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-800 dark:text-white border border-slate-300 dark:border-[#1e293b] text-xs font-extrabold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-800 dark:text-white border border-slate-300 dark:border-[#1e293b] text-xs font-extrabold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
                 <span>{tr(lang, 'الحصص', 'Séances', 'Sessions')}</span>
@@ -297,68 +359,35 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                     key={d}
                     type="button"
                     onClick={() => onStartDay(d)}
-                    className={`h-8 px-3 rounded-lg text-xs font-extrabold whitespace-nowrap transition cursor-pointer ${
+                    className={`h-7 px-2.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition cursor-pointer ${
                       activeWorkoutDay === d
                         ? 'bg-teal-600 text-white'
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
-                    {tr(lang, `حصة ${d}`, `Séance ${d}`, `Day ${d}`)}
+                    {d}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Right/End Finish CTA */}
-            <div className="lg:col-span-5 flex flex-wrap items-center justify-between lg:justify-end gap-2.5">
-              <div className="text-xs font-extrabold mono-num text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                {completedWorkingSets}/{totalPlannedWorkingSets} {tr(lang, 'مجموعات', 'séries', 'sets')} ({progressPct}%)
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  onFinishSession({
-                    day: activeWorkoutDay,
-                    preJointDiscomfort: preDiscomfort,
-                    postJointDiscomfort: postDiscomfort,
-                    sessionNotes,
-                    totalWorkingSets: completedWorkingSets,
-                    totalVolumeKg: Math.round(totalVolumeKg),
-                    e1rmUpdates,
-                    completedExerciseIds,
-                    newPrCount: sessionPrCount,
-                  })
-                }
-                className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white text-xs font-extrabold whitespace-nowrap transition cursor-pointer"
-              >
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>
-                  {tr(
-                    lang,
-                    `حفظ الحصة (التالي: ${followingDay})`,
-                    `Sauver (Suivant: ${followingDay})`,
-                    `Save Session (Next: ${followingDay})`
-                  )}
-                </span>
-              </button>
+            {/* Live Set Counter Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-500/15 border border-teal-500/30 text-teal-600 dark:text-teal-300 text-xs font-extrabold mono-num">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {completedWorkingSets}/{totalPlannedWorkingSets}{' '}
+                {tr(lang, 'مجموعات', 'séries', 'sets')} ({progressPct}%)
+              </span>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-[#1e293b]">
-            <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white leading-snug">
                 {tr(lang, meta.titleAr, meta.titleFr, meta.titleEn)}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-300">
-                {tr(lang, meta.focusAr, meta.focusFr, meta.focusEn)} ·{' '}
-                <span className="text-teal-600 dark:text-teal-300 font-bold">
-                  {tr(
-                    lang,
-                    `تعبئة ذكية: تعديل الوزن أو التكرار في S1 يُعمم تلقائياً على S2 و S3 لتوفير وقتك`,
-                    `Saisie intelligente : modifier S1 pré-remplit S2 et S3 automatiquement`,
-                    `Smart Carry-Over: setting S1 weight/reps auto-fills S2 & S3`
-                  )}
-                </span>
+              <p className="text-xs text-slate-500 dark:text-slate-300 mt-0.5">
+                {tr(lang, meta.focusAr, meta.focusFr, meta.focusEn)}
               </p>
             </div>
           </div>
@@ -371,12 +400,33 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
             />
           </div>
 
-          {/* Helper Toggles */}
+          {/* Compact Pre-Workout Toggles (Pre-Session Discomfort + RIR Guide + 45s Warm-Up) */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
+              onClick={() => setShowPreJointCheck((v) => !v)}
+              className={`inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-xl border text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                showPreJointCheck
+                  ? 'bg-teal-600 text-white border-teal-500'
+                  : 'bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#1e293b] hover:border-teal-500'
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {tr(
+                  lang,
+                  `انزعاج المفصل قبل الحصة (${preDiscomfort}/10)`,
+                  `Inconfort avant (${preDiscomfort}/10)`,
+                  `Pre-Session Joint (${preDiscomfort}/10)`
+                )}
+              </span>
+              {showPreJointCheck ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+
+            <button
+              type="button"
               onClick={() => setShowRirGuide((v) => !v)}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
             >
               <Info className="w-3.5 h-3.5 text-sky-500 shrink-0" />
               <span>{tr(lang, 'دليل RIR', 'Guide RIR', 'RIR Guide')}</span>
@@ -386,13 +436,39 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
             <button
               type="button"
               onClick={() => setShowWarmupGuide((v) => !v)}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-teal-500 shrink-0" />
               <span>{tr(lang, 'إحماء 45ث', 'Échauffement 45s', '45s Warm-Up')}</span>
               {showWarmupGuide ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
+
+          {showPreJointCheck && (
+            <div className="rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-3 text-xs space-y-1.5">
+              <label className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+                <span>
+                  {tr(
+                    lang,
+                    'انزعاج المفصل قبل بدء الحصة (0 = راحة تامة، 10 = ألم مرتفع):',
+                    'Inconfort articulaire avant séance (0–10) :',
+                    'Pre-Session Joint Discomfort (0–10):'
+                  )}
+                </span>
+                <span className="mono-num text-teal-600 dark:text-teal-300 font-extrabold text-sm">
+                  {preDiscomfort}/10
+                </span>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={10}
+                value={preDiscomfort}
+                onChange={(e) => setPreDiscomfort(Number(e.target.value))}
+                className="w-full accent-teal-500"
+              />
+            </div>
+          )}
 
           {showRirGuide && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-slate-50 dark:bg-[#0b0f19] p-3 rounded-xl border border-slate-200 dark:border-[#1e293b]">
@@ -439,80 +515,51 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
           )}
         </div>
 
-        {/* Pre / Post Joint Check */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div>
-            <label className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between mb-1">
-              <span>{tr(lang, 'انزعاج المفصل قبل الحصة (0–10):', 'Inconfort avant séance (0–10) :', 'Pre-Session Discomfort (0–10):')}</span>
-              <span className="mono-num text-teal-600 dark:text-teal-300 font-extrabold">{preDiscomfort}</span>
-            </label>
-            <input
-              type="range"
-              min={0}
-              max={10}
-              value={preDiscomfort}
-              onChange={(e) => setPreDiscomfort(Number(e.target.value))}
-              className="w-full accent-teal-500"
-            />
-          </div>
-          <div>
-            <label className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between mb-1">
-              <span>{tr(lang, 'انزعاج المفصل بعد الحصة (0–10):', 'Inconfort après séance (0–10) :', 'Post-Session Discomfort (0–10):')}</span>
-              <span className="mono-num text-sky-600 dark:text-sky-300 font-extrabold">{postDiscomfort}</span>
-            </label>
-            <input
-              type="range"
-              min={0}
-              max={10}
-              value={postDiscomfort}
-              onChange={(e) => setPostDiscomfort(Number(e.target.value))}
-              className="w-full accent-sky-500"
-            />
-          </div>
-          <div>
-            <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1">
-              {tr(lang, 'ملاحظة الحصة (اختياري):', 'Note de séance :', 'Session Note (optional):')}
-            </label>
-            <input
-              type="text"
-              value={sessionNotes}
-              onChange={(e) => setSessionNotes(e.target.value)}
-              placeholder={tr(lang, 'مثال: أداء قوي وتحكم ممتاز', 'Ex: Très bonne séance', 'e.g. Smooth reps & great control')}
-              className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-
-        {/* Minimalist Exercise Logging Cards with Strict CSS Grid Alignment */}
-        <div className="space-y-4">
+        {/* 2. MIDDLE OF PAGE: 6-Color Framed Exercise Cards with Accordion Sets & Inline Rest Timer */}
+        <div className="space-y-5">
           {dayExercises.map((ex, index) => {
+            const framePalette = EXERCISE_CARD_FRAMES[index % EXERCISE_CARD_FRAMES.length];
             const prog = evaluateDoubleProgression(ex, state.workoutLogs);
             const completionCount = state.exerciseCompletionCounts?.[ex.id] || 0;
-            const s1Log = getSetLog(ex, 1);
-            const exBestPr = evaluateSetPR(ex, s1Log, state.e1rmHistory, state.prRecords);
+            const histAvg = computeHistoricalExerciseAverage(ex, state);
+            const activeSetNum = getActiveSetNum(ex);
+            const isHighlighted = highlightedExId === ex.id;
+
+            let exDoneSetsCount = 0;
+            let exHasPr = false;
+            for (let s = 1; s <= ex.sets; s++) {
+              const l = getSetLog(ex, s);
+              if (l.done) exDoneSetsCount += 1;
+              if (evaluateSetPR(ex, l, state.e1rmHistory, state.prRecords).isPR) {
+                exHasPr = true;
+              }
+            }
 
             return (
-              <div
+              <article
                 key={ex.id}
-                className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3"
+                id={`exercise-card-${ex.id}`}
+                className={`rounded-2xl border bg-white dark:bg-[#111827] p-3.5 sm:p-4 space-y-3 transition-all ${
+                  framePalette.cardBorder
+                } ${isHighlighted ? 'ring-2 ring-teal-400 animate-focus-pulse' : ''}`}
               >
-                {/* Exercise Card Header Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-3 pb-3 border-b border-slate-100 dark:border-[#1e293b]">
-                  <div className="md:col-span-8 flex items-center gap-3 min-w-0">
+                {/* Exercise Card Header — Full Non-Truncated Title + Dedicated Sub-Line for Badges */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-[#1e293b]">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
                     {/* Dual Reference Photo Preview (Start + Peak) */}
                     <button
                       type="button"
                       onClick={() => onOpenExercise(ex.id)}
-                      className="grid grid-cols-2 gap-1.5 shrink-0 cursor-pointer"
+                      className="grid grid-cols-2 gap-1 shrink-0 cursor-pointer"
                       aria-label={trText(lang, ex.name)}
                     >
-                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-[#1e293b] bg-slate-100 dark:bg-[#0b0f19]">
+                      <div className="relative w-13 h-13 sm:w-15 sm:h-15 rounded-xl overflow-hidden border border-slate-200 dark:border-[#1e293b] bg-slate-100 dark:bg-[#0b0f19]">
                         <ExerciseImage exercise={ex} frameIdx={0} alt={`${trText(lang, ex.name)} 1`} />
                         <span className="absolute bottom-0.5 start-0.5 px-1 rounded bg-slate-900/85 text-[9px] font-bold text-white mono-num">
                           1
                         </span>
                       </div>
-                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-[#1e293b] bg-slate-100 dark:bg-[#0b0f19]">
+                      <div className="relative w-13 h-13 sm:w-15 sm:h-15 rounded-xl overflow-hidden border border-slate-200 dark:border-[#1e293b] bg-slate-100 dark:bg-[#0b0f19]">
                         <ExerciseImage exercise={ex} frameIdx={1} alt={`${trText(lang, ex.name)} 2`} />
                         <span className="absolute bottom-0.5 start-0.5 px-1 rounded bg-teal-600 text-[9px] font-bold text-white mono-num">
                           2
@@ -520,53 +567,72 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                       </div>
                     </button>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-extrabold text-teal-600 dark:text-teal-300 mono-num truncate">
-                          #{index + 1} · {ex.equipment} · {ex.sets}×{ex.repsLabel} · {ex.rirLabel}
+                    {/* Title (Full, No Truncation) + Sub-Row Badges */}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg text-xs font-extrabold mono-num shrink-0 ${framePalette.badgeBg}`}
+                        >
+                          #{index + 1}
                         </span>
+                        <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white break-words leading-snug">
+                          {trText(lang, ex.name)}
+                        </h3>
+                      </div>
+
+                      <p className="text-xs text-slate-500 dark:text-slate-300 break-words">
+                        {trText(lang, ex.muscleLabel)}
+                      </p>
+
+                      {/* Dedicated Badges Sub-Row (Equipment, Sets×Reps, Completion Count, PR 🏆) */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-extrabold mono-num ${framePalette.pillBg}`}
+                        >
+                          {ex.equipment} · {ex.sets}×{ex.repsLabel} · {ex.rirLabel}
+                        </span>
+
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-slate-700 dark:text-slate-200 text-[11px] font-extrabold mono-num">
+                          {exDoneSetsCount}/{ex.sets} ✓
+                        </span>
+
                         {completionCount > 0 && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-600 dark:text-sky-300 text-[10px] font-extrabold mono-num whitespace-nowrap">
                             {tr(lang, `أُنجز ${completionCount}×`, `${completionCount}× fait`, `Done ${completionCount}×`)}
                           </span>
                         )}
-                        {exBestPr.isPR && (
+
+                        {exHasPr && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-300 border border-amber-500/40 text-[10px] font-extrabold whitespace-nowrap">
                             <Trophy className="w-3 h-3 shrink-0" />
-                            <span>{tr(lang, 'رقم قياسي PR!', 'Nouveau PR !', 'New PR!')}</span>
+                            <span>{tr(lang, 'PR 🏆', 'PR 🏆', 'PR 🏆')}</span>
                           </span>
                         )}
                       </div>
-                      <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate mt-0.5">
-                        {trText(lang, ex.name)}
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-300 truncate">
-                        {trText(lang, ex.muscleLabel)}
-                      </p>
                     </div>
                   </div>
 
-                  {/* Unified Action Buttons Grid (Short Icon + 1 Word) */}
-                  <div className="md:col-span-4 grid grid-cols-3 gap-1.5">
+                  {/* Compact Action Buttons (Photos, Swap, Rest Timer) */}
+                  <div className="grid grid-cols-3 gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => onOpenExercise(ex.id)}
-                      className="inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-                      <span className="truncate">{tr(lang, 'الصور', 'Photos', 'Photos')}</span>
+                      <span>{tr(lang, 'الصور', 'Photos', 'Photos')}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => onOpenSwap(ex.id)}
-                      className="inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-indigo-500 transition cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] text-xs font-bold whitespace-nowrap hover:border-indigo-500 transition cursor-pointer"
                     >
                       <RefreshCw className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      <span className="truncate">{tr(lang, 'بديل', 'Swap', 'Swap')}</span>
+                      <span>{tr(lang, 'بديل', 'Swap', 'Swap')}</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => onStartRestTimer(ex.restSec)}
+                      onClick={() => onStartRestTimer(ex.restSec, `${ex.id}_S${Math.max(1, activeSetNum)}`)}
                       className="inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-800 dark:text-white border border-slate-200 dark:border-[#1e293b] text-xs font-extrabold mono-num whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
                     >
                       <Timer className="w-3.5 h-3.5 text-teal-500 shrink-0" />
@@ -575,33 +641,41 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                   </div>
                 </div>
 
-                {/* Double Progression + Smart Carry-Over Cue */}
-                <div
-                  className={`rounded-xl px-3 py-2 text-xs font-semibold border flex flex-wrap items-center justify-between gap-2 ${
-                    prog.readyToIncrease
-                      ? 'bg-teal-500/10 border-teal-500/35 text-teal-700 dark:text-teal-300'
-                      : 'bg-slate-50 dark:bg-[#0b0f19] border-slate-200 dark:border-[#1e293b] text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  <span>{trText(lang, prog.reason)}</span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-600 dark:text-sky-300 whitespace-nowrap">
-                    <Sparkles className="w-3 h-3 shrink-0" />
-                    <span>{tr(lang, 'تعبئة تلقائية S1 ← S2/S3', 'Auto-copie S1 → S2/S3', 'Auto-fill S1 → S2/S3')}</span>
-                  </span>
-                </div>
-
-                {/* Desktop Column Header Row (Strict 12-Col CSS Grid) */}
-                <div className="hidden lg:grid lg:grid-cols-12 items-center gap-2.5 px-3 text-[11px] font-extrabold text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                  <div className="lg:col-span-2">{tr(lang, 'المجموعة / النوع', 'Série / Type', 'Set / Type')}</div>
-                  <div className="lg:col-span-3 text-center">{tr(lang, 'الوزن الصحيح (كغ)', 'Charge entière (kg)', 'Integer Weight (kg)')}</div>
-                  <div className="lg:col-span-3 text-center">{tr(lang, 'التكرارات (Reps)', 'Répétitions', 'Reps')}</div>
-                  <div className="lg:col-span-2 text-center">
-                    {tr(lang, `RIR الفعلي (هدف ${ex.targetRir})`, `RIR Réel (cible ${ex.targetRir})`, `Actual RIR (tgt ${ex.targetRir})`)}
+                {/* Historical Session Average Banner + Double Progression Cue */}
+                <div className="rounded-xl px-3 py-2 text-xs font-semibold border bg-slate-50 dark:bg-[#0b0f19] border-slate-200 dark:border-[#1e293b] flex flex-wrap items-center justify-between gap-2">
+                  <div className="inline-flex items-center gap-1.5 font-extrabold text-teal-600 dark:text-teal-300">
+                    <BarChart2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      {tr(
+                        lang,
+                        `📊 متوسط آخر حصة: ${histAvg.avgWeightKg} كغ × ${histAvg.avgReps}`,
+                        `📊 Moyenne dernière séance : ${histAvg.avgWeightKg} kg × ${histAvg.avgReps}`,
+                        `📊 Last Session Avg: ${histAvg.avgWeightKg} kg × ${histAvg.avgReps}`
+                      )}
+                    </span>
                   </div>
-                  <div className="lg:col-span-2 text-end">{tr(lang, 'القوة / الإتمام', 'e1RM / Valider', 'e1RM / Complete')}</div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                    {prog.readyToIncrease && (
+                      <span className="px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-600 dark:text-teal-300 font-extrabold">
+                        {trText(lang, prog.reason)}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 font-bold text-sky-600 dark:text-sky-300">
+                      <Sparkles className="w-3 h-3 shrink-0" />
+                      <span>
+                        {tr(
+                          lang,
+                          'توريث تسلسلي Sn ← Sn-1',
+                          'Copie en cascade Sn ← Sn-1',
+                          'Cascading Auto-Fill Sn ← Sn-1'
+                        )}
+                      </span>
+                    </span>
+                  </div>
                 </div>
 
-                {/* Sets List — Strictly Aligned CSS Grid */}
+                {/* ACCORDION SETS LIST (S1 .. Sn) */}
                 <div className="space-y-2">
                   {Array.from({ length: ex.sets }, (_, i) => i + 1).map((setNum) => {
                     const key = `${ex.id}_S${setNum}`;
@@ -609,280 +683,604 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                     const intWeight = Math.max(0, Math.round(log.weight));
                     const e1 = estimateE1RM(intWeight, log.reps);
                     const prCheck = evaluateSetPR(ex, log, state.e1rmHistory, state.prRecords);
+                    const isOpen = setNum === activeSetNum;
+                    const isOptionsOpen = Boolean(openOptionsBySetKey[key]);
+                    const hasExtraOptions =
+                      log.isWarmup ||
+                      typeof log.actualRir === 'number' ||
+                      Boolean(log.note && log.note.trim());
 
-                    const rowSurfaceClass = log.done
-                      ? 'bg-teal-500/[0.08] border-teal-500/40'
-                      : log.isWarmup
-                      ? 'bg-amber-500/[0.06] border-amber-500/35'
-                      : 'bg-slate-50 dark:bg-[#0b0f19] border-slate-200 dark:border-[#1e293b]';
+                    // Check if the unified inline countdown timer is active right below this completed set
+                    const showInlineTimerHere =
+                      state.timer.running && state.timer.activeContextKey === key;
 
                     return (
-                      <div
-                        key={key}
-                        className={`grid grid-cols-1 lg:grid-cols-12 items-center gap-2.5 p-2.5 sm:p-3 rounded-xl border text-xs transition ${rowSurfaceClass}`}
-                      >
-                        {/* 1. Set Badge (S1, S2, S3) + Warmup Toggle */}
-                        <div className="lg:col-span-2 grid grid-cols-[2.25rem_1fr_auto] lg:grid-cols-[2.25rem_1fr] items-center gap-2">
-                          <span
-                            className={`w-9 h-9 rounded-xl font-extrabold mono-num flex items-center justify-center text-xs shrink-0 ${
-                              log.done
-                                ? 'bg-teal-600 text-white'
-                                : log.isWarmup
-                                ? 'bg-amber-500 text-slate-950'
-                                : 'bg-slate-200 dark:bg-[#1e293b] text-slate-800 dark:text-white'
-                            }`}
-                          >
-                            S{setNum}
-                          </span>
-                          <label className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer whitespace-nowrap select-none">
-                            <input
-                              type="checkbox"
-                              checked={log.isWarmup}
-                              onChange={(e) => updateSetWithCarryOver(ex, setNum, { ...log, isWarmup: e.target.checked })}
-                              className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
-                            />
-                            <span>{tr(lang, 'إحماء', 'Échauf.', 'Warmup')}</span>
-                          </label>
-                          <div className="lg:hidden flex items-center gap-1.5">
-                            {prCheck.isPR && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[10px] font-extrabold mono-num whitespace-nowrap">
-                                <Trophy className="w-3 h-3" /> PR
-                              </span>
-                            )}
-                            <span className="text-[11px] font-bold mono-num text-sky-600 dark:text-sky-300 whitespace-nowrap">
-                              e1RM: {e1}kg
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Mobile 3-Stepper Grid Wrapper / Desktop Direct Columns */}
-                        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-8 items-center gap-2.5">
-                          {/* 2. Integer Weight Stepper (Strict 3-col Grid — step="1" min="0") */}
-                          <div className="sm:col-span-1 lg:col-span-3 space-y-1 lg:space-y-0">
-                            <div className="lg:hidden text-[10px] font-bold text-slate-500 dark:text-slate-300 text-center whitespace-nowrap">
-                              {tr(lang, 'الوزن (كغ صحيح)', 'Charge (kg)', 'Weight (kg)')}
-                            </div>
-                            <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateSetWithCarryOver(ex, setNum, {
-                                    ...log,
-                                    weight: Math.max(0, intWeight - 1),
-                                  })
-                                }
-                                className="w-9 h-9 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                aria-label="Decrease weight by 1 kg"
-                              >
-                                <Minus className="w-3.5 h-3.5" />
-                              </button>
-                              <input
-                                type="number"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                step="1"
-                                min="0"
-                                value={intWeight}
-                                onChange={(e) =>
-                                  updateSetWithCarryOver(ex, setNum, {
-                                    ...log,
-                                    weight: Math.max(0, Math.round(Number(e.target.value) || 0)),
-                                  })
-                                }
-                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-[#1e293b] bg-white dark:bg-[#111827] font-extrabold mono-num text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateSetWithCarryOver(ex, setNum, {
-                                    ...log,
-                                    weight: intWeight + 1,
-                                  })
-                                }
-                                className="w-9 h-9 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                aria-label="Increase weight by 1 kg"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 3. Reps Stepper (Strict 3-col Grid — Carries over from S1) */}
-                          <div className="sm:col-span-1 lg:col-span-3 space-y-1 lg:space-y-0">
-                            <div className="lg:hidden text-[10px] font-bold text-slate-500 dark:text-slate-300 text-center whitespace-nowrap">
-                              {tr(lang, 'التكرارات (Reps)', 'Répétitions', 'Reps')}
-                            </div>
-                            <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateSetWithCarryOver(ex, setNum, {
-                                    ...log,
-                                    reps: Math.max(1, log.reps - 1),
-                                  })
-                                }
-                                className="w-9 h-9 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                aria-label="Decrease reps"
-                              >
-                                <Minus className="w-3.5 h-3.5" />
-                              </button>
-                              <input
-                                type="number"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                step="1"
-                                min="1"
-                                max="50"
-                                value={log.reps}
-                                onChange={(e) =>
-                                  updateSetWithCarryOver(ex, setNum, {
-                                    ...log,
-                                    reps: Math.max(1, Math.round(Number(e.target.value) || 1)),
-                                  })
-                                }
-                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-[#1e293b] bg-white dark:bg-[#111827] font-extrabold mono-num text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateSetWithCarryOver(ex, setNum, {
-                                    ...log,
-                                    reps: log.reps + 1,
-                                  })
-                                }
-                                className="w-9 h-9 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                aria-label="Increase reps"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* 4. Actual RIR Stepper (Strict 3-col Grid) */}
-                          <div className="sm:col-span-1 lg:col-span-2 space-y-1 lg:space-y-0">
-                            <label
-                              htmlFor={`${key}_actual_rir`}
-                              className="lg:hidden block text-[10px] font-bold text-slate-500 dark:text-slate-300 text-center whitespace-nowrap"
-                            >
-                              {tr(lang, 'RIR الفعلي', 'RIR réel', 'Actual RIR')} ({ex.targetRir})
-                            </label>
-                            <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const current = log.actualRir ?? ex.targetRir;
-                                  const next = Math.max(0, Number((current - 0.5).toFixed(1)));
-                                  updateSetWithCarryOver(ex, setNum, { ...log, actualRir: next, rir: next });
-                                }}
-                                className="w-9 h-9 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                aria-label={`Decrease actual RIR for set ${setNum}`}
-                              >
-                                <Minus className="w-3.5 h-3.5" />
-                              </button>
-                              <input
-                                id={`${key}_actual_rir`}
-                                type="number"
-                                min={0}
-                                max={10}
-                                step={0.5}
-                                placeholder={String(ex.targetRir)}
-                                value={log.actualRir ?? ''}
-                                onChange={(e) => {
-                                  const raw = e.target.value;
-                                  if (raw === '') {
-                                    updateSetWithCarryOver(ex, setNum, { ...log, actualRir: undefined, rir: ex.targetRir });
-                                    return;
-                                  }
-                                  const parsed = Math.max(0, Math.min(10, Number(raw)));
-                                  if (!Number.isNaN(parsed)) {
-                                    updateSetWithCarryOver(ex, setNum, { ...log, actualRir: parsed, rir: parsed });
-                                  }
-                                }}
-                                aria-label={tr(
-                                  lang,
-                                  `RIR الفعلي للمجموعة ${setNum}`,
-                                  `RIR réel série ${setNum}`,
-                                  `Actual RIR achieved set ${setNum}`
-                                )}
-                                className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-[#1e293b] bg-white dark:bg-[#111827] font-extrabold mono-num text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-teal-500 focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const current = log.actualRir ?? ex.targetRir;
-                                  const next = Math.min(10, Number((current + 0.5).toFixed(1)));
-                                  updateSetWithCarryOver(ex, setNum, { ...log, actualRir: next, rir: next });
-                                }}
-                                className="w-9 h-9 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                aria-label={`Increase actual RIR for set ${setNum}`}
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 5. e1RM, PR Badge & Primary Complete Set Button */}
-                        <div className="lg:col-span-2 grid grid-cols-[1fr_auto] items-center gap-2">
-                          <div className="hidden lg:flex items-center justify-end gap-1 text-[11px] mono-num text-slate-500 dark:text-slate-300 whitespace-nowrap">
-                            {prCheck.isPR && (
-                              <span
-                                title={tr(lang, 'رقم قياسي شخصي جديد!', 'Nouveau record personnel !', 'New Personal Record!')}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[10px] font-extrabold"
-                              >
-                                <Trophy className="w-3 h-3" /> PR
-                              </span>
-                            )}
-                            {typeof log.actualRir === 'number' && !log.isWarmup ? (
-                              <span className="font-bold text-teal-600 dark:text-teal-300">
-                                {log.actualRir >= ex.targetRir + 2
-                                  ? tr(lang, '+وزن', '+Charge', '+Load')
-                                  : `${e1}kg`}
-                              </span>
-                            ) : (
-                              <span>{e1}kg</span>
-                            )}
-                          </div>
+                      <div key={key} className="space-y-2">
+                        {/* CASE A: COMPLETED & COLLAPSED SET — Calm 1-Line Emerald Summary Bar */}
+                        {log.done && !isOpen ? (
                           <button
                             type="button"
-                            onClick={() => {
-                              const nextDone = !log.done;
-                              updateSetWithCarryOver(ex, setNum, {
-                                ...log,
-                                done: nextDone,
-                                timestamp: nextDone ? new Date().toISOString() : undefined,
-                              });
-                              if (nextDone && !log.isWarmup) {
-                                onStartRestTimer(ex.restSec);
-                              }
-                            }}
-                            aria-label={log.done ? 'Mark set incomplete' : 'Complete set'}
-                            className={`w-full lg:w-auto min-w-[5.75rem] h-9 px-3.5 rounded-xl font-extrabold text-xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition active:scale-95 cursor-pointer ${
-                              log.done
-                                ? 'bg-teal-600 hover:bg-teal-500 text-white'
-                                : 'bg-slate-200/90 dark:bg-[#1e293b] hover:bg-teal-600 hover:text-white text-slate-800 dark:text-white border border-slate-300 dark:border-[#334155]'
-                            }`}
+                            onClick={() =>
+                              setExpandedSetByEx((prev) => ({
+                                ...prev,
+                                [ex.id]: setNum,
+                              }))
+                            }
+                            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/15 text-xs transition cursor-pointer text-start"
                           >
-                            <Check className="w-3.5 h-3.5 shrink-0" />
-                            <span>{log.done ? tr(lang, 'تم ✓', 'Fait ✓', 'Done ✓') : tr(lang, 'إتمام', 'Valider', 'Complete')}</span>
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-emerald-600 text-white font-extrabold mono-num text-xs">
+                                S{setNum} ✓
+                              </span>
+                              <span className="font-extrabold mono-num text-slate-900 dark:text-white text-sm">
+                                {intWeight} {tr(lang, 'كغ', 'kg', 'kg')} × {log.reps}
+                              </span>
+                              {log.isWarmup && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 dark:text-amber-300 text-[10px] font-extrabold">
+                                  {tr(lang, 'إحماء', 'Échauf.', 'Warmup')}
+                                </span>
+                              )}
+                              {typeof log.actualRir === 'number' && (
+                                <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-[#1e293b] text-slate-700 dark:text-slate-300 text-[10px] font-bold mono-num">
+                                  RIR {log.actualRir}
+                                </span>
+                              )}
+                              {prCheck.isPR && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[10px] font-extrabold mono-num">
+                                  <Trophy className="w-3 h-3" /> PR
+                                </span>
+                              )}
+                              {log.note && (
+                                <span className="text-[11px] text-slate-500 dark:text-slate-300 truncate max-w-[160px]">
+                                  · {log.note}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[11px] font-bold mono-num text-emerald-600 dark:text-emerald-300">
+                                e1RM {e1}kg
+                              </span>
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 underline">
+                                {tr(lang, 'تعديل', 'Modifier', 'Edit')}
+                              </span>
+                            </div>
                           </button>
-                        </div>
+                        ) : !isOpen ? (
+                          /* CASE B: UPCOMING COLLAPSED SET (S2, S3...) — Calm Muted Dark Row */
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedSetByEx((prev) => ({
+                                ...prev,
+                                [ex.id]: setNum,
+                              }))
+                            }
+                            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50/80 dark:bg-[#0b0f19]/75 hover:border-teal-500/50 text-xs text-slate-500 dark:text-slate-400 transition cursor-pointer text-start"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-[#1e293b] text-slate-700 dark:text-slate-300 font-extrabold mono-num flex items-center justify-center text-xs">
+                                S{setNum}
+                              </span>
+                              <span className="font-bold mono-num text-slate-700 dark:text-slate-300">
+                                {tr(
+                                  lang,
+                                  `المجموعة القادمة: ${intWeight} كغ × ${log.reps}`,
+                                  `Suivante : ${intWeight} kg × ${log.reps}`,
+                                  `Upcoming: ${intWeight} kg × ${log.reps}`
+                                )}
+                              </span>
+                            </div>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-600 dark:text-teal-400">
+                              <span>{tr(lang, 'فتح', 'Ouvrir', 'Open')}</span>
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </span>
+                          </button>
+                        ) : (
+                          /* CASE C: ACTIVE EXPANDED SET — Illuminated Border + Single Horizontal Row (Weight | Reps) + "+ خيارات" */
+                          <div className="rounded-xl border-2 border-teal-500 bg-slate-50 dark:bg-[#0b0f19] p-3 space-y-2.5 shadow-xs">
+                            {/* Top Mini-Bar: Set Badge + e1RM/PR + "+ خيارات" Toggle */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-lg bg-teal-600 text-white font-extrabold mono-num text-xs">
+                                  {tr(lang, `المجموعة S${setNum}`, `Série S${setNum}`, `Set S${setNum}`)}
+                                </span>
+                                <span className="text-xs font-extrabold mono-num text-sky-600 dark:text-sky-300">
+                                  e1RM: {e1}kg
+                                </span>
+                                {prCheck.isPR && (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[10px] font-extrabold mono-num">
+                                    <Trophy className="w-3 h-3" /> PR
+                                  </span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOpenOptionsBySetKey((prev) => ({
+                                    ...prev,
+                                    [key]: !prev[key],
+                                  }))
+                                }
+                                className={`inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border text-[11px] font-extrabold transition cursor-pointer ${
+                                  isOptionsOpen || hasExtraOptions
+                                    ? 'bg-indigo-600 text-white border-indigo-500'
+                                    : 'bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#1e293b] hover:border-indigo-500'
+                                }`}
+                              >
+                                <span>{tr(lang, '+ خيارات', '+ Options', '+ Options')}</span>
+                                {isOptionsOpen ? (
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
+
+                            {/* SINGLE HORIZONTAL ROW (2 COLUMNS): Column 1 = Weight (kg), Column 2 = Reps */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                              {/* Column 1: Integer Weight Stepper */}
+                              <div className="space-y-1">
+                                <label
+                                  htmlFor={`${key}_weight`}
+                                  className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 text-center"
+                                >
+                                  {tr(lang, 'الوزن (كغ)', 'Charge (kg)', 'Weight (kg)')}
+                                </label>
+                                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        weight: Math.max(0, intWeight - 1),
+                                      })
+                                    }
+                                    className="w-9 h-10 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
+                                    aria-label="Decrease weight by 1 kg"
+                                  >
+                                    <Minus className="w-3.5 h-3.5" />
+                                  </button>
+                                  <input
+                                    id={`${key}_weight`}
+                                    type="number"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    step="1"
+                                    min="0"
+                                    value={intWeight}
+                                    onChange={(e) =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        weight: Math.max(0, Math.round(Number(e.target.value) || 0)),
+                                      })
+                                    }
+                                    className="h-10 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-[#1e293b] bg-white dark:bg-[#111827] font-extrabold mono-num text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        weight: intWeight + 1,
+                                      })
+                                    }
+                                    className="w-9 h-10 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
+                                    aria-label="Increase weight by 1 kg"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Column 2: Reps Stepper */}
+                              <div className="space-y-1">
+                                <label
+                                  htmlFor={`${key}_reps`}
+                                  className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 text-center"
+                                >
+                                  {tr(lang, 'التكرارات', 'Répétitions', 'Reps')}
+                                </label>
+                                <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        reps: Math.max(1, log.reps - 1),
+                                      })
+                                    }
+                                    className="w-9 h-10 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
+                                    aria-label="Decrease reps"
+                                  >
+                                    <Minus className="w-3.5 h-3.5" />
+                                  </button>
+                                  <input
+                                    id={`${key}_reps`}
+                                    type="number"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    step="1"
+                                    min="1"
+                                    max="50"
+                                    value={log.reps}
+                                    onChange={(e) =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        reps: Math.max(1, Math.round(Number(e.target.value) || 1)),
+                                      })
+                                    }
+                                    className="h-10 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-[#1e293b] bg-white dark:bg-[#111827] font-extrabold mono-num text-slate-900 dark:text-white focus:border-teal-500 focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        reps: log.reps + 1,
+                                      })
+                                    }
+                                    className="w-9 h-10 rounded-xl bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center transition active:scale-95 cursor-pointer"
+                                    aria-label="Increase reps"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* COLLAPSIBLE "+ خيارات" DRAWER: Actual RIR, Warm-up Checkbox, and Set Note */}
+                            {isOptionsOpen && (
+                              <div className="rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#1e293b] p-3 space-y-2.5 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center">
+                                  {/* Actual RIR Stepper */}
+                                  <div className="space-y-1">
+                                    <label
+                                      htmlFor={`${key}_actual_rir`}
+                                      className="block text-[11px] font-bold text-slate-600 dark:text-slate-300"
+                                    >
+                                      {tr(lang, 'RIR الفعلي', 'RIR réel', 'Actual RIR')} ({tr(lang, 'الهدف', 'cible', 'target')} {ex.targetRir})
+                                    </label>
+                                    <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const current = log.actualRir ?? ex.targetRir;
+                                          const next = Math.max(0, Number((current - 0.5).toFixed(1)));
+                                          updateSetWithCarryOver(ex, setNum, { ...log, actualRir: next, rir: next });
+                                        }}
+                                        className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1e293b] text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center cursor-pointer"
+                                        aria-label={`Decrease actual RIR for set ${setNum}`}
+                                      >
+                                        <Minus className="w-3.5 h-3.5" />
+                                      </button>
+                                      <input
+                                        id={`${key}_actual_rir`}
+                                        type="number"
+                                        min={0}
+                                        max={10}
+                                        step={0.5}
+                                        placeholder={String(ex.targetRir)}
+                                        value={log.actualRir ?? ''}
+                                        onChange={(e) => {
+                                          const raw = e.target.value;
+                                          if (raw === '') {
+                                            updateSetWithCarryOver(ex, setNum, {
+                                              ...log,
+                                              actualRir: undefined,
+                                              rir: ex.targetRir,
+                                            });
+                                            return;
+                                          }
+                                          const parsed = Math.max(0, Math.min(10, Number(raw)));
+                                          if (!Number.isNaN(parsed)) {
+                                            updateSetWithCarryOver(ex, setNum, {
+                                              ...log,
+                                              actualRir: parsed,
+                                              rir: parsed,
+                                            });
+                                          }
+                                        }}
+                                        className="h-9 w-full min-w-0 text-center rounded-xl border border-slate-300 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] font-extrabold mono-num text-slate-900 dark:text-white"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const current = log.actualRir ?? ex.targetRir;
+                                          const next = Math.min(10, Number((current + 0.5).toFixed(1)));
+                                          updateSetWithCarryOver(ex, setNum, { ...log, actualRir: next, rir: next });
+                                        }}
+                                        className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#1e293b] text-slate-700 dark:text-white border border-slate-300 dark:border-[#334155] flex items-center justify-center cursor-pointer"
+                                        aria-label={`Increase actual RIR for set ${setNum}`}
+                                      >
+                                        <Plus className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Warm-up Toggle Checkbox */}
+                                  <div className="flex items-center pt-3 sm:pt-5">
+                                    <label className="inline-flex items-center gap-2 text-xs font-extrabold text-amber-600 dark:text-amber-300 cursor-pointer select-none">
+                                      <input
+                                        type="checkbox"
+                                        checked={log.isWarmup}
+                                        onChange={(e) =>
+                                          updateSetWithCarryOver(ex, setNum, {
+                                            ...log,
+                                            isWarmup: e.target.checked,
+                                          })
+                                        }
+                                        className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                                      />
+                                      <span>
+                                        {tr(
+                                          lang,
+                                          'احتساب كمجموعة إحماء (لا تدخل في الحجم)',
+                                          'Série d’échauffement',
+                                          'Mark as Warm-Up Set'
+                                        )}
+                                      </span>
+                                    </label>
+                                  </div>
+                                </div>
+
+                                {/* Optional Set Note */}
+                                <div>
+                                  <input
+                                    type="text"
+                                    value={log.note || ''}
+                                    onChange={(e) =>
+                                      updateSetWithCarryOver(ex, setNum, {
+                                        ...log,
+                                        note: e.target.value,
+                                      })
+                                    }
+                                    placeholder={tr(
+                                      lang,
+                                      'ملاحظة للمجموعة (مثال: تحكم عالٍ، قبضة ضيقة)...',
+                                      'Note pour cette série...',
+                                      'Optional note for this set...'
+                                    )}
+                                    className="w-full h-9 px-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* PRIMARY COMPLETE SET ACTION BUTTON ("تم ✓") */}
+                            <div className="flex items-center gap-2 pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // Always complete and advance when clicking the primary button on an incomplete set;
+                                  // if already done and re-opened for editing, clicking "تم ✓" saves & collapses it!
+                                  const nextSetToOpen = setNum < ex.sets ? setNum + 1 : 0;
+                                  updateSetWithCarryOver(ex, setNum, {
+                                    ...log,
+                                    done: true,
+                                    timestamp: new Date().toISOString(),
+                                  });
+                                  setExpandedSetByEx((prev) => ({
+                                    ...prev,
+                                    [ex.id]: nextSetToOpen,
+                                  }));
+                                  if (!log.isWarmup) {
+                                    onStartRestTimer(ex.restSec, key);
+                                  }
+                                }}
+                                className="flex-1 h-10 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white font-extrabold text-xs inline-flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
+                              >
+                                <Check className="w-4 h-4 shrink-0" />
+                                <span>
+                                  {setNum < ex.sets
+                                    ? tr(
+                                        lang,
+                                        `تم ✓ (حفظ S${setNum} وفتح S${setNum + 1} + بدء الراحة ${ex.restSec}ث)`,
+                                        `Fait ✓ (Ouvrir S${setNum + 1} + Repos ${ex.restSec}s)`,
+                                        `Done ✓ (Open S${setNum + 1} + Start ${ex.restSec}s Rest)`
+                                      )
+                                    : tr(
+                                        lang,
+                                        `تم ✓ (إتمام المجموعة الأخيرة S${setNum})`,
+                                        `Fait ✓ (Terminer S${setNum})`,
+                                        `Done ✓ (Finish Final Set S${setNum})`
+                                      )}
+                                </span>
+                              </button>
+
+                              {log.done && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    updateSetWithCarryOver(ex, setNum, {
+                                      ...log,
+                                      done: false,
+                                      timestamp: undefined,
+                                    });
+                                  }}
+                                  className="h-10 px-3 rounded-xl bg-slate-200 dark:bg-[#1e293b] text-slate-700 dark:text-slate-200 text-xs font-bold hover:text-rose-500 transition cursor-pointer"
+                                >
+                                  {tr(lang, 'إلغاء الإتمام', 'Annuler', 'Undo')}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* INLINE COUNTDOWN REST TIMER BAR (Directly Below Completed Set S_n) */}
+                        {showInlineTimerHere && (
+                          <div
+                            role="timer"
+                            aria-label="Inline Set Rest Timer"
+                            className="rounded-xl border border-amber-500/50 bg-amber-500/15 px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs animate-view-in"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Timer className="w-4 h-4 text-amber-500 dark:text-amber-300 animate-spin" />
+                              <span className="font-extrabold text-amber-800 dark:text-amber-200">
+                                {tr(lang, 'راحة بين المجموعات:', 'Repos en cours :', 'Rest Countdown:')}
+                              </span>
+                              <span className="text-base font-extrabold mono-num text-amber-600 dark:text-amber-300">
+                                {formatSec(state.timer.remainingSec)}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onAdjustRestTimer
+                                    ? onAdjustRestTimer(-15)
+                                    : onStartRestTimer(Math.max(15, state.timer.remainingSec - 15), key)
+                                }
+                                className="h-8 px-2.5 rounded-lg bg-slate-900/80 text-white font-extrabold mono-num text-[11px] hover:bg-slate-800 transition cursor-pointer"
+                              >
+                                {tr(lang, '-15ث', '-15s', '-15s')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onAdjustRestTimer
+                                    ? onAdjustRestTimer(15)
+                                    : onStartRestTimer(state.timer.remainingSec + 15, key)
+                                }
+                                className="h-8 px-2.5 rounded-lg bg-slate-900/80 text-white font-extrabold mono-num text-[11px] hover:bg-slate-800 transition cursor-pointer"
+                              >
+                                {tr(lang, '+15ث', '+15s', '+15s')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => (onSkipRestTimer ? onSkipRestTimer() : undefined)}
+                                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[11px] transition cursor-pointer"
+                              >
+                                <span>{tr(lang, 'تخطي', 'Passer', 'Skip')}</span>
+                                <SkipForward className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </article>
             );
           })}
+        </div>
+
+        {/* 3. BOTTOM OF PAGE (Chronological End-of-Session Checkout: Post-Session Joint + Notes + Save Button) */}
+        <div className="app-card rounded-2xl border-2 border-teal-500/50 bg-white dark:bg-[#111827] p-4 sm:p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-[#1e293b]">
+            <div>
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                {tr(
+                  lang,
+                  `ختام الحصة ${activeWorkoutDay} وحفظ السجل`,
+                  `Bilan de fin de Séance ${activeWorkoutDay}`,
+                  `Session ${activeWorkoutDay} Checkout & Save`
+                )}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-300">
+                {tr(
+                  lang,
+                  'بعد الانتهاء من التمارين أعلاه، سجّل راحة المفاصل وملاحظتك ثم احفظ الحصة للانتقال للدور التالي.',
+                  'Évaluez votre confort articulaire après la séance puis sauvegardez.',
+                  'Log your post-workout joint comfort and save to advance your sequence.'
+                )}
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-300 text-xs font-extrabold mono-num">
+              {completedWorkingSets}/{totalPlannedWorkingSets} {tr(lang, 'مكتمل', 'complété', 'done')} ·{' '}
+              {Math.round(totalVolumeKg).toLocaleString()} kg
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+            <div>
+              <label className="font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between mb-1.5">
+                <span>
+                  {tr(
+                    lang,
+                    'انزعاج المفصل بعد الحصة (0–10):',
+                    'Inconfort articulaire après séance (0–10) :',
+                    'Post-Session Joint Discomfort (0–10):'
+                  )}
+                </span>
+                <span className="mono-num text-sky-600 dark:text-sky-300 font-extrabold text-sm">
+                  {postDiscomfort}/10
+                </span>
+              </label>
+              <input
+                type="range"
+                min={0}
+                max={10}
+                value={postDiscomfort}
+                onChange={(e) => setPostDiscomfort(Number(e.target.value))}
+                className="w-full accent-sky-500"
+              />
+            </div>
+
+            <div>
+              <label className="font-bold text-slate-700 dark:text-slate-200 block mb-1.5">
+                {tr(lang, 'ملاحظة الحصة (اختياري):', 'Note de séance :', 'Session Note (optional):')}
+              </label>
+              <input
+                type="text"
+                value={sessionNotes}
+                onChange={(e) => setSessionNotes(e.target.value)}
+                placeholder={tr(
+                  lang,
+                  'مثال: أداء قوي وتحكم ممتاز في الأوزان',
+                  'Ex: Très bonne séance',
+                  'e.g. Smooth reps & great joint comfort'
+                )}
+                className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              onFinishSession({
+                day: activeWorkoutDay,
+                preJointDiscomfort: preDiscomfort,
+                postJointDiscomfort: postDiscomfort,
+                sessionNotes,
+                totalWorkingSets: completedWorkingSets,
+                totalVolumeKg: Math.round(totalVolumeKg),
+                e1rmUpdates,
+                completedExerciseIds,
+                newPrCount: sessionPrCount,
+              })
+            }
+            className="w-full h-12 px-5 rounded-xl bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white text-sm font-extrabold inline-flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+          >
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span>
+              {tr(
+                lang,
+                `إنهاء وحفظ الحصة ${activeWorkoutDay} (الحصة التالية: ${followingDay})`,
+                `Terminer et Sauver la Séance ${activeWorkoutDay} (Suivante : ${followingDay})`,
+                `Finish & Save Session ${activeWorkoutDay} (Next Up: ${followingDay})`
+              )}
+            </span>
+          </button>
         </div>
       </div>
     );
   }
 
-  // ================= PROGRAM OVERVIEW MODE =================
+  // ================= SIMPLIFIED HOME SCREEN (CURRENT TURN SESSION ONLY + COMPACT OTHER SESSIONS DRAWER) =================
+  const currentDayIds = state.customDayExercises[programMode][nextUpDay] || [];
+  const currentDayExs = currentDayIds.map((id) => byId.get(id)).filter((e): e is Exercise => Boolean(e));
+  const currentTotalSets = currentDayExs.reduce((acc, e) => acc + e.sets, 0);
+  const currentMeta = SESSION_META[nextUpDay];
+  const otherDays = SEQUENCE_ORDER.filter((d) => d !== nextUpDay);
+
   return (
     <div key="workout-overview" className="space-y-4 animate-view-in">
-      {/* 1. WORKOUT DELAY & STREAK WARNING BANNER (> 3 DAYS INACTIVITY) — Rose Coral */}
+      {/* 1. WORKOUT DELAY & STREAK WARNING BANNER (> 3 DAYS INACTIVITY) */}
       {streakInfo.isDelayed && streakInfo.daysSinceLastWorkout !== null && (
         <div
           role="alert"
@@ -936,51 +1334,48 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         </div>
       )}
 
-      {/* 2. DASHBOARD PROGRESS & SESSION COUNTERS (4-Col Strict CSS Grid — Solid Dark #111827) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Counter 1: Total Completed Sessions (Teal Emerald) */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3.5 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block truncate">
+      {/* 2. COMPACT 4-COUNTER KPI STRIP (No Truncated Labels on Mobile) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3 sm:p-3.5 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block leading-tight">
               {tr(lang, 'الحصص المكتملة', 'Séances Complétées', 'Completed Sessions')}
             </span>
             <div className="text-xl sm:text-2xl font-extrabold mono-num text-teal-600 dark:text-teal-300 mt-0.5">
               {streakInfo.totalSessions}
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 mono-num block truncate">
-              {streakInfo.totalWorkingSetsAllTime} {tr(lang, 'مجموعة مسجلة', 'séries effectives', 'working sets')}
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 mono-num block leading-tight">
+              {streakInfo.totalWorkingSetsAllTime} {tr(lang, 'مجموعة عمل', 'séries', 'working sets')}
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-300 flex items-center justify-center shrink-0">
-            <Award className="w-5 h-5" />
+          <div className="hidden sm:flex w-9 h-9 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-300 items-center justify-center shrink-0">
+            <Award className="w-4 h-4" />
           </div>
         </div>
 
-        {/* Counter 2: Next Session in Dynamic Sequence (Royal Sky) */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3.5 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block truncate">
-              {tr(lang, 'الحصة التالية في الدور', 'Prochaine Séance', 'Next in Sequence')}
+        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3 sm:p-3.5 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block leading-tight">
+              {tr(lang, 'الحصة التالية', 'Prochaine Séance', 'Next in Sequence')}
             </span>
-            <div className="text-xl sm:text-2xl font-extrabold text-sky-600 dark:text-sky-300 mt-0.5 truncate">
+            <div className="text-xl sm:text-2xl font-extrabold text-sky-600 dark:text-sky-300 mt-0.5">
               {tr(lang, `الحصة ${nextUpDay}`, `Séance ${nextUpDay}`, `Session ${nextUpDay}`)}
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 mono-num block truncate">
-              A → B → C → D → A
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 mono-num block leading-tight">
+              A → B → C → D
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-300 flex items-center justify-center shrink-0">
-            <Repeat className="w-5 h-5" />
+          <div className="hidden sm:flex w-9 h-9 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-300 items-center justify-center shrink-0">
+            <Repeat className="w-4 h-4" />
           </div>
         </div>
 
-        {/* Counter 3: Last Workout & Streak Status (Warm Amber) */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3.5 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block truncate">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3 sm:p-3.5 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block leading-tight">
               {tr(lang, 'آخر حصة والانتظام', 'Dernière Séance', 'Last Session & Streak')}
             </span>
-            <div className="text-base sm:text-lg font-extrabold mono-num text-amber-600 dark:text-amber-300 mt-0.5 truncate">
+            <div className="text-sm sm:text-lg font-extrabold mono-num text-amber-600 dark:text-amber-300 mt-0.5 leading-snug">
               {streakInfo.lastSession
                 ? `${streakInfo.lastSession.day} · ${
                     streakInfo.daysSinceLastWorkout === 0
@@ -994,27 +1389,26 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
                   }`
                 : tr(lang, 'لم تبدأ بعد', 'Aucune', 'None yet')}
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block leading-tight">
               {streakInfo.isDelayed
                 ? tr(lang, 'تأخر > 3 أيام', 'Pause > 3 jours', 'Paused > 3 days')
                 : tr(lang, `سلسلة منتظمة (${streakInfo.activeStreakCount})`, `Série active (${streakInfo.activeStreakCount})`, `Active streak (${streakInfo.activeStreakCount})`)}
             </span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 dark:text-amber-300 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5" />
+          <div className="hidden sm:flex w-9 h-9 rounded-xl bg-amber-500/15 text-amber-500 dark:text-amber-300 items-center justify-center shrink-0">
+            <Flame className="w-4 h-4" />
           </div>
         </div>
 
-        {/* Counter 4: Daily Readiness Score (Soft Indigo) */}
-        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3.5 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block truncate">
+        <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-3 sm:p-3.5 flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300 block leading-tight">
               {tr(lang, 'مؤشر الجاهزية', 'Indice de Forme', 'Readiness Score')}
             </span>
             <div className="text-xl sm:text-2xl font-extrabold mono-num text-indigo-600 dark:text-indigo-300 mt-0.5">
               {readiness.score}/100
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block leading-tight">
               {readiness.band === 'high'
                 ? tr(lang, 'جاهزية مثالية', 'Prêt à progresser', 'Optimal readiness')
                 : readiness.band === 'moderate'
@@ -1025,14 +1419,14 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
           <button
             type="button"
             onClick={() => setShowReadinessSliders((v) => !v)}
-            className="h-10 px-3 rounded-xl bg-slate-100 dark:bg-[#0b0f19] hover:border-indigo-500 border border-slate-200 dark:border-[#1e293b] text-xs font-bold text-indigo-600 dark:text-indigo-300 whitespace-nowrap transition cursor-pointer"
+            className="h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] hover:border-indigo-500 border border-slate-200 dark:border-[#1e293b] text-xs font-bold text-indigo-600 dark:text-indigo-300 whitespace-nowrap transition cursor-pointer shrink-0"
           >
             {tr(lang, 'ضبط', 'Ajuster', 'Adjust')}
           </button>
         </div>
       </div>
 
-      {/* Collapsible Readiness & Mode Controls */}
+      {/* Collapsible Readiness Sliders */}
       {showReadinessSliders && (
         <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
           <div>
@@ -1095,270 +1489,239 @@ export const WorkoutView: React.FC<WorkoutViewProps> = ({
         </div>
       )}
 
-      {/* 3. FLEXIBLE SEQUENCE ROTATION CONTROL BAR (A -> B -> C -> D -> A) */}
-      <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-            <div>
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                {tr(
-                  lang,
-                  'تدوير الحصص المرن (A → B → C → D → A)',
-                  'Rotation Flexible (A → B → C → D → A)',
-                  'Flexible Sequence Rotation (A → B → C → D → A)'
-                )}
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-300">
-                {tr(
-                  lang,
-                  'لا حاجة للارتباط بأيام أسبوع ثابتة — يتقدم دور الحصة تلقائياً بعد كل حصة تحفظها.',
-                  'Aucun jour fixe obligatoire — la séance suivante avance automatiquement.',
-                  'No fixed weekday lock — your active session advances automatically in sequence.'
-                )}
-              </p>
+      {/* 3. PRIMARY FOCUS: CURRENT TURN SESSION CARD ONLY (Zero Clutter) */}
+      <section
+        aria-label={tr(lang, `الحصة الحالية ${nextUpDay}`, `Séance actuelle ${nextUpDay}`, `Current Session ${nextUpDay}`)}
+        className="rounded-2xl border-2 border-teal-500/80 bg-white dark:bg-[#111827] p-4 sm:p-5 space-y-4 shadow-xs"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-[#1e293b]">
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-lg bg-teal-600 text-white text-xs font-extrabold whitespace-nowrap">
+                {tr(lang, `الحصة ${nextUpDay} — دورك الحالي`, `Séance ${nextUpDay} — À votre tour`, `Session ${nextUpDay} — Up Next`)}
+              </span>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-300">
+                {state.trainingDaysLabels[nextUpDay]}
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-xs font-extrabold mono-num text-teal-600 dark:text-teal-300">
+                {currentDayExs.length} {tr(lang, 'تمارين', 'exercices', 'exercises')} · {currentTotalSets} {tr(lang, 'مجموعة', 'séries', 'sets')}
+              </span>
             </div>
+            <h2 className="text-base sm:text-xl font-extrabold text-slate-900 dark:text-white leading-snug">
+              {tr(lang, currentMeta.titleAr, currentMeta.titleFr, currentMeta.titleEn)}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-300">
+              {tr(lang, currentMeta.focusAr, currentMeta.focusFr, currentMeta.focusEn)}
+            </p>
           </div>
 
-          {/* Program Mode Switch (Joint-Safe vs Classic) */}
-          <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-[#0b0f19] p-1 rounded-xl border border-slate-200 dark:border-[#1e293b] text-xs">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {onOpenSettings && (
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                className="inline-flex items-center justify-center gap-1.5 h-11 px-3.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1e293b] hover:border-teal-500 text-xs font-extrabold whitespace-nowrap transition cursor-pointer"
+              >
+                <Settings className="w-4 h-4 text-teal-500 shrink-0" />
+                <span>{tr(lang, 'إعدادات الجدول', 'Réglages', 'Schedule Settings')}</span>
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => onSetProgramMode('joint_safe')}
-              className={`h-8 px-3 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer ${
-                programMode === 'joint_safe'
-                  ? 'bg-teal-600 text-white'
-                  : 'text-slate-600 dark:text-slate-300'
-              }`}
+              onClick={() => onStartDay(nextUpDay)}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-teal-600 hover:bg-teal-500 active:scale-[0.99] text-white text-sm font-extrabold whitespace-nowrap transition cursor-pointer shadow-xs"
             >
-              {tr(lang, 'آمن للمفاصل', 'Joint-Safe', 'Joint-Safe')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetProgramMode('benchmark')}
-              className={`h-8 px-3 rounded-lg font-extrabold whitespace-nowrap transition cursor-pointer ${
-                programMode === 'benchmark'
-                  ? 'bg-sky-600 text-white'
-                  : 'text-slate-600 dark:text-slate-300'
-              }`}
-            >
-              {tr(lang, 'كلاسيكي', 'Classique', 'Classic')}
+              <Play className="w-4 h-4 fill-current shrink-0" />
+              <span>
+                {tr(
+                  lang,
+                  `ابدأ الحصة ${nextUpDay} الآن`,
+                  `Lancer la Séance ${nextUpDay}`,
+                  `Start Session ${nextUpDay} Now`
+                )}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* 4-Session Sequence Launch Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {SEQUENCE_ORDER.map((d) => {
-            const isNextUp = d === nextUpDay;
-            const count = (state.customDayExercises[programMode][d] || []).length;
+        {/* Current Turn Session Exercise List with 6-Color Framing & Full Non-Truncated Titles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          {currentDayExs.map((ex, idx) => {
+            const framePalette = EXERCISE_CARD_FRAMES[idx % EXERCISE_CARD_FRAMES.length];
+            const doneCount = state.exerciseCompletionCounts?.[ex.id] || 0;
+            const prRec = state.prRecords?.[ex.id];
+            const histAvg = computeHistoricalExerciseAverage(ex, state);
+            const isHighlighted = highlightedExId === ex.id;
+
             return (
-              <button
-                key={`SEQ_${d}`}
-                type="button"
-                onClick={() => onStartDay(d)}
-                className={`flex items-center justify-between gap-2 p-3 rounded-xl border text-start transition active:scale-[0.99] cursor-pointer ${
-                  isNextUp
-                    ? 'bg-teal-600 text-white border-teal-500'
-                    : 'bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white border-slate-200 dark:border-[#1e293b] hover:border-teal-500/60'
-                }`}
+              <div
+                key={`${nextUpDay}_${ex.id}`}
+                id={`exercise-card-${ex.id}`}
+                className={`flex items-center justify-between gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-[#0b0f19] border text-xs transition ${
+                  framePalette.cardBorder
+                } ${isHighlighted ? 'ring-2 ring-teal-400 animate-focus-pulse' : ''}`}
               >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs sm:text-sm font-extrabold whitespace-nowrap">
-                      {tr(lang, `الحصة ${d}`, `Séance ${d}`, `Session ${d}`)}
-                    </span>
-                    {isNextUp && (
-                      <span className="px-1.5 py-0.5 rounded bg-white/20 text-white text-[10px] font-extrabold whitespace-nowrap">
-                        {tr(lang, 'دورك', 'À suivre', 'Next')}
-                      </span>
-                    )}
+                <button
+                  type="button"
+                  onClick={() => onOpenExercise(ex.id)}
+                  className="flex items-start gap-2.5 min-w-0 flex-1 text-start group cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] shrink-0">
+                    <ExerciseImage exercise={ex} frameIdx={0} alt={trText(lang, ex.name)} />
                   </div>
-                  <div
-                    className={`text-[11px] truncate mt-0.5 ${
-                      isNextUp ? 'text-white/90' : 'text-slate-500 dark:text-slate-300'
-                    }`}
-                  >
-                    #{SESSION_META[d].seqIndex} · {count} {tr(lang, 'تمارين', 'exercices', 'exercises')}
-                  </div>
-                </div>
-                <Play className={`w-4 h-4 shrink-0 fill-current ${isNextUp ? 'text-white' : 'text-teal-500'}`} />
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Optional Custom Label Mode Toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-[#1e293b] text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(
-              [
-                { id: 'sequence', label: tr(lang, 'تدوير مرن', 'Séquence', 'Sequence') },
-                { id: 'mwf', label: tr(lang, 'إثنين/أربعاء/جمعة', 'Lun/Mer/Ven', 'Mon/Wed/Fri') },
-                { id: 'tts', label: tr(lang, 'ثلاثاء/خميس/سبت', 'Mar/Jeu/Sam', 'Tue/Thu/Sat') },
-                { id: 'custom', label: tr(lang, 'مخصص', 'Perso', 'Custom') },
-              ] as const
-            ).map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => onSetSchedulePreset(p.id)}
-                className={`h-8 px-3 rounded-lg font-bold border whitespace-nowrap transition cursor-pointer ${
-                  state.schedulePreset === p.id
-                    ? 'bg-indigo-600 text-white border-indigo-500'
-                    : 'bg-slate-50 dark:bg-[#0b0f19] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#1e293b] hover:border-indigo-500/50'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <label className="inline-flex items-center gap-2 text-xs font-bold cursor-pointer text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={state.volumeSettings.includeOptionalDayD}
-              onChange={(e) => onToggleOptionalDayD(e.target.checked)}
-              className="w-4 h-4 accent-teal-500 rounded cursor-pointer"
-            />
-            <span>{tr(lang, 'احتساب الحصة D في الحجم الأسبوعي', 'Inclure Séance D dans le volume', 'Include Session D in Weekly Volume')}</span>
-          </label>
-        </div>
-      </div>
-
-      {/* 4. ALL 4 SESSION CARDS (A, B, C, D) IN UNIFIED GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {SEQUENCE_ORDER.map((day) => {
-          const dayIds = state.customDayExercises[programMode][day] || [];
-          const dayExs = dayIds.map((id) => byId.get(id)).filter((e): e is Exercise => Boolean(e));
-          const totalSets = dayExs.reduce((acc, e) => acc + e.sets, 0);
-          const meta = SESSION_META[day];
-          const isNextUp = day === nextUpDay;
-
-          return (
-            <div
-              key={day}
-              className={`rounded-2xl border bg-white dark:bg-[#111827] p-4 flex flex-col justify-between space-y-3.5 transition ${
-                isNextUp
-                  ? 'border-teal-500/80 ring-1 ring-teal-500/30'
-                  : 'border-slate-200 dark:border-[#1e293b]'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-[#1e293b]">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-start gap-1.5">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-extrabold whitespace-nowrap ${
-                          isNextUp
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-slate-100 dark:bg-[#0b0f19] text-sky-600 dark:text-sky-300 border border-slate-200 dark:border-[#1e293b]'
-                        }`}
+                        className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold mono-num shrink-0 ${framePalette.badgeBg}`}
                       >
-                        {isNextUp
-                          ? tr(lang, `الحصة القادمة · ${day}`, `Prochaine Séance · ${day}`, `Next Up · ${day}`)
-                          : tr(lang, `التسلسل #${meta.seqIndex} · ${day}`, `Séquence #${meta.seqIndex} · ${day}`, `Sequence #${meta.seqIndex} · ${day}`)}
+                        #{idx + 1}
                       </span>
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">
-                        {state.trainingDaysLabels[day]}
+                      <span className="font-extrabold text-slate-900 dark:text-white break-words leading-snug group-hover:text-teal-500 transition">
+                        {trText(lang, ex.name)}
                       </span>
                     </div>
 
-                    {state.schedulePreset === 'custom' ? (
-                      <input
-                        type="text"
-                        value={state.trainingDaysLabels[day]}
-                        onChange={(e) => onUpdateDayLabel(day, e.target.value)}
-                        className="mt-1.5 block w-full h-8 px-2.5 text-xs font-bold rounded-lg border border-slate-300 dark:border-[#1e293b] bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white"
-                      />
-                    ) : (
-                      <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white mt-1 truncate">
-                        {tr(lang, meta.titleAr, meta.titleFr, meta.titleEn)}
-                      </h3>
-                    )}
-                    <p className="text-[11px] text-slate-500 dark:text-slate-300 truncate">
-                      {tr(lang, meta.focusAr, meta.focusFr, meta.focusEn)}
-                    </p>
+                    {/* Sub-Line Badges (Equipment, Sets×Reps, Historical Avg, PR, Done Count) */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-300 mono-num">
+                      <span>
+                        {ex.sets}×{ex.repsLabel} · <strong className={framePalette.accentText}>{ex.equipment}</strong>
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-300 text-[10px] font-extrabold">
+                        📊 {histAvg.avgWeightKg}kg × {histAvg.avgReps}
+                      </span>
+                      {doneCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-300 text-[10px] font-extrabold">
+                          {doneCount}×
+                        </span>
+                      )}
+                      {prRec && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-300 text-[10px] font-extrabold">
+                          <Trophy className="w-2.5 h-2.5" /> {prRec.bestWeightKg}kg
+                        </span>
+                      )}
+                    </div>
                   </div>
+                </button>
 
-                  <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-xs font-extrabold mono-num text-teal-600 dark:text-teal-300 whitespace-nowrap shrink-0">
-                    {totalSets} {tr(lang, 'مجموعة', 'séries', 'sets')}
-                  </span>
-                </div>
-
-                {/* Exercise Rows with Reference Photo Thumbnails + Completion & PR Badges */}
-                <div className="space-y-1.5">
-                  {dayExs.map((ex, idx) => {
-                    const doneCount = state.exerciseCompletionCounts?.[ex.id] || 0;
-                    const prRec = state.prRecords?.[ex.id];
-                    return (
-                      <div
-                        key={`${day}_${ex.id}`}
-                        className="grid grid-cols-[1fr_auto] items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200/80 dark:border-[#1e293b] text-xs hover:border-teal-500/60 transition"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => onOpenExercise(ex.id)}
-                          className="flex items-center gap-2.5 min-w-0 text-start group cursor-pointer"
-                        >
-                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] shrink-0">
-                            <ExerciseImage exercise={ex} frameIdx={0} alt={trText(lang, ex.name)} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="font-extrabold text-slate-900 dark:text-white truncate group-hover:text-teal-500 transition">
-                                {idx + 1}. {trText(lang, ex.name)}
-                              </span>
-                              {doneCount > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-300 text-[10px] font-extrabold mono-num whitespace-nowrap shrink-0">
-                                  {doneCount}×
-                                </span>
-                              )}
-                              {prRec && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-300 text-[10px] font-extrabold mono-num whitespace-nowrap shrink-0">
-                                  <Trophy className="w-2.5 h-2.5" /> {prRec.bestWeightKg}kg
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-300 mono-num truncate">
-                              {ex.sets}×{ex.repsLabel} · <span className="text-sky-600 dark:text-sky-300 font-bold">{ex.equipment}</span> · {ex.rirLabel}
-                            </div>
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onOpenSwap(ex.id)}
-                          aria-label={`Swap ${trText(lang, ex.name)}`}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-indigo-500 hover:bg-white dark:hover:bg-[#111827] border border-transparent hover:border-slate-200 dark:hover:border-[#1e293b] transition cursor-pointer"
-                          title={tr(lang, 'بديل', 'Swap', 'Swap')}
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onOpenSwap(ex.id)}
+                  aria-label={`Swap ${trText(lang, ex.name)}`}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-indigo-500 hover:bg-white dark:hover:bg-[#111827] border border-slate-200 dark:border-[#1e293b] transition cursor-pointer shrink-0"
+                  title={tr(lang, 'بديل', 'Swap', 'Swap')}
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
               </div>
+            );
+          })}
+        </div>
+      </section>
 
+      {/* 4. COMPACT DRAWER TO BROWSE OR LAUNCH OTHER SESSIONS (A · C · D) */}
+      <div className="rounded-2xl border border-slate-200 dark:border-[#1e293b] bg-white dark:bg-[#111827] p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-sky-500 shrink-0" />
+            <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+              {tr(
+                lang,
+                'استعراض أو بدء باقي الحصص في الجدول:',
+                'Consulter ou lancer une autre séance :',
+                'Browse or Launch Other Sessions:'
+              )}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {otherDays.map((d) => {
+              const isSelected = previewOtherDay === d;
+              const exCount = (state.customDayExercises[programMode][d] || []).length;
+              return (
+                <button
+                  key={`OTHER_TAB_${d}`}
+                  type="button"
+                  onClick={() => setPreviewOtherDay((prev) => (prev === d ? null : d))}
+                  className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-extrabold transition cursor-pointer ${
+                    isSelected
+                      ? 'bg-sky-600 text-white border-sky-500'
+                      : 'bg-slate-100 dark:bg-[#0b0f19] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#1e293b] hover:border-sky-500'
+                  }`}
+                >
+                  <span>{tr(lang, `الحصة ${d}`, `Séance ${d}`, `Session ${d}`)}</span>
+                  <span className="text-[10px] opacity-80 mono-num">({exCount})</span>
+                  {isSelected ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {previewOtherDay && (
+          <div className="rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] p-3.5 space-y-3 animate-view-in">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-[#1e293b]">
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  {tr(
+                    lang,
+                    SESSION_META[previewOtherDay].titleAr,
+                    SESSION_META[previewOtherDay].titleFr,
+                    SESSION_META[previewOtherDay].titleEn
+                  )}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-300">
+                  {tr(
+                    lang,
+                    SESSION_META[previewOtherDay].focusAr,
+                    SESSION_META[previewOtherDay].focusFr,
+                    SESSION_META[previewOtherDay].focusEn
+                  )}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => onStartDay(day)}
-                className={`w-full h-10 px-4 rounded-xl text-xs font-extrabold inline-flex items-center justify-center gap-2 whitespace-nowrap transition cursor-pointer ${
-                  isNextUp
-                    ? 'bg-teal-600 hover:bg-teal-500 text-white'
-                    : 'bg-slate-900 dark:bg-[#1e293b] hover:bg-teal-600 text-white border border-slate-800 dark:border-[#334155]'
-                }`}
+                onClick={() => onStartDay(previewOtherDay)}
+                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-extrabold whitespace-nowrap transition cursor-pointer"
               >
-                <Play className="w-4 h-4 fill-current shrink-0" />
+                <Play className="w-3.5 h-3.5 fill-current" />
                 <span>
-                  {isNextUp
-                    ? tr(lang, `ابدأ الحصة ${day} (الدور الحالي)`, `Lancer Séance ${day}`, `Start Session ${day} (Next Up)`)
-                    : tr(lang, `ابدأ الحصة ${day}`, `Lancer Séance ${day}`, `Start Session ${day}`)}
+                  {tr(
+                    lang,
+                    `بدء الحصة ${previewOtherDay}`,
+                    `Lancer Séance ${previewOtherDay}`,
+                    `Start Session ${previewOtherDay}`
+                  )}
                 </span>
               </button>
             </div>
-          );
-        })}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {(state.customDayExercises[programMode][previewOtherDay] || [])
+                .map((id) => byId.get(id))
+                .filter((e): e is Exercise => Boolean(e))
+                .map((ex, i) => (
+                  <button
+                    key={`${previewOtherDay}_PREV_${ex.id}`}
+                    type="button"
+                    onClick={() => onOpenExercise(ex.id)}
+                    className="flex items-center gap-2.5 p-2 rounded-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-[#1e293b] hover:border-sky-500 text-start text-xs transition cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-slate-200 dark:border-[#1e293b] shrink-0">
+                      <ExerciseImage exercise={ex} frameIdx={0} alt={trText(lang, ex.name)} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-extrabold text-slate-900 dark:text-white break-words leading-snug">
+                        {i + 1}. {trText(lang, ex.name)}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mono-num">
+                        {ex.sets}×{ex.repsLabel} · {ex.equipment}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Non-medical Disclaimer Strip */}

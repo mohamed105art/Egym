@@ -111,75 +111,95 @@ export const MuscleMap14: React.FC<MuscleMap14Props> = ({
     (ex) => ex.primaryMuscle === selectedZone.key || ex.secondaryMuscles.includes(selectedZone.key)
   );
 
+  const [showInlineCalibration, setShowInlineCalibration] = React.useState(false);
+
   return (
     <div className="space-y-4">
-      {/* Volume Calibration Controls — Solid Clean Card */}
-      <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] p-4 space-y-3 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-teal-400" />
-            <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-              {tr(lang, 'إعدادات احتساب الحجم العضلي الأسبوعي', 'Paramètres de Calcul du Volume', 'Weekly Volume Calibration')}
-            </h3>
-          </div>
-          <label className="inline-flex items-center gap-2 text-xs font-bold cursor-pointer select-none text-slate-700 dark:text-slate-200">
-            <input
-              type="checkbox"
-              checked={volumeSettings.includeOptionalDayD}
-              onChange={(e) => onUpdateVolumeSettings({ includeOptionalDayD: e.target.checked })}
-              className="w-4 h-4 accent-teal-500 rounded cursor-pointer"
-            />
-            <span>
-              {tr(lang, 'تضمين اليوم التكميلي الاختياري D', 'Inclure Jour D optionnel', 'Include Optional Bonus Day D')}
+      {/* Compact 1-Line Volume Summary Bar (Full settings also available in ⚙️ الإعدادات) */}
+      <div className="rounded-2xl border border-slate-200 dark:border-[#24324F] bg-white dark:bg-[#131C31] px-3.5 py-2.5 space-y-2.5 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-teal-400 shrink-0" />
+            <span className="font-extrabold text-slate-900 dark:text-white">
+              {tr(lang, 'معايرة الحجم الأسبوعي:', 'Calibrage du volume :', 'Volume Calibration:')}
             </span>
-          </label>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="space-y-1.5">
-            <span className="font-bold text-slate-600 dark:text-slate-200 block">
-              {tr(lang, 'معامل المجموعات غير المباشرة (Synergist):', 'Pondération des séries indirectes :', 'Indirect / Synergist Set Weighting:')}
+            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-[#0B1120] border border-slate-200 dark:border-[#24324F] font-extrabold mono-num text-teal-600 dark:text-teal-300">
+              {volumeSettings.includeOptionalDayD ? 'A + B + C + D' : 'A + B + C'} · Synergist {volumeSettings.indirectCoefficient}x · RIR ≤ {volumeSettings.minProximityRir}
             </span>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[0, 0.25, 0.5, 1.0].map((coeff) => (
-                <button
-                  key={coeff}
-                  type="button"
-                  onClick={() => onUpdateVolumeSettings({ indirectCoefficient: coeff })}
-                  className={`h-9 px-2 rounded-xl font-extrabold mono-num border transition cursor-pointer ${
-                    volumeSettings.indirectCoefficient === coeff
-                      ? 'bg-teal-600 text-white border-teal-500 shadow-xs'
-                      : 'bg-slate-50 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#24324F] hover:border-teal-500'
-                  }`}
-                >
-                  {coeff}x
-                </button>
-              ))}
-            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <span className="font-bold text-slate-600 dark:text-slate-200 block">
-              {tr(lang, 'عتبة القرب من الفشل لاحتساب المجموعة (RIR ≤):', 'Seuil d’effort RIR ≤ :', 'Effective Set Proximity (RIR ≤):')}
-            </span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[2, 3, 4].map((rirMax) => (
-                <button
-                  key={rirMax}
-                  type="button"
-                  onClick={() => onUpdateVolumeSettings({ minProximityRir: rirMax })}
-                  className={`h-9 px-2 rounded-xl font-extrabold mono-num border transition cursor-pointer ${
-                    volumeSettings.minProximityRir === rirMax
-                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
-                      : 'bg-slate-50 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#24324F] hover:border-indigo-500'
-                  }`}
-                >
-                  ≤ {rirMax} RIR
-                </button>
-              ))}
+          <button
+            type="button"
+            onClick={() => setShowInlineCalibration((v) => !v)}
+            className="h-8 px-3 rounded-xl bg-slate-100 dark:bg-[#0B1120] hover:border-teal-500 border border-slate-200 dark:border-[#24324F] text-xs font-extrabold text-teal-600 dark:text-teal-300 transition cursor-pointer"
+          >
+            {showInlineCalibration
+              ? tr(lang, 'إخفاء المعايرة', 'Masquer', 'Hide')
+              : tr(lang, 'تعديل سريع ⚙️', 'Ajuster ⚙️', 'Quick Adjust ⚙️')}
+          </button>
+        </div>
+
+        {showInlineCalibration && (
+          <div className="pt-2 border-t border-slate-100 dark:border-[#24324F] space-y-2.5 text-xs">
+            <label className="inline-flex items-center gap-2 font-bold cursor-pointer select-none text-slate-700 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={volumeSettings.includeOptionalDayD}
+                onChange={(e) => onUpdateVolumeSettings({ includeOptionalDayD: e.target.checked })}
+                className="w-4 h-4 accent-teal-500 rounded cursor-pointer"
+              />
+              <span>
+                {tr(lang, 'تضمين اليوم التكميلي الاختياري D', 'Inclure Jour D optionnel', 'Include Optional Bonus Day D')}
+              </span>
+            </label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <span className="font-bold text-slate-600 dark:text-slate-200 block">
+                  {tr(lang, 'معامل العضلات المساعدة (Synergist):', 'Pondération indirecte :', 'Synergist Weighting:')}
+                </span>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[0, 0.25, 0.5, 1.0].map((coeff) => (
+                    <button
+                      key={coeff}
+                      type="button"
+                      onClick={() => onUpdateVolumeSettings({ indirectCoefficient: coeff })}
+                      className={`h-8 px-2 rounded-xl font-extrabold mono-num border transition cursor-pointer ${
+                        volumeSettings.indirectCoefficient === coeff
+                          ? 'bg-teal-600 text-white border-teal-500'
+                          : 'bg-slate-50 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#24324F]'
+                      }`}
+                    >
+                      {coeff}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="font-bold text-slate-600 dark:text-slate-200 block">
+                  {tr(lang, 'عتبة القرب من الفشل (RIR ≤):', 'Seuil RIR ≤ :', 'Proximity (RIR ≤):')}
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[2, 3, 4].map((rirMax) => (
+                    <button
+                      key={rirMax}
+                      type="button"
+                      onClick={() => onUpdateVolumeSettings({ minProximityRir: rirMax })}
+                      className={`h-8 px-2 rounded-xl font-extrabold mono-num border transition cursor-pointer ${
+                        volumeSettings.minProximityRir === rirMax
+                          ? 'bg-indigo-600 text-white border-indigo-500'
+                          : 'bg-slate-50 dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-[#24324F]'
+                      }`}
+                    >
+                      ≤ {rirMax} RIR
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Main Split: Front/Back Anatomical SVG + Selected Muscle Inspector */}

@@ -135,6 +135,14 @@ export interface SetLog {
   isWarmup: boolean;
   done: boolean;
   timestamp?: string;
+  note?: string;
+}
+
+export interface ExerciseSessionHistorySummary {
+  lastSessionDate: string;
+  avgWeightKg: number;
+  avgReps: number;
+  setsCount: number;
 }
 
 export interface WorkoutSessionRecord {
@@ -220,6 +228,7 @@ export interface TimerPersistState {
   running: boolean;
   audioEnabled: boolean;
   hapticsEnabled: boolean;
+  activeContextKey?: string | null; // e.g. "EX01_S1" links inline workout rest bar with top header timer
 }
 
 export interface ScientificStudy {
@@ -289,6 +298,7 @@ export interface AppState {
   workoutLogs: Record<string, SetLog>;
   exerciseCompletionCounts?: Record<string, number>;
   prRecords?: Record<string, PersonalRecordEntry>;
+  exerciseHistory?: Record<string, ExerciseSessionHistorySummary>;
   sessionHistory: WorkoutSessionRecord[];
   jointResponseLogs: JointResponseLog[];
   measurements: BodyMeasurement[];

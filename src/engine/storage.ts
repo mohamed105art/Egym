@@ -3,6 +3,7 @@ import { PRESET_MEAL_PLANS } from '../data/nutrition';
 import {
   AppState,
   Exercise,
+  ExerciseSessionHistorySummary,
   GoalMode,
   MealBlock,
   PersonalRecordEntry,
@@ -23,11 +24,121 @@ export function getNextSequenceDay(completedDay: WorkoutDayKey): WorkoutDayKey {
 }
 
 /**
- * Smart Set Carry-Over & Integer Weight Enforcement:
+ * Computes integer average weight and average reps from an array of completed working sets.
+ * Example: sets with weights [10, 12, 14] and reps [10, 10, 10] -> { avgWeightKg: 12, avgReps: 10, setsCount: 3 }
+ */
+export function computeCompletedSetsAverage(
+  completedWorkingSets: { weight: number; reps: number }[]
+): { avgWeightKg: number; avgReps: number; setsCount: number } | null {
+  const valid = completedWorkingSets.filter((s) => s.weight >= 0 && s.reps > 0);
+  if (valid.length === 0) return null;
+  const sumW = valid.reduce((acc, s) => acc + Math.max(0, Math.round(s.weight)), 0);
+  const sumR = valid.reduce((acc, s) => acc + Math.max(1, Math.round(s.reps)), 0);
+  return {
+    avgWeightKg: Math.max(0, Math.round(sumW / valid.length)),
+    avgReps: Math.max(1, Math.round(sumR / valid.length)),
+    setsCount: valid.length,
+  };
+}
+
+/**
+ * Resolves the historical session average for an exercise from the user's last completed session
+ * (or falls back to stored PR records / default exercise prescription).
+ */
+export function computeHistoricalExerciseAverage(
+  ex: Exercise,
+  state: Pick<AppState, 'exerciseHistory' | 'prRecords'>
+): {
+  hasHistory: boolean;
+  avgWeightKg: number;
+  avgReps: number;
+  lastSessionDate: string | null;
+} {
+  const hist = state.exerciseHistory?.[ex.id];
+  if (hist && hist.avgWeightKg >= 0 && hist.avgReps > 0) {
+    return {
+      hasHistory: true,
+      avgWeightKg: Math.max(0, Math.round(hist.avgWeightKg)),
+      avgReps: Math.max(1, Math.round(hist.avgReps)),
+      lastSessionDate: hist.lastSessionDate,
+    };
+  }
+
+  const pr = state.prRecords?.[ex.id];
+  if (pr && pr.bestWeightKg > 0) {
+    return {
+      hasHistory: true,
+      avgWeightKg: Math.max(0, Math.round(pr.bestWeightKg)),
+      avgReps: Math.max(1, Math.round(pr.bestReps || ex.repMin)),
+      lastSessionDate: pr.achievedAt || null,
+    };
+  }
+
+  return {
+    hasHistory: false,
+    avgWeightKg: Math.max(0, Math.round(ex.defaultWeightKg)),
+    avgReps: ex.repMin,
+    lastSessionDate: null,
+  };
+}
+
+/**
+ * Resolves a set's effective log using strict cascading inheritance (S_n <- S_{n-1}):
+ * - If S_n is explicitly logged in `workoutLogs`, returns its sanitized values.
+ * - Otherwise walks backwards (S_{n-1}, S_{n-2}, ..., S_1) and inherits the nearest preceding set's weight & reps.
+ * - If S_1 itself is not yet logged, pre-fills S_1 with the historical session average (`avgWeightKg` × `avgReps`).
+ */
+export function resolveEffectiveSetLog(
+  ex: Exercise,
+  setNum: number,
+  workoutLogs: Record<string, SetLog>,
+  historicalAvg?: { avgWeightKg: number; avgReps: number }
+): SetLog {
+  const key = `${ex.id}_S${setNum}`;
+  const existing = workoutLogs[key];
+  if (existing) {
+    return {
+      ...existing,
+      weight: Math.max(0, Math.round(existing.weight)),
+      reps: Math.max(1, Math.round(existing.reps)),
+    };
+  }
+
+  for (let prev = setNum - 1; prev >= 1; prev--) {
+    const prevLog = workoutLogs[`${ex.id}_S${prev}`];
+    if (prevLog) {
+      return {
+        weight: Math.max(0, Math.round(prevLog.weight)),
+        reps: Math.max(1, Math.round(prevLog.reps)),
+        rir: ex.targetRir,
+        isWarmup: false,
+        done: false,
+      };
+    }
+  }
+
+  const fallbackWeight = Math.max(
+    0,
+    Math.round(historicalAvg?.avgWeightKg ?? ex.defaultWeightKg)
+  );
+  const fallbackReps = Math.max(1, Math.round(historicalAvg?.avgReps ?? ex.repMin));
+
+  return {
+    weight: fallbackWeight,
+    reps: fallbackReps,
+    rir: ex.targetRir,
+    isWarmup: false,
+    done: false,
+  };
+}
+
+/**
+ * Cascading Set Auto-Fill (S_n <- S_{n-1}) & Integer Weight Enforcement:
  * - Rounds all weights to whole integer kilograms (`Math.max(0, Math.round(weight))`).
- * - When the user updates Set 1 (`setNum === 1`) weight or reps, automatically propagates
- *   those values as defaults to subsequent sets (`S2..Sn`) that are not yet marked `done`.
- * - Subsequent sets (`S2`, `S3`, ...) can still be edited independently at any time.
+ * - When the user updates ANY set `setNum` (S1, S2, S3...) weight or reps, automatically
+ *   cascades those updated values forward to subsequent sets (`S_{setNum+1}..S_{ex.sets}`)
+ *   that are not yet marked `done`.
+ * - Example: S1 = 10kg -> S2 & S3 become 10kg. User edits S2 to 12kg x 12 -> S3 automatically becomes 12kg x 12.
  */
 export function applySmartSetCarryOver(
   workoutLogs: Record<string, SetLog>,
@@ -35,40 +146,39 @@ export function applySmartSetCarryOver(
   setNum: number,
   nextLog: SetLog
 ): Record<string, SetLog> {
-  const sanitizedPrimary: SetLog = {
+  const sanitizedCurrent: SetLog = {
     ...nextLog,
     weight: Math.max(0, Math.round(nextLog.weight || 0)),
     reps: Math.max(1, Math.round(nextLog.reps || ex.repMin)),
   };
 
-  const primaryKey = `${ex.id}_S${setNum}`;
-  const prevPrimary = workoutLogs[primaryKey];
+  const currentKey = `${ex.id}_S${setNum}`;
+  const prevCurrent = workoutLogs[currentKey];
   const updatedLogs: Record<string, SetLog> = {
     ...workoutLogs,
-    [primaryKey]: sanitizedPrimary,
+    [currentKey]: sanitizedCurrent,
   };
 
-  if (setNum === 1) {
-    const weightOrRepsChanged =
-      !prevPrimary ||
-      Math.round(prevPrimary.weight) !== sanitizedPrimary.weight ||
-      prevPrimary.reps !== sanitizedPrimary.reps;
+  const weightOrRepsChanged =
+    !prevCurrent ||
+    Math.round(prevCurrent.weight) !== sanitizedCurrent.weight ||
+    prevCurrent.reps !== sanitizedCurrent.reps;
 
-    if (weightOrRepsChanged) {
-      for (let s = 2; s <= ex.sets; s++) {
-        const subKey = `${ex.id}_S${s}`;
-        const existingSub = updatedLogs[subKey];
-        if (!existingSub || !existingSub.done) {
-          updatedLogs[subKey] = {
-            weight: sanitizedPrimary.weight,
-            reps: sanitizedPrimary.reps,
-            rir: existingSub?.rir ?? ex.targetRir,
-            actualRir: existingSub?.actualRir,
-            isWarmup: existingSub?.isWarmup ?? false,
-            done: false,
-            timestamp: existingSub?.timestamp,
-          };
-        }
+  if (weightOrRepsChanged && setNum < ex.sets) {
+    for (let s = setNum + 1; s <= ex.sets; s++) {
+      const subKey = `${ex.id}_S${s}`;
+      const existingSub = updatedLogs[subKey];
+      if (!existingSub || !existingSub.done) {
+        updatedLogs[subKey] = {
+          weight: sanitizedCurrent.weight,
+          reps: sanitizedCurrent.reps,
+          rir: existingSub?.rir ?? ex.targetRir,
+          actualRir: existingSub?.actualRir,
+          isWarmup: existingSub?.isWarmup ?? false,
+          done: false,
+          timestamp: existingSub?.timestamp,
+          note: existingSub?.note,
+        };
       }
     }
   }
@@ -490,6 +600,11 @@ export function createDefaultAppState(): AppState {
       EX03: { bestWeightKg: 140, bestReps: 11, bestE1rm: 191.3, achievedAt: date5DaysAgo },
       EX07: { bestWeightKg: 32, bestReps: 10, bestE1rm: 42.0, achievedAt: date5DaysAgo },
     },
+    exerciseHistory: {
+      EX01: { lastSessionDate: date5DaysAgo, avgWeightKg: 26, avgReps: 10, setsCount: 3 },
+      EX03: { lastSessionDate: date5DaysAgo, avgWeightKg: 140, avgReps: 10, setsCount: 3 },
+      EX07: { lastSessionDate: date5DaysAgo, avgWeightKg: 32, avgReps: 10, setsCount: 3 },
+    },
     customMeals: JSON.parse(JSON.stringify(PRESET_MEAL_PLANS)) as { training: MealBlock[]; rest: MealBlock[] },
     timer: {
       durationSec: 90,
@@ -498,6 +613,7 @@ export function createDefaultAppState(): AppState {
       running: false,
       audioEnabled: true,
       hapticsEnabled: true,
+      activeContextKey: null,
     },
   };
 }
@@ -629,6 +745,7 @@ export function migrateState(raw: unknown): AppState {
           isWarmup: Boolean(entry.isWarmup),
           done: Boolean(entry.done),
           timestamp: typeof entry.timestamp === 'string' ? entry.timestamp : undefined,
+          note: typeof entry.note === 'string' ? entry.note : undefined,
         };
       }
     }
@@ -726,6 +843,25 @@ export function migrateState(raw: unknown): AppState {
     base.prRecords = cleanPrs;
   }
 
+  if (r.exerciseHistory && typeof r.exerciseHistory === 'object') {
+    const rawHist = r.exerciseHistory as Record<string, unknown>;
+    const cleanHist: Record<string, ExerciseSessionHistorySummary> = { ...base.exerciseHistory };
+    for (const [exId, entry] of Object.entries(rawHist)) {
+      if (entry && typeof entry === 'object') {
+        const e = entry as Record<string, unknown>;
+        if (typeof e.avgWeightKg === 'number' && typeof e.avgReps === 'number') {
+          cleanHist[exId] = {
+            lastSessionDate: typeof e.lastSessionDate === 'string' ? e.lastSessionDate : new Date().toISOString().slice(0, 10),
+            avgWeightKg: Math.max(0, Math.round(e.avgWeightKg)),
+            avgReps: Math.max(1, Math.round(e.avgReps)),
+            setsCount: typeof e.setsCount === 'number' ? Math.max(1, Math.round(e.setsCount)) : 3,
+          };
+        }
+      }
+    }
+    base.exerciseHistory = cleanHist;
+  }
+
   if (r.customMeals && typeof r.customMeals === 'object') {
     const cm = r.customMeals as Record<string, unknown>;
     base.customMeals = {
@@ -747,6 +883,7 @@ export function migrateState(raw: unknown): AppState {
       running: Boolean(t.running),
       audioEnabled: t.audioEnabled !== false,
       hapticsEnabled: t.hapticsEnabled !== false,
+      activeContextKey: typeof t.activeContextKey === 'string' ? t.activeContextKey : null,
     };
   }
 

@@ -160,6 +160,18 @@ html.dark {
   }
 }
 
+@keyframes focusPulseCard {
+  0% {
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(20, 184, 166, 0.25);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+  }
+}
+
 @layer utilities {
   .animate-view-in {
     animation: appViewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -175,6 +187,22 @@ html.dark {
 
   .animate-toast-pop {
     animation: appToastPop 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-focus-pulse {
+    animation: focusPulseCard 1200ms cubic-bezier(0.16, 1, 0.3, 1) 1;
+  }
+
+  .modal-sheet-dvh {
+    max-height: 88dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .safe-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .app-card {

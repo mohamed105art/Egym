@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
   BellRing,
-  BookOpen,
   Download,
   Dumbbell,
   GitCompare,
@@ -11,6 +10,7 @@ import {
   Play,
   RefreshCw,
   RotateCcw,
+  Settings,
   Smartphone,
   Sun,
   Timer,
@@ -25,6 +25,7 @@ import { ExercisesView } from './components/ExercisesView';
 import {
   ExerciseDetailModal,
   PhotoLightboxModal,
+  SettingsModal,
   SubstitutionModal,
 } from './components/Modals';
 import { NutritionView } from './components/NutritionView';
@@ -34,6 +35,7 @@ import { EXERCISES_DB } from './data/exercises';
 import { tr } from './engine/i18n';
 import {
   applySmartSetCarryOver,
+  computeCompletedSetsAverage,
   createBackupExportPayload,
   getNextSequenceDay,
   loadSavedState,
@@ -79,6 +81,8 @@ export default function App() {
   const [detailExId, setDetailExId] = useState<string | null>(null);
   const [lightboxExId, setLightboxExId] = useState<string | null>(null);
   const [swapSourceExId, setSwapSourceExId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [highlightedExId, setHighlightedExId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [restCompleteFlash, setRestCompleteFlash] = useState(false);
 
@@ -86,13 +90,79 @@ export default function App() {
   const { isInstallable, isInstalled, install } = usePWAInstall();
   const toastTimerRef = useRef<number | null>(null);
   const restFlashRef = useRef<number | null>(null);
+  const highlightTimerRef = useRef<number | null>(null);
   const quickImportInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Scroll & Focus Lock Refs (Section ثانياً - 2)
+  const savedScrollYRef = useRef<number>(0);
+  const lastFocusedExIdRef = useRef<string | null>(null);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => setToast(null), 3800);
   }, []);
+
+  /**
+   * Captures the exact scroll position and focused exercise card ID before opening any modal
+   */
+  const captureScrollAndFocus = useCallback((exId: string) => {
+    savedScrollYRef.current = window.scrollY;
+    lastFocusedExIdRef.current = exId;
+  }, []);
+
+  /**
+   * Restores the exact scroll position and highlights the focused exercise card upon modal close
+   */
+  const restoreScrollAndFocus = useCallback(() => {
+    const targetExId = lastFocusedExIdRef.current;
+    const savedY = savedScrollYRef.current;
+
+    window.requestAnimationFrame(() => {
+      const cardEl = targetExId ? document.getElementById(`exercise-card-${targetExId}`) : null;
+      if (cardEl) {
+        const rect = cardEl.getBoundingClientRect();
+        const isVisible = rect.top >= 56 && rect.bottom <= window.innerHeight - 56;
+        if (!isVisible) {
+          window.scrollTo({ top: savedY, behavior: 'auto' });
+        }
+      } else {
+        window.scrollTo({ top: savedY, behavior: 'auto' });
+      }
+
+      if (targetExId) {
+        setHighlightedExId(targetExId);
+        if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current);
+        highlightTimerRef.current = window.setTimeout(() => {
+          setHighlightedExId(null);
+        }, 1800);
+      }
+    });
+  }, []);
+
+  const openExerciseDetailWithLock = useCallback(
+    (exId: string) => {
+      captureScrollAndFocus(exId);
+      setDetailExId(exId);
+    },
+    [captureScrollAndFocus]
+  );
+
+  const openLightboxWithLock = useCallback(
+    (exId: string) => {
+      captureScrollAndFocus(exId);
+      setLightboxExId(exId);
+    },
+    [captureScrollAndFocus]
+  );
+
+  const openSwapWithLock = useCallback(
+    (exId: string) => {
+      captureScrollAndFocus(exId);
+      setSwapSourceExId(exId);
+    },
+    [captureScrollAndFocus]
+  );
 
   // Sync <html lang dir class="dark|light"> & save to localStorage
   useEffect(() => {
@@ -107,7 +177,7 @@ export default function App() {
     }
   }, [state]);
 
-  // Timestamp-resilient Rest Timer with Vibration API + Visual Alert
+  // Unified Timestamp-resilient Rest Timer Engine (Top Bar + Inline Set Timer)
   useEffect(() => {
     if (!state.timer.running || !state.timer.endMs) return;
 
@@ -139,6 +209,7 @@ export default function App() {
             running: false,
             endMs: null,
             remainingSec: prev.timer.durationSec,
+            activeContextKey: null,
           },
         }));
         showToast(
@@ -177,7 +248,7 @@ export default function App() {
     showToast,
   ]);
 
-  const startRestTimer = useCallback((seconds: number) => {
+  const startRestTimer = useCallback((seconds: number, contextKey?: string) => {
     const dur = Math.max(15, Math.min(600, Math.round(seconds)));
     setRestCompleteFlash(false);
     setState((prev) => ({
@@ -188,6 +259,39 @@ export default function App() {
         remainingSec: dur,
         endMs: Date.now() + dur * 1000,
         running: true,
+        activeContextKey: contextKey ?? prev.timer.activeContextKey ?? null,
+      },
+    }));
+  }, []);
+
+  const adjustRestTimer = useCallback((deltaSec: number) => {
+    setRestCompleteFlash(false);
+    setState((prev) => {
+      const currentRem = prev.timer.endMs
+        ? Math.max(0, Math.ceil((prev.timer.endMs - Date.now()) / 1000))
+        : prev.timer.remainingSec;
+      const nextRem = Math.max(5, Math.min(600, currentRem + deltaSec));
+      return {
+        ...prev,
+        timer: {
+          ...prev.timer,
+          remainingSec: nextRem,
+          endMs: prev.timer.running ? Date.now() + nextRem * 1000 : null,
+        },
+      };
+    });
+  }, []);
+
+  const skipRestTimer = useCallback(() => {
+    setRestCompleteFlash(false);
+    setState((prev) => ({
+      ...prev,
+      timer: {
+        ...prev.timer,
+        running: false,
+        endMs: null,
+        remainingSec: prev.timer.durationSec,
+        activeContextKey: null,
       },
     }));
   }, []);
@@ -226,6 +330,7 @@ export default function App() {
         running: false,
         endMs: null,
         remainingSec: prev.timer.durationSec,
+        activeContextKey: null,
       },
     }));
   };
@@ -346,6 +451,7 @@ export default function App() {
         },
       };
     });
+    lastFocusedExIdRef.current = newId;
     showToast(
       tr(
         state.lang,
@@ -389,129 +495,50 @@ export default function App() {
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
-  // Curated 5-Color Harmonious Web Palette Navigation Meta (Gateway Dashboard)
   const navItems: {
     id: MainTab;
-    step: string;
     label: string;
     shortLabel: string;
-    subtitle: string;
     icon: React.ReactNode;
     activeBgClass: string;
-    iconBadgeClass: string;
     mobileTextClass: string;
     mobileActivePill: string;
   }[] = [
     {
       id: 'home',
-      step: '1',
       label: tr(state.lang, 'حصتي التدريبية', 'Ma Séance', 'My Workout'),
       shortLabel: tr(state.lang, 'الحصص', 'Séance', 'Workout'),
-      subtitle: tr(state.lang, 'A→B→C→D وتعبئة S1', 'Séquence & S1', 'A→B→C→D & S1'),
       icon: <Dumbbell className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-teal-600 text-white border-teal-500 shadow-sm',
-      iconBadgeClass: 'bg-teal-500/15 text-teal-600 dark:text-teal-300',
+      activeBgClass: 'bg-teal-600 text-white border-teal-500 shadow-xs',
       mobileTextClass: 'text-teal-500 dark:text-teal-400',
       mobileActivePill: 'bg-teal-500/15 text-teal-500 dark:text-teal-300',
     },
     {
       id: 'exercises',
-      step: '2',
       label: tr(state.lang, 'التمارين والمقارنة', 'Exercices & Comparer', 'Exercises & Compare'),
       shortLabel: tr(state.lang, 'التمارين', 'Exercices', 'Exercises'),
-      subtitle: tr(state.lang, '32 تمريناً والعضلات', '32 Guides & Carte', '32 Guides & Map'),
       icon: <Activity className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-sky-600 text-white border-sky-500 shadow-sm',
-      iconBadgeClass: 'bg-sky-500/15 text-sky-600 dark:text-sky-300',
+      activeBgClass: 'bg-sky-600 text-white border-sky-500 shadow-xs',
       mobileTextClass: 'text-sky-500 dark:text-sky-400',
       mobileActivePill: 'bg-sky-500/15 text-sky-500 dark:text-sky-300',
     },
     {
       id: 'nutrition',
-      step: '3',
       label: tr(state.lang, 'التغذية والوجبات', 'Nutrition & Repas', 'Meals & Macros'),
       shortLabel: tr(state.lang, 'التغذية', 'Nutrition', 'Nutrition'),
-      subtitle: tr(state.lang, 'حاسبة الماكروز والوجبات', 'Macros & Repas', 'Macros & Meals'),
       icon: <Utensils className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-emerald-600 text-white border-emerald-500 shadow-sm',
-      iconBadgeClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
+      activeBgClass: 'bg-emerald-600 text-white border-emerald-500 shadow-xs',
       mobileTextClass: 'text-emerald-500 dark:text-emerald-400',
       mobileActivePill: 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-300',
     },
     {
       id: 'progress',
-      step: '4',
       label: tr(state.lang, 'تقدمي والمدرب', 'Progrès & Coach', 'Progress & Coach'),
       shortLabel: tr(state.lang, 'تقدمي', 'Progrès', 'Progress'),
-      subtitle: tr(state.lang, 'مخطط 30ي والمدرب', 'Courbe 30j & Coach', '30d Chart & Coach'),
       icon: <TrendingUp className="w-4 h-4 shrink-0" />,
-      activeBgClass: 'bg-indigo-600 text-white border-indigo-500 shadow-sm',
-      iconBadgeClass: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300',
+      activeBgClass: 'bg-indigo-600 text-white border-indigo-500 shadow-xs',
       mobileTextClass: 'text-indigo-500 dark:text-indigo-400',
       mobileActivePill: 'bg-indigo-500/15 text-indigo-500 dark:text-indigo-300',
-    },
-  ];
-
-  const glossaryTerms = [
-    {
-      code: 'RIR',
-      title: tr(state.lang, 'تكرارات في الاحتياط', 'Répétitions en Réserve', 'Reps In Reserve'),
-      desc: tr(
-        state.lang,
-        'عدد التكرارات النظيفة المتبقية قبل الوصول للفشل العضلي (مثال: 2 RIR يعني كان بإمكانك أداء تكرارين إضافيين).',
-        'Nombre de répétitions propres restantes avant l’échec musculaire.',
-        'Clean reps left in the tank before technical failure (e.g. 2 RIR = 2 reps left).'
-      ),
-    },
-    {
-      code: 'e1RM',
-      title: tr(state.lang, 'أقصى وزن تقديري لرفعة واحدة', '1RM Estimé', 'Estimated 1-Rep Max'),
-      desc: tr(
-        state.lang,
-        'مؤشر القوة القصوى المحسوب تلقائياً من الوزن والتكرارات لمتابعة تطور قوتك بأمان دون مخاطرة.',
-        'Force maximale théorique calculée à partir du poids et des répétitions.',
-        'Calculated maximum strength from your working weight and reps without maxing out.'
-      ),
-    },
-    {
-      code: 'S1 / S2 / S3',
-      title: tr(state.lang, 'المجموعات والتعبئة الذكية', 'Séries & Auto-Copie', 'Sets & Smart Carry-Over'),
-      desc: tr(
-        state.lang,
-        'أرقام المجموعات؛ عند إدخال الوزن أو التكرار في S1 تنتقل القيمة تلقائياً إلى S2 و S3 لتوفير وقتك.',
-        'Numéros de séries ; modifier S1 pré-remplit automatiquement S2 et S3.',
-        'Set numbers; entering weight/reps in S1 auto-fills S2 and S3.'
-      ),
-    },
-    {
-      code: 'PR 🏆',
-      title: tr(state.lang, 'رقم قياسي شخصي', 'Record Personnel', 'Personal Record'),
-      desc: tr(
-        state.lang,
-        'وسام يظهر تلقائياً عندما تتجاوز أفضل وزن أو أعلى قوة تقديرية (e1RM) سابقتين لك في التمرين.',
-        'Badge célébrant un nouveau record de charge ou de force e1RM.',
-        'Badge awarded when a set beats your historical best weight or e1RM.'
-      ),
-    },
-    {
-      code: 'A → B → C → D',
-      title: tr(state.lang, 'التدوير المرن للحصص', 'Rotation Flexible', 'Flexible Sequence'),
-      desc: tr(
-        state.lang,
-        'نظام يتقدم تلقائياً للحصة التالية بعد كل حفظ دون التقيد بأيام أسبوع ثابتة.',
-        'Le programme avance automatiquement à la séance suivante après chaque sauvegarde.',
-        'Advances automatically to the next workout session without fixed weekday locks.'
-      ),
-    },
-    {
-      code: 'TDEE',
-      title: tr(state.lang, 'إجمالي الطاقة اليومية والماكروز', 'Dépense Énergétique', 'Total Daily Energy'),
-      desc: tr(
-        state.lang,
-        'مجموع السعرات اليومية الموزعة على البروتين والكاربوهيدرات والدهون حسب هدفك.',
-        'Total calorique quotidien réparti en protéines, glucides et lipides.',
-        'Daily calorie target split into Protein, Carbs, and Fats for your goal.'
-      ),
     },
   ];
 
@@ -557,7 +584,7 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Compact Utility Cluster: Compare + Backup Export/Import + Rest Timer + Lang + Theme + Refresh */}
+          {/* Compact Utility Cluster: Compare + Unified Timer + Lang + Theme + Settings ⚙️ */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* Quick Shortcut to Side-by-Side Favorites Comparison */}
             <button
@@ -580,27 +607,6 @@ export default function App() {
               <span>{tr(state.lang, 'مقارنة', 'Comparer', 'Compare')}</span>
             </button>
 
-            {/* Quick 1-Click JSON Backup Export & Import */}
-            <button
-              type="button"
-              onClick={handleQuickExportBackup}
-              title={tr(state.lang, 'تصدير نسخة احتياطية JSON', 'Exporter sauvegarde JSON', 'Export JSON Backup')}
-              aria-label="Export JSON Backup"
-              className="hidden lg:inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-teal-600 dark:text-teal-300 text-xs font-bold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 shrink-0" />
-              <span>{tr(state.lang, 'تصدير', 'Export', 'Export')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => quickImportInputRef.current?.click()}
-              title={tr(state.lang, 'استعادة نسخة احتياطية JSON', 'Importer sauvegarde JSON', 'Import JSON Backup')}
-              aria-label="Import JSON Backup"
-              className="hidden lg:inline-flex items-center justify-center gap-1 h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-300 text-xs font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
-            >
-              <Upload className="w-3.5 h-3.5 shrink-0" />
-              <span>{tr(state.lang, 'استعادة', 'Import', 'Import')}</span>
-            </button>
             <input
               ref={quickImportInputRef}
               type="file"
@@ -609,20 +615,20 @@ export default function App() {
               className="hidden"
             />
 
-            {/* Rest Timer Control with Visual Flash Alert */}
+            {/* Unified Rest Timer Control with Visual Flash Alert */}
             <div
               className={`inline-flex items-center gap-1 h-9 px-2 rounded-xl border text-xs transition shrink-0 ${
                 restCompleteFlash
                   ? 'bg-rose-600 text-white border-rose-400 animate-pulse'
                   : state.timer.running
-                  ? 'bg-teal-500/15 border-teal-500/50 text-slate-900 dark:text-white'
+                  ? 'bg-amber-500/15 border-amber-500/50 text-slate-900 dark:text-white'
                   : 'bg-slate-100 dark:bg-[#0b0f19] border-slate-200 dark:border-[#1e293b] text-slate-900 dark:text-white'
               }`}
             >
               {restCompleteFlash ? (
                 <BellRing className="w-3.5 h-3.5 text-white shrink-0" />
               ) : (
-                <Timer className={`w-3.5 h-3.5 shrink-0 ${state.timer.running ? 'text-teal-500 dark:text-teal-400' : 'text-slate-400'}`} />
+                <Timer className={`w-3.5 h-3.5 shrink-0 ${state.timer.running ? 'text-amber-500 dark:text-amber-400' : 'text-slate-400'}`} />
               )}
               <span className="font-mono font-extrabold tabular-nums w-9 text-center">
                 {formatSec(state.timer.remainingSec)}
@@ -692,15 +698,18 @@ export default function App() {
               {state.theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            {/* 1-Click Cache Refresh Button */}
+            {/* Unified Settings & Glossary Button (⚙️ الإعدادات) */}
             <button
               type="button"
-              onClick={() => void handlePurgeCacheAndReload()}
-              title={tr(state.lang, 'تحديث الكاش وإعادة تحميل الواجهة النظيفة', 'Actualiser le cache', 'Refresh cache & reload')}
-              aria-label="Refresh App Cache"
-              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-400 flex items-center justify-center hover:border-sky-500 transition cursor-pointer shrink-0"
+              onClick={() => setSettingsOpen(true)}
+              title={tr(state.lang, 'الإعدادات، النسخ الاحتياطي، ودليل المصطلحات', 'Paramètres & Lexique', 'Settings, Backup & Glossary')}
+              aria-label={tr(state.lang, 'الإعدادات', 'Paramètres', 'Settings')}
+              className="w-9 h-9 sm:w-auto sm:px-2.5 rounded-xl bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-teal-600 dark:text-teal-300 flex items-center justify-center gap-1 hover:border-teal-500 transition cursor-pointer shrink-0"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <Settings className="w-4 h-4 shrink-0" />
+              <span className="hidden lg:inline text-xs font-extrabold">
+                {tr(state.lang, 'الإعدادات', 'Réglages', 'Settings')}
+              </span>
             </button>
 
             {isInstallable && !isInstalled && (
@@ -760,59 +769,14 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content — Direct Access Without Duplicate Top Gateway Cards */}
       <main className="max-w-7xl mx-auto px-3 sm:px-5 py-4 space-y-4">
-        {/* Clean Gateway Dashboard Cards (4 Main Destinations on Solid Dark #111827) */}
-        <section
-          aria-label={tr(state.lang, 'بوابة الأقسام الرئيسية', 'Portail principal', 'Main Gateway')}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 no-print"
-        >
-          {navItems.map((item) => {
-            const isActive = state.mainTab === item.id;
-            return (
-              <button
-                key={`HERO_NAV_${item.id}`}
-                type="button"
-                onClick={() => setState((prev) => ({ ...prev, mainTab: item.id }))}
-                className={`flex items-center gap-2.5 sm:gap-3 p-3 rounded-2xl border text-start transition cursor-pointer overflow-hidden ${
-                  isActive
-                    ? item.activeBgClass
-                    : 'app-card hover:border-teal-500/50'
-                }`}
-              >
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-xs ${
-                    isActive ? 'bg-white/20 text-white' : item.iconBadgeClass
-                  }`}
-                >
-                  {item.icon}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div
-                    className={`text-xs sm:text-sm font-extrabold truncate ${
-                      isActive ? 'text-white' : 'text-slate-900 dark:text-white'
-                    }`}
-                  >
-                    {item.step}. {item.label}
-                  </div>
-                  <div
-                    className={`text-[11px] truncate ${
-                      isActive ? 'text-white/90' : 'text-slate-500 dark:text-slate-300'
-                    }`}
-                  >
-                    {item.subtitle}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </section>
-
         {state.mainTab === 'home' && (
           <div key="tab-home" className="animate-view-in">
             <WorkoutView
               state={state}
               exercises={EXERCISES_DB}
+              highlightedExId={highlightedExId}
               onStartDay={(day) => setState((prev) => ({ ...prev, activeWorkoutDay: day }))}
               onExitWorkout={() => setState((prev) => ({ ...prev, activeWorkoutDay: null }))}
               onSetProgramMode={(mode) => setState((prev) => ({ ...prev, programMode: mode }))}
@@ -852,6 +816,9 @@ export default function App() {
                 }))
               }
               onStartRestTimer={startRestTimer}
+              onAdjustRestTimer={adjustRestTimer}
+              onSkipRestTimer={skipRestTimer}
+              onOpenSettings={() => setSettingsOpen(true)}
               onFinishSession={(payload) => {
                 const today = new Date().toISOString().slice(0, 10);
                 const nextDay = getNextSequenceDay(payload.day);
@@ -867,6 +834,27 @@ export default function App() {
                   const nextCounts = { ...(prev.exerciseCompletionCounts || {}) };
                   for (const exId of payload.completedExerciseIds) {
                     nextCounts[exId] = (nextCounts[exId] || 0) + 1;
+                  }
+
+                  // Compute & Save Historical Session Average (avgWeightKg & avgReps) per exercise
+                  const nextExerciseHistory = { ...(prev.exerciseHistory || {}) };
+                  for (const exId of payload.completedExerciseIds) {
+                    const exObj = EXERCISES_DB.find((e) => e.id === exId);
+                    if (!exObj) continue;
+                    const completedSets: Array<{ weight: number; reps: number }> = [];
+                    for (let s = 1; s <= exObj.sets; s++) {
+                      const setLog = prev.workoutLogs[`${exId}_S${s}`];
+                      if (setLog && setLog.done && !setLog.isWarmup) {
+                        completedSets.push({ weight: setLog.weight, reps: setLog.reps });
+                      }
+                    }
+                    const avgSummary = computeCompletedSetsAverage(completedSets);
+                    if (avgSummary) {
+                      nextExerciseHistory[exId] = {
+                        lastSessionDate: today,
+                        ...avgSummary,
+                      };
+                    }
                   }
 
                   // Update Personal Records (PRs)
@@ -899,12 +887,31 @@ export default function App() {
                     }
                   }
 
+                  // Clear current session's active set logs so next session cleanly pre-fills S1 with the new historical average
+                  const dayExIds = prev.customDayExercises[prev.programMode][payload.day] || [];
+                  const nextWorkoutLogs = { ...prev.workoutLogs };
+                  for (const exId of dayExIds) {
+                    const exObj = EXERCISES_DB.find((e) => e.id === exId);
+                    const maxSets = exObj ? exObj.sets : 6;
+                    for (let s = 1; s <= maxSets; s++) {
+                      delete nextWorkoutLogs[`${exId}_S${s}`];
+                    }
+                  }
+
                   return {
                     ...prev,
                     activeWorkoutDay: null,
                     nextSequenceDay: nextDay,
                     exerciseCompletionCounts: nextCounts,
+                    exerciseHistory: nextExerciseHistory,
                     prRecords: nextPrs,
+                    workoutLogs: nextWorkoutLogs,
+                    timer: {
+                      ...prev.timer,
+                      running: false,
+                      endMs: null,
+                      activeContextKey: null,
+                    },
                     sessionHistory: [
                       ...prev.sessionHistory,
                       {
@@ -952,8 +959,8 @@ export default function App() {
                   )
                 );
               }}
-              onOpenExercise={(exId) => setDetailExId(exId)}
-              onOpenSwap={(exId) => setSwapSourceExId(exId)}
+              onOpenExercise={openExerciseDetailWithLock}
+              onOpenSwap={openSwapWithLock}
             />
           </div>
         )}
@@ -964,6 +971,7 @@ export default function App() {
               state={state}
               exercises={EXERCISES_DB}
               volumeMap={volumeMap}
+              highlightedExId={highlightedExId}
               onSetExSubTab={(tab) => setState((prev) => ({ ...prev, exSubTab: tab }))}
               onSetSearch={(q) => setState((prev) => ({ ...prev, searchQuery: q }))}
               onSetMuscleFilter={(m) => setState((prev) => ({ ...prev, muscleFilter: m }))}
@@ -981,8 +989,8 @@ export default function App() {
                 }))
               }
               onSetCompareIds={(ids) => setState((prev) => ({ ...prev, compareIds: ids }))}
-              onOpenExercise={(exId) => setDetailExId(exId)}
-              onOpenLightbox={(exId) => setLightboxExId(exId)}
+              onOpenExercise={openExerciseDetailWithLock}
+              onOpenLightbox={openLightboxWithLock}
             />
           </div>
         )}
@@ -1032,75 +1040,11 @@ export default function App() {
             />
           </div>
         )}
-
-        {/* Footer Technical Glossary & Abbreviations Legend (دليل المصطلحات والاختصارات التقنية) */}
-        <footer
-          aria-label={tr(
-            state.lang,
-            'دليل المصطلحات والاختصارات التقنية',
-            'Lexique des termes techniques',
-            'Technical Terms & Abbreviations Glossary'
-          )}
-          className="app-card p-4 space-y-3 no-print"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-[#1e293b]">
-            <div className="flex items-center gap-2 min-w-0">
-              <BookOpen className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-              <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate">
-                {tr(
-                  state.lang,
-                  'دليل المصطلحات والاختصارات التقنية',
-                  'Lexique des Abréviations & Termes',
-                  'Technical Terms & Abbreviations Glossary'
-                )}
-              </h2>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleQuickExportBackup}
-                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-teal-600 dark:text-teal-300 text-[11px] font-bold whitespace-nowrap hover:border-teal-500 transition cursor-pointer"
-              >
-                <Download className="w-3 h-3 shrink-0" />
-                <span>{tr(state.lang, 'تصدير JSON', 'Exporter', 'Backup')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => quickImportInputRef.current?.click()}
-                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-[#0b0f19] border border-slate-200 dark:border-[#1e293b] text-sky-600 dark:text-sky-300 text-[11px] font-bold whitespace-nowrap hover:border-sky-500 transition cursor-pointer"
-              >
-                <Upload className="w-3 h-3 shrink-0" />
-                <span>{tr(state.lang, 'استعادة JSON', 'Importer', 'Restore')}</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
-            {glossaryTerms.map((term) => (
-              <div
-                key={term.code}
-                className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b0f19] border border-slate-200/80 dark:border-[#1e293b] space-y-1 overflow-hidden"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="px-2 py-0.5 rounded-md bg-teal-500/15 text-teal-600 dark:text-teal-300 font-mono text-[11px] font-extrabold whitespace-nowrap shrink-0">
-                    {term.code}
-                  </span>
-                  <strong className="font-extrabold text-slate-900 dark:text-white truncate">
-                    {term.title}
-                  </strong>
-                </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {term.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </footer>
       </main>
 
       {/* Mobile Bottom 4-Tab Bar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-15 bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-[#1e293b] grid grid-cols-4 px-1 no-print"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 h-15 bg-white dark:bg-[#111827] border-t border-slate-200 dark:border-[#1e293b] grid grid-cols-4 px-1 no-print safe-bottom-nav"
         aria-label="Mobile Navigation"
       >
         {navItems.map((item) => {
@@ -1127,12 +1071,15 @@ export default function App() {
         })}
       </nav>
 
-      {/* Modals */}
+      {/* Modals with Scroll & Focus Lock Restoration */}
       <ExerciseDetailModal
         exercise={detailEx}
         lang={state.lang}
         isFavorite={detailEx ? state.favoriteExercises.includes(detailEx.id) : false}
-        onClose={() => setDetailExId(null)}
+        onClose={() => {
+          setDetailExId(null);
+          restoreScrollAndFocus();
+        }}
         onToggleFavorite={handleToggleFavorite}
         onOpenLightbox={(exId) => setLightboxExId(exId)}
         onOpenSwap={(exId) => {
@@ -1146,7 +1093,10 @@ export default function App() {
         currentExerciseId={lightboxExId}
         lang={state.lang}
         onSelectExerciseId={(id) => setLightboxExId(id)}
-        onClose={() => setLightboxExId(null)}
+        onClose={() => {
+          setLightboxExId(null);
+          restoreScrollAndFocus();
+        }}
       />
 
       <SubstitutionModal
@@ -1154,7 +1104,36 @@ export default function App() {
         exercises={EXERCISES_DB}
         lang={state.lang}
         onSwap={handleSwapExercise}
-        onClose={() => setSwapSourceExId(null)}
+        onClose={() => {
+          setSwapSourceExId(null);
+          restoreScrollAndFocus();
+        }}
+      />
+
+      <SettingsModal
+        open={settingsOpen}
+        state={state}
+        isInstallable={isInstallable}
+        isInstalled={isInstalled}
+        onClose={() => setSettingsOpen(false)}
+        onSetProgramMode={(mode) => setState((prev) => ({ ...prev, programMode: mode }))}
+        onSetSchedulePreset={setSchedulePreset}
+        onUpdateDayLabel={(day, label) =>
+          setState((prev) => ({
+            ...prev,
+            trainingDaysLabels: { ...prev.trainingDaysLabels, [day]: label },
+          }))
+        }
+        onUpdateVolumeSettings={(patch) =>
+          setState((prev) => ({
+            ...prev,
+            volumeSettings: { ...prev.volumeSettings, ...patch },
+          }))
+        }
+        onExportBackup={handleQuickExportBackup}
+        onTriggerImportBackup={() => quickImportInputRef.current?.click()}
+        onPurgeCache={() => void handlePurgeCacheAndReload()}
+        onInstallPwa={() => void install()}
       />
 
       {/* Toast Notification */}

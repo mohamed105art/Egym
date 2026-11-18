@@ -7,11 +7,14 @@ import { SCIENTIFIC_STUDIES } from '../data/studies';
 import {
   applySmartSetCarryOver,
   buildLast30DaysAnalytics,
+  computeCompletedSetsAverage,
+  computeHistoricalExerciseAverage,
   computeSessionStreakAndDelay,
   createDefaultAppState,
   evaluateSetPR,
   getNextSequenceDay,
   migrateState,
+  resolveEffectiveSetLog,
   validateAndImportBackup,
 } from './storage';
 import {
@@ -275,33 +278,90 @@ test('buildExerciseComparisonProfile resolves primary/secondary muscles, evidenc
   assert.equal(profB.kinematicRig.rigType, ex03.rigType);
 });
 
-test('applySmartSetCarryOver enforces integer weights, carries S1 weight/reps to S2 & S3 when not done, and allows independent S2/S3 edits', () => {
+test('applySmartSetCarryOver enforces integer weights and cascading inheritance (S_n <- S_{n-1}) across sets', () => {
   const ex01 = EXERCISES_DB.find((e) => e.id === 'EX01')!; // 3 sets
   const logs1 = applySmartSetCarryOver({}, ex01, 1, {
-    weight: 30.4,
+    weight: 10.4,
     reps: 10,
     rir: 2,
     isWarmup: false,
     done: false,
   });
 
-  // Weight rounded to integer 30 and propagated to S2 & S3
-  assert.equal(logs1.EX01_S1.weight, 30);
-  assert.equal(logs1.EX01_S2.weight, 30);
+  // Weight rounded to integer 10 and propagated to S2 & S3
+  assert.equal(logs1.EX01_S1.weight, 10);
+  assert.equal(logs1.EX01_S2.weight, 10);
   assert.equal(logs1.EX01_S2.reps, 10);
-  assert.equal(logs1.EX01_S3.weight, 30);
+  assert.equal(logs1.EX01_S3.weight, 10);
   assert.equal(logs1.EX01_S3.reps, 10);
 
-  // Editing S2 independently only updates S2
+  // Editing S2 to 12 kg x 12 cascades automatically to S3 (S3 <- S2), while S1 stays 10 kg
   const logs2 = applySmartSetCarryOver(logs1, ex01, 2, {
     ...logs1.EX01_S2,
-    weight: 28,
-    reps: 9,
+    weight: 12,
+    reps: 12,
   });
-  assert.equal(logs2.EX01_S1.weight, 30);
-  assert.equal(logs2.EX01_S2.weight, 28);
-  assert.equal(logs2.EX01_S2.reps, 9);
-  assert.equal(logs2.EX01_S3.weight, 30);
+  assert.equal(logs2.EX01_S1.weight, 10);
+  assert.equal(logs2.EX01_S2.weight, 12);
+  assert.equal(logs2.EX01_S2.reps, 12);
+  assert.equal(logs2.EX01_S3.weight, 12);
+  assert.equal(logs2.EX01_S3.reps, 12);
+
+  // If S3 is already marked done, editing S2 does not overwrite completed S3
+  const logsWithDoneS3: Record<string, typeof logs2.EX01_S1> = {
+    ...logs2,
+    EX01_S3: { ...logs2.EX01_S3, weight: 14, reps: 10, done: true },
+  };
+  const logs3 = applySmartSetCarryOver(logsWithDoneS3, ex01, 2, {
+    ...logsWithDoneS3.EX01_S2,
+    weight: 16,
+    reps: 8,
+  });
+  assert.equal(logs3.EX01_S2.weight, 16);
+  assert.equal(logs3.EX01_S3.weight, 14);
+});
+
+test('computeCompletedSetsAverage, computeHistoricalExerciseAverage, and resolveEffectiveSetLog pre-fill S1 with last session average', () => {
+  const ex01 = EXERCISES_DB.find((e) => e.id === 'EX01')!;
+  const avg = computeCompletedSetsAverage([
+    { weight: 10, reps: 10 },
+    { weight: 12, reps: 10 },
+    { weight: 14, reps: 10 },
+  ]);
+  assert.ok(avg);
+  assert.equal(avg!.avgWeightKg, 12);
+  assert.equal(avg!.avgReps, 10);
+  assert.equal(avg!.setsCount, 3);
+
+  const state = createDefaultAppState();
+  state.exerciseHistory = {
+    ...state.exerciseHistory,
+    EX01: {
+      lastSessionDate: '2026-11-15',
+      avgWeightKg: avg!.avgWeightKg,
+      avgReps: avg!.avgReps,
+      setsCount: avg!.setsCount,
+    },
+  };
+
+  const histInfo = computeHistoricalExerciseAverage(ex01, state);
+  assert.equal(histInfo.hasHistory, true);
+  assert.equal(histInfo.avgWeightKg, 12);
+  assert.equal(histInfo.avgReps, 10);
+
+  // S1 pre-fills automatically with historical session average (12 kg x 10)
+  const s1Effective = resolveEffectiveSetLog(ex01, 1, {}, histInfo);
+  assert.equal(s1Effective.weight, 12);
+  assert.equal(s1Effective.reps, 10);
+
+  // When S2 is logged as 14 kg x 11, S3 inherits from S2 (14 kg x 11) even if S3 is not yet in workoutLogs
+  const partialLogs = {
+    EX01_S1: { weight: 12, reps: 10, rir: 2, isWarmup: false, done: true },
+    EX01_S2: { weight: 14, reps: 11, rir: 2, isWarmup: false, done: false },
+  };
+  const s3Effective = resolveEffectiveSetLog(ex01, 3, partialLogs, histInfo);
+  assert.equal(s3Effective.weight, 14);
+  assert.equal(s3Effective.reps, 11);
 });
 
 test('evaluateSetPR detects new Personal Records accurately', () => {

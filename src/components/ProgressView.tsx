@@ -245,9 +245,9 @@ export const ProgressView: React.FC<ProgressViewProps> = ({
                     <p className="text-[11px] text-slate-500 dark:text-slate-300">
                       {tr(
                         lang,
-                        'مرّر المؤشر فوق النقاط لعرض تفاصيل كل حصة تدريبية، مجموعات العمل، وتطور القوة.',
-                        'Survolez le graphique pour inspecter le tonnage et la force estimée.',
-                        'Hover or tap any point to inspect session volume, working sets, and e1RM.'
+                        'اضغط على أي نقطة في المخطط لعرض تفاصيل كل حصة تدريبية، مجموعات العمل، وتطور القوة.',
+                        'Touchez un point du graphique pour inspecter le tonnage et la force estimée.',
+                        'Tap any point on the chart to inspect session volume, working sets, and e1RM.'
                       )}
                     </p>
                   </div>
